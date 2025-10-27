@@ -1,0 +1,142 @@
+Warning: The trip points for the library named SRAM_ss0p72v0p72vm40c_100a differ from those in the library named N16ADFP_StdCellss0p72vm40c. (TIM-164)
+Information: Updating design information... (UID-85)
+Warning: Design 'top' contains 1 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 1
+        -sort_by group
+Design : top
+Version: Q-2019.12
+Date   : Thu Sep 25 20:53:36 2025
+****************************************
+
+ # A fanout number of 1000 was used for high fanout net computations.
+
+Operating Conditions: ss0p72vm40c   Library: N16ADFP_StdCellss0p72vm40c
+Wire Load Model Mode: segmented
+
+  Startpoint: CPU/DC1/DC_opcode_reg_2_
+              (rising edge-triggered flip-flop clocked by clk)
+  Endpoint: CPU/CSR1/instret_reg_63_
+            (rising edge-triggered flip-flop clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  SRAM_wrapper_0     ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  FPU                ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  MDR                ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  FRegFile           ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  RegFile            ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  BPU                ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  CSR                ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  MEM_stage          ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  EXE_stage          ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  DC_stage           ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  IF_stage           ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  SRAM_wrapper_1     ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  top                ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  CPU                ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  JB                 ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  ALU                ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  Controller         ZeroWireload          N16ADFP_StdCellss0p72vm40c
+  CSR_DW01_add_2     ZeroWireload          N16ADFP_StdCellss0p72vm40c
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock clk (rise edge)                                 0.0000     0.0000
+  clock network delay (ideal)                           0.2000     0.2000
+  CPU/DC1/DC_opcode_reg_2_/CP (DFQD2BWP16P90LVT)        0.0000 #   0.2000 r
+  CPU/DC1/DC_opcode_reg_2_/Q (DFQD2BWP16P90LVT)         0.0694     0.2694 f
+  CPU/DC1/DC_opcode[2] (DC_stage)                       0.0000     0.2694 f
+  CPU/Ctrl1/E_op[2] (Controller)                        0.0000     0.2694 f
+  CPU/Ctrl1/U210/ZN (INVD4BWP16P90LVT)                  0.0077     0.2771 r
+  CPU/Ctrl1/U207/ZN (CKNR2D4BWP16P90LVT)                0.0064     0.2835 f
+  CPU/Ctrl1/U211/ZN (IND4D1BWP16P90)                    0.0092     0.2927 r
+  CPU/Ctrl1/U200/ZN (OAI21D1BWP16P90LVT)                0.0233     0.3160 f
+  CPU/Ctrl1/E_fu_sel[1] (Controller)                    0.0000     0.3160 f
+  CPU/EXE1/E_fu_sel[1] (EXE_stage)                      0.0000     0.3160 f
+  CPU/EXE1/U117/Z (AN2D2BWP16P90LVT)                    0.0237     0.3396 f
+  CPU/EXE1/waiting (EXE_stage)                          0.0000     0.3396 f
+  CPU/CSR1/waiting (CSR)                                0.0000     0.3396 f
+  CPU/CSR1/U8/ZN (IAO21D2BWP16P90LVT)                   0.0097     0.3494 r
+  CPU/CSR1/add_20/B[0] (CSR_DW01_add_2)                 0.0000     0.3494 r
+  CPU/CSR1/add_20/U159/ZN (ND2D1BWP16P90LVT)            0.0070     0.3564 f
+  CPU/CSR1/add_20/U158/ZN (NR2D1BWP16P90LVT)            0.0115     0.3679 r
+  CPU/CSR1/add_20/U165/ZN (CKND2D1BWP16P90LVT)          0.0091     0.3770 f
+  CPU/CSR1/add_20/U164/ZN (NR2D1BWP16P90LVT)            0.0128     0.3898 r
+  CPU/CSR1/add_20/U167/ZN (ND2D1BWP16P90LVT)            0.0082     0.3980 f
+  CPU/CSR1/add_20/U162/ZN (CKND1BWP16P90LVT)            0.0085     0.4064 r
+  CPU/CSR1/add_20/U154/ZN (ND4D4BWP16P90LVT)            0.0117     0.4181 f
+  CPU/CSR1/add_20/U153/ZN (CKNR2D4BWP16P90LVT)          0.0073     0.4254 r
+  CPU/CSR1/add_20/U220/ZN (ND2D1BWP16P90LVT)            0.0095     0.4349 f
+  CPU/CSR1/add_20/U215/ZN (NR2D1BWP16P90LVT)            0.0112     0.4461 r
+  CPU/CSR1/add_20/U234/ZN (ND2D1BWP16P90LVT)            0.0109     0.4570 f
+  CPU/CSR1/add_20/U216/ZN (NR2D1BWP16P90LVT)            0.0113     0.4683 r
+  CPU/CSR1/add_20/U157/ZN (ND2D1BWP16P90LVT)            0.0109     0.4792 f
+  CPU/CSR1/add_20/U156/ZN (NR2D1BWP16P90LVT)            0.0113     0.4906 r
+  CPU/CSR1/add_20/U155/ZN (ND2D1BWP16P90LVT)            0.0124     0.5029 f
+  CPU/CSR1/add_20/U149/ZN (NR2D2BWP16P90LVT)            0.0099     0.5129 r
+  CPU/CSR1/add_20/U148/ZN (ND2D2BWP16P90LVT)            0.0097     0.5226 f
+  CPU/CSR1/add_20/U150/ZN (CKNR2D4BWP16P90LVT)          0.0078     0.5304 r
+  CPU/CSR1/add_20/U152/ZN (ND2D2BWP16P90LVT)            0.0078     0.5382 f
+  CPU/CSR1/add_20/U151/ZN (NR4D4BWP16P90LVT)            0.0110     0.5492 r
+  CPU/CSR1/add_20/U252/CO (HA1D1BWP16P90LVT)            0.0183     0.5675 r
+  CPU/CSR1/add_20/U36/CO (HA1D2BWP16P90LVT)             0.0180     0.5854 r
+  CPU/CSR1/add_20/U35/CO (HA1D2BWP16P90LVT)             0.0174     0.6029 r
+  CPU/CSR1/add_20/U34/CO (HA1D2BWP16P90LVT)             0.0174     0.6203 r
+  CPU/CSR1/add_20/U238/CO (HA1D2BWP16P90LVT)            0.0175     0.6378 r
+  CPU/CSR1/add_20/U195/CO (HA1D1BWP16P90LVT)            0.0164     0.6542 r
+  CPU/CSR1/add_20/U31/CO (HA1D2BWP16P90LVT)             0.0179     0.6721 r
+  CPU/CSR1/add_20/U239/CO (HA1D2BWP16P90LVT)            0.0175     0.6896 r
+  CPU/CSR1/add_20/U196/CO (HA1D1BWP16P90LVT)            0.0164     0.7060 r
+  CPU/CSR1/add_20/U240/CO (HA1D2BWP16P90LVT)            0.0180     0.7240 r
+  CPU/CSR1/add_20/U197/CO (HA1D1BWP16P90LVT)            0.0164     0.7404 r
+  CPU/CSR1/add_20/U241/CO (HA1D2BWP16P90LVT)            0.0180     0.7584 r
+  CPU/CSR1/add_20/U198/CO (HA1D1BWP16P90LVT)            0.0164     0.7748 r
+  CPU/CSR1/add_20/U24/CO (HA1D2BWP16P90LVT)             0.0179     0.7927 r
+  CPU/CSR1/add_20/U23/CO (HA1D2BWP16P90LVT)             0.0174     0.8102 r
+  CPU/CSR1/add_20/U22/CO (HA1D2BWP16P90LVT)             0.0174     0.8276 r
+  CPU/CSR1/add_20/U21/CO (HA1D2BWP16P90LVT)             0.0175     0.8451 r
+  CPU/CSR1/add_20/U199/CO (HA1D1BWP16P90LVT)            0.0164     0.8615 r
+  CPU/CSR1/add_20/U242/CO (HA1D2BWP16P90LVT)            0.0180     0.8795 r
+  CPU/CSR1/add_20/U200/CO (HA1D1BWP16P90LVT)            0.0164     0.8959 r
+  CPU/CSR1/add_20/U243/CO (HA1D2BWP16P90LVT)            0.0180     0.9139 r
+  CPU/CSR1/add_20/U201/CO (HA1D1BWP16P90LVT)            0.0164     0.9303 r
+  CPU/CSR1/add_20/U244/CO (HA1D2BWP16P90LVT)            0.0180     0.9483 r
+  CPU/CSR1/add_20/U202/CO (HA1D1BWP16P90LVT)            0.0164     0.9647 r
+  CPU/CSR1/add_20/U245/CO (HA1D2BWP16P90LVT)            0.0180     0.9827 r
+  CPU/CSR1/add_20/U203/CO (HA1D1BWP16P90LVT)            0.0164     0.9991 r
+  CPU/CSR1/add_20/U246/CO (HA1D2BWP16P90LVT)            0.0180     1.0171 r
+  CPU/CSR1/add_20/U251/CO (HA1D1BWP16P90LVT)            0.0165     1.0335 r
+  CPU/CSR1/add_20/U250/CO (HA1D1BWP16P90LVT)            0.0170     1.0505 r
+  CPU/CSR1/add_20/U249/CO (HA1D1BWP16P90LVT)            0.0170     1.0675 r
+  CPU/CSR1/add_20/U204/CO (HA1D1BWP16P90LVT)            0.0170     1.0844 r
+  CPU/CSR1/add_20/U205/CO (HA1D1BWP16P90LVT)            0.0169     1.1013 r
+  CPU/CSR1/add_20/U5/CO (HA1D2BWP16P90LVT)              0.0180     1.1193 r
+  CPU/CSR1/add_20/U206/CO (HA1D1BWP16P90LVT)            0.0165     1.1358 r
+  CPU/CSR1/add_20/U207/CO (HA1D1BWP16P90LVT)            0.0156     1.1513 r
+  CPU/CSR1/add_20/U247/Z (XOR2D1BWP16P90LVT)            0.0132     1.1646 r
+  CPU/CSR1/add_20/SUM[63] (CSR_DW01_add_2)              0.0000     1.1646 r
+  CPU/CSR1/U228/Z (AN2D1BWP16P90LVT)                    0.0112     1.1758 r
+  CPU/CSR1/instret_reg_63_/D (DFQD2BWP16P90LVT)         0.0000     1.1758 r
+  data arrival time                                                1.1758
+
+  clock clk (rise edge)                                 1.0000     1.0000
+  clock network delay (ideal)                           0.2000     1.2000
+  clock uncertainty                                    -0.0200     1.1800
+  CPU/CSR1/instret_reg_63_/CP (DFQD2BWP16P90LVT)        0.0000     1.1800 r
+  library setup time                                   -0.0042     1.1758
+  data required time                                               1.1758
+  --------------------------------------------------------------------------
+  data required time                                               1.1758
+  data arrival time                                               -1.1758
+  --------------------------------------------------------------------------
+  slack (MET)                                                      0.0000
+
+
+1

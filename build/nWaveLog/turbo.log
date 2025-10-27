@@ -1,0 +1,2 @@
+Command Line: /opt/CIC/Synopsys/verdi/2023.03-sp2/platform/LINUXAMD64/bin/Novas -nWave top.fsdb
+uname(Linux CASGPU3 5.4.0-216-generic #236-Ubuntu SMP Fri Apr 11 19:53:21 UTC 2025 x86_64)

@@ -1,0 +1,56 @@
+{
+    "std": [
+        "std",
+        "reYIK",
+        "module",
+        1
+    ],
+    "SRAM_wrapper": [
+        "SRAM_wrapper",
+        "isvEQ",
+        "module",
+        2
+    ],
+    "DC_stage": [
+        "DC_stage",
+        "B8vaa",
+        "module",
+        10
+    ],
+    "LSU": [
+        "LSU",
+        "n2Qdy",
+        "module",
+        4
+    ],
+    "CSR": [
+        "CSR",
+        "f4Wd0",
+        "module",
+        5
+    ],
+    "konata": [
+        "konata",
+        "UPNct",
+        "module",
+        6
+    ],
+    "top": [
+        "top",
+        "Emx8S",
+        "module",
+        9
+    ],
+    "top_tb": [
+        "top_tb",
+        "W0eJz",
+        "module",
+        7
+    ],
+    "...MASTER...": [
+        "SIM",
+        "amcQw",
+        "module",
+        8
+    ]
+}

@@ -1,0 +1,170 @@
+Magic 271485
+Revision Verdi_U-2023.03-SP2
+
+; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
+viewPort 1920 23 1920 1017 262 586
+
+; File list:
+; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
+openDirFile -d / "" "/homes/nfs/HsuHsiang/AVSD/OoO/build/top.fsdb"
+
+; file time scale:
+; fileTimeScale ### s|ms|us|ns|ps
+
+; signal spacing:
+signalSpacing 5
+
+; windowTimeUnit is used for zoom, cursor & marker
+; waveform viewport range
+zoom 997543.212237 1000439.961759
+cursor 998650.000000
+marker 0.000000
+
+; user define markers
+; userMarker time_pos marker_name color linestyle
+; visible top row signal index
+top 0
+; marker line index
+markerPos 2
+
+; event list
+; addEvent event_name event_expression
+; curEvent event_name
+
+
+
+COMPLEX_EVENT_BEGIN
+
+
+COMPLEX_EVENT_END
+
+
+
+; toolbar current search type
+; curSTATUS search_type
+curSTATUS ByChange
+
+
+addGroup "G1"
+activeDirFile "" "/homes/nfs/HsuHsiang/AVSD/OoO/build/top.fsdb"
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU/IF/IF_out_pc[15:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope IF_out_inst[31:0]
+addSignal -h 15 -holdScope clk
+addSignal -h 15 -holdScope rst
+addSignal -h 15 -UNSIGNED -HEX -holdScope jb_pc[15:0]
+addSignal -h 15 -holdScope mispredict
+addSignal -h 15 -holdScope IF_valid
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU/DC/DC_out_inst[31:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope DC_out_pc[15:0]
+addSignal -h 15 -holdScope rename_map[0:63]
+addSignal -h 15 -holdScope commit_map[0:63]
+addSignal -h 15 -holdScope DC_ready
+addSignal -h 15 -holdScope DC_valid
+addGroup "G2"
+addSignal -h 15 /top_tb/TOP/CPU/IS/ROB[0]
+addSignal -h 15 -holdScope ROB[1]
+addSignal -h 15 -holdScope ROB[2]
+addSignal -h 15 -holdScope ROB[3]
+addSignal -h 15 -holdScope ROB[4]
+addSignal -h 15 -holdScope ROB[5]
+addSignal -h 15 -holdScope ROB[6]
+addSignal -h 15 -holdScope ROB[7]
+addSignal -h 15 -UNSIGNED -HEX -holdScope ROB_h[2:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope ROB_t[2:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope ROB_num[2:0]
+addSignal -h 15 -UNSIGNED -BIN -holdScope can_issue[7:0]
+addSignal -h 15 -UNSIGNED -BIN -holdScope commit_rs1_match[7:0]
+addSignal -h 15 -UNSIGNED -BIN -holdScope commit_rs2_match[7:0]
+addSignal -h 15 /top_tb/TOP/CPU/IS/R1/registers[0:79]
+addSignal -h 15 /top_tb/TOP/CPU/LSU/LQ[0:3]
+addSignal -expanded -h 15 -holdScope SQ[0:3]
+addSignal -h 15 -holdScope SQ[0]
+addSignal -h 15 -holdScope SQ[1]
+addSignal -h 15 -holdScope SQ[2]
+addSignal -h 15 -holdScope SQ[3]
+addSignal -h 15 -UNSIGNED -HEX -holdScope st_idx[1:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope SQ_h[1:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope SQ_t[1:0]
+addSignal -h 15 /top_tb/TOP/CPU/DC/IS_ready
+addSignal -h 15 -holdScope ld_ready
+addSignal -h 15 -holdScope st_ready
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU/LSU/EXE_in_st_idx[1:0]
+addGroup "G3"
+addSignal -h 15 /top_tb/TOP/CPU/IS/IS_ready
+addSignal -h 15 -holdScope IS_valid
+addSignal -h 15 -UNSIGNED -HEX -holdScope IS_out_pc[15:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope IS_out_inst[31:0]
+addSignal -h 15 -UNSIGNED -BIN -holdScope EXE_ready[4:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope issue_ptr[2:0]
+addSignal -h 15 -UNSIGNED -BIN -holdScope flush_mask[7:0]
+addGroup "G4"
+addSignal -h 15 /top_tb/TOP/CPU/EXE/fpu_wb_valid
+addSignal -h 15 -holdScope fpu_bypass
+addSignal -h 15 -holdScope fpu_start
+addSignal -h 15 -UNSIGNED -HEX -holdScope EXE_in_fu_sel[2:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope EXE_in_inst[31:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope EXE_in_pc[15:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope EXE_in_rob_idx[2:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope EXE_in_imm[31:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope EXE_in_rs1_data[31:0]
+addSignal -h 15 /top_tb/TOP/CPU/DC/freelist[0:15]
+addSignal -h 15 -UNSIGNED -UDEC -holdScope free_h[3:0]
+addSignal -h 15 -UNSIGNED -UDEC -holdScope free_t[3:0]
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU/EXE/ALU1/alu_out[31:0]
+addGroup "G5"
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU/EXE/WB_out_data[31:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope WB_out_rob_idx[2:0]
+addSignal -h 15 -holdScope WB_out_valid
+addSignal -h 15 -UNSIGNED -BIN -holdScope out_sel[3:0]
+addGroup "G6"
+addSignal -h 15 /top_tb/TOP/CPU/IS/commit
+addSignal -h 15 -UNSIGNED -UDEC -holdScope commit_A_rd[5:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope commit_P_rd_new[6:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope commit_P_rd_old[6:0]
+addSignal -h 15 -2COMP -HEX -holdScope commit_data[31:0]
+addSignal -h 15 -holdScope commit_wb_en
+addGroup "G7"
+addGroup "G8"
+
+; getSignalForm Scope Hierarchy Status
+; active file of getSignalForm
+activeDirFile "" "/homes/nfs/HsuHsiang/AVSD/OoO/build/top.fsdb"
+
+GETSIGNALFORM_SCOPE_HIERARCHY_BEGIN
+getSignalForm close
+
+"/top_tb"
+"/top_tb/TOP"
+"/top_tb/TOP/CPU"
+"/top_tb/TOP/CPU/DC"
+"/top_tb/TOP/CPU/EXE"
+"/top_tb/TOP/CPU/EXE/ALU1"
+"/top_tb/TOP/CPU/IF"
+"/top_tb/TOP/CPU/IS"
+"/top_tb/TOP/CPU/LSU"
+"/top_tb/TOP/DM1"
+"/top_tb/TOP/DM1/i_SRAM"
+"/top_tb/TOP/IM1"
+"/top_tb/TOP/IM1/i_SRAM"
+
+SCOPE_LIST_BEGIN
+"/top_tb"
+"/top_tb/TOP/DM1"
+"/top_tb/TOP/CPU/IF"
+"/top_tb/TOP"
+"/top_tb/TOP/CPU"
+"/top_tb/TOP/CPU/IS"
+"/top_tb/TOP/CPU/EXE"
+"/top_tb/TOP/CPU/DC"
+"/top_tb/TOP/CPU/EXE/ALU1"
+"/top_tb/TOP/CPU/IS/R1"
+"/top_tb/TOP/CPU/LSU"
+"/top_tb/TOP/IM1"
+"/top_tb/TOP/DM1/i_SRAM"
+"/top_tb/TOP/IM1/i_SRAM"
+"/top_tb/TOP/CPU/LSU/Unnamed_$LSU_sv_113"
+SCOPE_LIST_END
+
+GETSIGNALFORM_SCOPE_HIERARCHY_END
+
+

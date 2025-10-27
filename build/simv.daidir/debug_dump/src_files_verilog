@@ -1,0 +1,17 @@
+/homes/nfs/HsuHsiang/AVSD/OOO/include/define.svh
+/homes/nfs/HsuHsiang/AVSD/OOO/sim/SRAM/SRAM_rtl.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/sim/top_tb.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/ALU.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/CPU.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/CSR.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/DC_stage.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/EXE_stage.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/FPU.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/IF_stage.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/IS_stage.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/LSU.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/MDR.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/RegFile.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/SRAM_wrapper.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/konata.sv
+/homes/nfs/HsuHsiang/AVSD/OOO/src/top.sv

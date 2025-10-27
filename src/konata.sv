@@ -1,0 +1,436 @@
+module konata(
+    input logic clk,
+    input logic rst,
+    
+    // IF stage signals
+    input logic [15:0] IM_r_addr,
+
+    input logic        IF_valid,
+    input logic [15:0] IF_out_pc,
+    input logic [31:0] IF_out_inst,
+    
+    // DC stage signals
+    input logic        DC_valid,
+    input logic        DC_ready,
+    input logic [15:0] DC_out_pc,
+    input logic [31:0] DC_out_inst,
+    input logic [4:0]  DC_out_op,
+    input logic [2:0]  DC_out_f3,
+    input logic [6:0]  DC_out_f7,
+    
+    // IS stage signals
+    input logic [2:0]  ROB_tail,
+    input logic        IS_valid,
+    input logic        IS_ready,
+    input logic [15:0] IS_out_pc,
+    input logic [31:0] IS_out_inst,
+    input logic [2:0]  IS_out_rob_idx,
+    
+    // EXE stage signals
+    input logic [4:0]  EXE_ready,
+    
+    // WB stage signals
+    input logic        WB_out_valid,
+    input logic [2:0]  WB_out_rob_idx,
+    
+    // Commit signals
+    input logic        commit,
+    input logic [2:0]  commit_rob_idx,
+    
+    // Flush signals
+    input logic        mispredict,
+    input logic [2:0]  mis_rob_idx,
+    input logic        recovery
+);
+
+    // File descriptor
+    integer fd;
+    
+    // Cycle counter
+    logic [63:0] cycle_count;
+    
+    // Instruction ID counter  
+    logic [31:0] insn_id;
+    logic [31:0] retire_id;
+    logic [15:0] IF_pc_r;
+
+    logic [2:0]  wb_rob_idx;
+    logic        wb_valid_r;
+
+    logic [2:0]  cm_rob_idx;
+    logic        cm_valid_r;
+    
+    // Instruction tracking structure
+    typedef struct packed {
+        logic        valid;
+        logic [31:0] id;           // Instruction ID in file
+        logic [15:0] pc;
+        logic [31:0] inst;
+        logic [2:0]  rob_idx;
+        
+        // Stage tracking
+        logic        if_started;
+        logic        dc_started;
+        logic        is_started;
+        logic        ex_started;
+        logic        wb_started;
+        logic        cm_started;
+        
+        logic        retired;
+        logic        flushed;
+    } insn_track_t;
+    
+    // ROB tracking array (8 entries)
+    insn_track_t insn_tracker [0:7];
+
+    logic [7:0] next_IS;
+    
+    // Helper function to decode opcode name
+    function string decode_opcode(input logic [4:0] op, input logic [2:0] f3, input logic [6:0] f7);
+        case (op)
+            5'b01100: begin // R-type
+                case ({f7[5], f3})
+                    4'b0000: return "add";
+                    4'b1000: return "sub";
+                    4'b0111: return "and";
+                    4'b0110: return "or";
+                    4'b0100: return "xor";
+                    4'b0001: return "sll";
+                    4'b0101: return "srl";
+                    4'b1101: return "sra";
+                    4'b0010: return "slt";
+                    4'b0011: return "sltu";
+                    default: return "r-type";
+                endcase
+            end
+            5'b00100: begin // I-type ALU
+                case (f3)
+                    3'b000: return "addi";
+                    3'b111: return "andi";
+                    3'b110: return "ori";
+                    3'b100: return "xori";
+                    3'b001: return "slli";
+                    3'b101: return (f7[5]) ? "srai" : "srli";
+                    3'b010: return "slti";
+                    3'b011: return "sltiu";
+                    default: return "i-type";
+                endcase
+            end
+            5'b00000: begin // Load
+                case (f3)
+                    3'b000: return "lb";
+                    3'b001: return "lh";
+                    3'b010: return "lw";
+                    3'b100: return "lbu";
+                    3'b101: return "lhu";
+                    default: return "load";
+                endcase
+            end
+            5'b01000: begin // Store
+                case (f3)
+                    3'b000: return "sb";
+                    3'b001: return "sh";
+                    3'b010: return "sw";
+                    default: return "store";
+                endcase
+            end
+            5'b11000: begin // Branch
+                case (f3)
+                    3'b000: return "beq";
+                    3'b001: return "bne";
+                    3'b100: return "blt";
+                    3'b101: return "bge";
+                    3'b110: return "bltu";
+                    3'b111: return "bgeu";
+                    default: return "branch";
+                endcase
+            end
+            5'b11011: return "jai";
+            5'b11001: return "jalr";
+            5'b01101: return "lui";
+            5'b00101: return "auipc";
+            default:  return "unknown";
+        endcase
+    endfunction
+    
+    // Initialize
+    initial begin
+        fd = $fopen("kanata.log", "w");
+        if (fd == 0) begin
+            $display("[Konata] Error: Cannot open kanata.log file");
+            $finish;
+        end
+        
+        // Write Kanata header (version 4)
+        $fwrite(fd, "Kanata\t0004\n");
+        
+        // Write initial cycle marker
+        $fwrite(fd, "C=\t0\n");
+        $fflush(fd);
+        
+        // Initialize tracker
+        
+        $display("[Konata] Log initialized");
+    end
+    
+    // Cycle counter
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            cycle_count <= 64'd0;
+        end else begin
+            cycle_count <= cycle_count + 64'd1;
+        end
+    end
+    
+    // Main logging logic
+    always_ff @(posedge clk) begin
+        if(rst) begin 
+            insn_id     <= 0;
+            retire_id   <= 0;
+            IF_pc_r     <= 16'hFFFF;
+            next_IS     <= 8'b0;
+            for (int i = 0; i < 8; i++) begin
+                insn_tracker[i] <= 'b0;
+            end
+        end
+        else begin
+            // Output cycle progression (C command)
+            $fwrite(fd, "C\t1\n");
+            
+            if(mispredict) begin
+                for(int i = 0; i < 8; i++) begin
+                    if (insn_tracker[i].valid && 
+                        insn_tracker[i].pc > IS_out_pc) begin
+
+                        insn_tracker[i].retired <= 1'b1;
+                        insn_tracker[i].flushed <= 1'b1;
+                    end
+                end
+            end
+
+
+            // ========================================
+            // Retired 
+            // ========================================
+
+            for (int i = 0; i < 8; i++) begin
+                if (insn_tracker[i].retired) begin
+                    // R command: 
+                    $fwrite(fd, "R\t%0d\t0\t%d\n", insn_tracker[i].id, insn_tracker[i].flushed);
+
+                    insn_tracker[i] <= 'b0;
+                    retire_id++;
+                end
+            end
+
+            // ========================================
+            // Stage 6: CM (Commit)
+            // ========================================
+            if (cm_valid_r) begin
+                for (int i = 0; i < 8; i++) begin
+                    if (insn_tracker[i].valid && 
+                        insn_tracker[i].rob_idx == cm_rob_idx &&
+                        (insn_tracker[i].wb_started || insn_tracker[i].inst[6:2] == `B_TYPE) &&
+                        !insn_tracker[i].cm_started &&
+                        !insn_tracker[i].retired &&
+                        !insn_tracker[i].flushed) begin
+                        
+                        // S command: Start CM stage
+                        $fwrite(fd, "S\t%0d\t0\tCM\n", insn_tracker[i].id);
+                        insn_tracker[i].cm_started <= 1'b1;
+                        
+                        insn_tracker[i].retired <= 1'b1;
+                        insn_tracker[i].valid <= 1'b0;
+                        retire_id++;
+                        break;
+                    end
+                end
+            end
+
+            // ========================================
+            // Stage 5: WB (Writeback)
+            // ========================================
+            if (wb_valid_r) begin
+                for (int i = 0; i < 8; i++) begin
+                    if (insn_tracker[i].valid && 
+                        insn_tracker[i].rob_idx == wb_rob_idx &&
+                        insn_tracker[i].ex_started &&
+                        !insn_tracker[i].wb_started) begin
+                        
+                        // S command: Start WB stage
+                        $fwrite(fd, "S\t%0d\t0\tWB\n", insn_tracker[i].id);
+                        insn_tracker[i].wb_started <= 1'b1;
+                        break;
+                    end
+                end
+            end
+
+            // ========================================
+            // Stage 4: EX (Execute)
+            // ========================================
+            if (IS_valid) begin
+                for (int i = 0; i < 8; i++) begin
+                    if (insn_tracker[i].valid && 
+                        insn_tracker[i].is_started && 
+                        !insn_tracker[i].ex_started &&
+                        insn_tracker[i].pc == IS_out_pc) begin
+                        
+                        // S command: Start EX stage (use X for dependency arrows)
+                        $fwrite(fd, "S\t%0d\t0\tEX\n", insn_tracker[i].id);
+                        insn_tracker[i].ex_started <= 1'b1;
+                        break;
+                    end
+                end
+            end
+
+            // ========================================
+            // Stage 3: IS (Issue)
+            // ========================================
+            for (int i = 0; i < 8; i++) begin
+                if (next_IS[i] && !insn_tracker[i].is_started) begin
+                    // S command: Start IS stage
+                    $fwrite(fd, "S\t%0d\t0\tIS\n", insn_tracker[i].id);
+                    insn_tracker[i].is_started <= 1'b1;
+                    break;
+                end
+            end
+
+            // ========================================
+            // Stage 2: DC (Decode)
+            // ========================================
+            if (IF_valid && DC_ready) begin
+                for (int i = 0; i < 8; i++) begin
+                    if (insn_tracker[i].valid && 
+                        insn_tracker[i].if_started && 
+                        !insn_tracker[i].dc_started &&
+                        insn_tracker[i].pc == IF_out_pc) begin
+                                                
+                        insn_tracker[i].inst = IF_out_inst;
+
+                        // Decode the instruction and write (example: li x0,0 /addi	sp,sp,-4)
+
+                        begin
+                            logic [6:0] opcode;
+                            logic [4:0] rd, rs1, rs2;
+                            logic [2:0] funct3;
+                            logic [6:0] funct7;
+                            logic [31:0] imm;
+                            string opname;
+                            
+                            // Extract instruction fields
+                            opcode = IF_out_inst[6:0];
+                            rd     = IF_out_inst[11:7];
+                            funct3 = IF_out_inst[14:12];
+                            rs1    = IF_out_inst[19:15];
+                            rs2    = IF_out_inst[24:20];
+                            funct7 = IF_out_inst[31:25];
+                            
+                            // Decode opcode name
+                            opname = decode_opcode(opcode[6:2], funct3, funct7);
+                            
+                            // Format instruction string based on type
+                            $fwrite(fd, "L\t%0d\t0\t%-3h: %08h ", insn_tracker[i].id, IF_out_pc, IF_out_inst);
+                            case (opcode[6:2])
+                                5'b01100: begin // R-type
+                                    $fwrite(fd, "%-5s x%0d,x%0d,x%0d\n", opname, rd, rs1, rs2);
+                                end
+                                5'b00100: begin // I-type ALU
+                                    imm = {{20{IF_out_inst[31]}}, IF_out_inst[31:20]};
+                                    $fwrite(fd, "%-5s x%0d,x%0d,%0d\n", opname, rd, rs1, $signed(imm));
+                                end
+                                5'b00000: begin // Load
+                                    imm = {{20{IF_out_inst[31]}}, IF_out_inst[31:20]};
+                                    $fwrite(fd, "%-5s x%0d,%0d(x%0d)\n", opname, rd, $signed(imm), rs1);
+                                end
+                                5'b01000: begin // Store
+                                    imm = {{20{IF_out_inst[31]}}, IF_out_inst[31:25], IF_out_inst[11:7]};
+                                    $fwrite(fd, "%-5s x%0d,%0d(x%0d)\n", opname, rs2, $signed(imm), rs1);
+                                end
+                                5'b11000: begin // Branch
+                                    imm = {{19{IF_out_inst[31]}}, IF_out_inst[31], IF_out_inst[7], 
+                                           IF_out_inst[30:25], IF_out_inst[11:8], 1'b0};
+                                    $fwrite(fd, "%-5s x%0d,x%0d,%0h\n", opname, rs1, rs2, $signed(imm + IF_out_pc));
+                                end
+                                5'b11011: begin // JAL
+                                    imm = {{12{IF_out_inst[31]}}, IF_out_inst[19:12], IF_out_inst[20], IF_out_inst[30:21], 1'b0};
+                                    $fwrite(fd, "%-5s %0h\n", opname, $signed(imm + IF_out_pc));
+                                end
+                                5'b11001: begin // JALR
+                                    imm = {{20{IF_out_inst[31]}}, IF_out_inst[31:20]};
+                                    $fwrite(fd, "%-5s x%0d,%0d(x%0d)\n", opname, rd, $signed(imm), rs1);
+                                end
+                                5'b01101: begin // LUI
+                                    $fwrite(fd, "%-5s x%0d,0x%0h\n", opname, rd, IF_out_inst[31:12]);
+                                end
+                                5'b00101: begin // AUIPC
+                                    $fwrite(fd, "%-5s x%0d,0x%0h\n", opname, rd, IF_out_inst[31:12]);
+                                end
+                                default: begin
+                                    $fwrite(fd, "%-5s ", insn_tracker[i].id, opname);
+                                end
+                            endcase
+                        end
+                        
+                        // S command: Start DC stage
+                        $fwrite(fd, "S\t%0d\t0\tDC\n", insn_tracker[i].id);
+                        insn_tracker[i].dc_started <= 1'b1;
+
+                        next_IS = 1 << i;
+                        insn_tracker[i].rob_idx <= ROB_tail;
+                        
+                        // L command: Add ROB allocation info
+                        $fwrite(fd, "L\t%0d\t1\tROB[%0d]\n", 
+                                insn_tracker[i].id, ROB_tail);
+
+                        break;
+                    end
+                end
+            end
+            else begin
+                next_IS = 0;
+            end
+
+            // ========================================
+            // Stage 1: IF (Fetch)
+            // ========================================
+            // Find free slot in tracker
+            if(IM_r_addr != IF_pc_r) begin
+                for (int i = 0; i < 8; i++) begin
+                    if (insn_tracker[i].valid == 0) begin
+                        // I command: Start new instruction
+                        $fwrite(fd, "I\t%0d\t%0d\t0\n", insn_id, insn_id);
+                        
+                        // S command: Start IF stage
+                        $fwrite(fd, "S\t%0d\t0\tIF\n", insn_id);
+                        
+                        // Initialize tracker entry
+                        insn_tracker[i].valid       <= 1'b1;
+                        insn_tracker[i].id          <= insn_id;
+                        insn_tracker[i].pc          <= IM_r_addr;
+                        insn_tracker[i].if_started  <= 1'b1;
+                        
+                        insn_id++;
+                        break;
+                    end
+                end
+            end
+            IF_pc_r     <= IM_r_addr;
+            wb_rob_idx  <= WB_out_rob_idx;
+            wb_valid_r  <= WB_out_valid;
+            cm_rob_idx  <= commit_rob_idx;
+            cm_valid_r  <= commit;
+
+            $fflush(fd);
+        end
+    end
+    
+    // Close file on finish
+    final begin
+        if (fd != 0) begin
+            $fclose(fd);
+            $display("[Konata] Log closed. Cycles: %0d, Instructions: %0d, Retired: %0d", 
+                     cycle_count, insn_id, retire_id);
+        end
+    end
+
+endmodule

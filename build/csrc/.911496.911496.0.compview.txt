@@ -1,0 +1,9 @@
+{"vcs1":{"timestamp_begin":1760149217.748847340, "rt":1.48, "ut":0.97, "st":0.19}}
+{"vcselab":{"timestamp_begin":1760149219.477523175, "rt":0.82, "ut":0.46, "st":0.12}}
+{"link":{"timestamp_begin":1760149220.490705572, "rt":0.53, "ut":0.27, "st":0.21}}
+{"SNPS_VCS_INTERNAL_ROOT_START_TIME": 1760149216.129114763}
+{"VCS_COMP_START_TIME": 1760149216.129114763}
+{"VCS_COMP_END_TIME": 1760149223.053518563}
+{"VCS_USER_OPTIONS": "-R -sverilog /homes/nfs/HsuHsiang/AVSD/OoO/./sim/top_tb.sv -debug_access+all -full64 +incdir+/homes/nfs/HsuHsiang/AVSD/OoO/./src+/homes/nfs/HsuHsiang/AVSD/OoO/./src/AXI+/homes/nfs/HsuHsiang/AVSD/OoO/./include+/homes/nfs/HsuHsiang/AVSD/OoO/./sim +define+prog0 +prog_path=/homes/nfs/HsuHsiang/AVSD/OoO/./sim/prog0 +rdcycle=1 +notimingcheck"}
+{"vcs1": {"peak_mem": 284800}}
+{"vcselab": {"peak_mem": 159564}}
