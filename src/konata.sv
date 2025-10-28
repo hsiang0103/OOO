@@ -79,27 +79,32 @@ module konata(
         logic        retired;
         logic        flushed;
     } insn_track_t;
-    
-    // ROB tracking array (8 entries)
-    insn_track_t insn_tracker [0:7];
 
-    logic [7:0] next_IS;
+    // ROB tracking array (16 entries)
+    insn_track_t insn_tracker [0:15];
+
+    logic [15:0] next_IS;
     
     // Helper function to decode opcode name
     function string decode_opcode(input logic [4:0] op, input logic [2:0] f3, input logic [6:0] f7);
         case (op)
             5'b01100: begin // R-type
-                case ({f7[5], f3})
-                    4'b0000: return "add";
-                    4'b1000: return "sub";
-                    4'b0111: return "and";
-                    4'b0110: return "or";
-                    4'b0100: return "xor";
-                    4'b0001: return "sll";
-                    4'b0101: return "srl";
-                    4'b1101: return "sra";
-                    4'b0010: return "slt";
-                    4'b0011: return "sltu";
+                case ({f7[5], f7[0], f3})
+                    5'b00000: return "add";
+                    5'b10000: return "sub";
+                    5'b00111: return "and";
+                    5'b00110: return "or";
+                    5'b00100: return "xor";
+                    5'b00001: return "sll";
+                    5'b00101: return "srl";
+                    5'b10101: return "sra";
+                    5'b00010: return "slt";
+                    5'b00011: return "sltu";
+                    5'b01000: return "mul";
+                    5'b01001: return "mulh";
+                    5'b01010: return "mulhsu";
+                    5'b01011: return "mulhu";
+
                     default: return "r-type";
                 endcase
             end
@@ -145,7 +150,7 @@ module konata(
                     default: return "branch";
                 endcase
             end
-            5'b11011: return "jai";
+            5'b11011: return "jal";
             5'b11001: return "jalr";
             5'b01101: return "lui";
             5'b00101: return "auipc";
@@ -188,8 +193,8 @@ module konata(
             insn_id     <= 0;
             retire_id   <= 0;
             IF_pc_r     <= 16'hFFFF;
-            next_IS     <= 8'b0;
-            for (int i = 0; i < 8; i++) begin
+            next_IS     <= 16'b0;
+            for (int i = 0; i < 16; i++) begin
                 insn_tracker[i] <= 'b0;
             end
         end
@@ -198,7 +203,7 @@ module konata(
             $fwrite(fd, "C\t1\n");
             
             if(mispredict) begin
-                for(int i = 0; i < 8; i++) begin
+                for(int i = 0; i < 16; i++) begin
                     if (insn_tracker[i].valid && 
                         insn_tracker[i].pc > IS_out_pc) begin
 
@@ -213,7 +218,7 @@ module konata(
             // Retired 
             // ========================================
 
-            for (int i = 0; i < 8; i++) begin
+            for (int i = 0; i < 16; i++) begin
                 if (insn_tracker[i].retired) begin
                     // R command: 
                     $fwrite(fd, "R\t%0d\t0\t%d\n", insn_tracker[i].id, insn_tracker[i].flushed);
@@ -227,7 +232,7 @@ module konata(
             // Stage 6: CM (Commit)
             // ========================================
             if (cm_valid_r) begin
-                for (int i = 0; i < 8; i++) begin
+                for (int i = 0; i < 16; i++) begin
                     if (insn_tracker[i].valid && 
                         insn_tracker[i].rob_idx == cm_rob_idx &&
                         (insn_tracker[i].wb_started || insn_tracker[i].inst[6:2] == `B_TYPE) &&
@@ -251,7 +256,7 @@ module konata(
             // Stage 5: WB (Writeback)
             // ========================================
             if (wb_valid_r) begin
-                for (int i = 0; i < 8; i++) begin
+                for (int i = 0; i < 16; i++) begin
                     if (insn_tracker[i].valid && 
                         insn_tracker[i].rob_idx == wb_rob_idx &&
                         insn_tracker[i].ex_started &&
@@ -269,7 +274,7 @@ module konata(
             // Stage 4: EX (Execute)
             // ========================================
             if (IS_valid) begin
-                for (int i = 0; i < 8; i++) begin
+                for (int i = 0; i < 16; i++) begin
                     if (insn_tracker[i].valid && 
                         insn_tracker[i].is_started && 
                         !insn_tracker[i].ex_started &&
@@ -286,7 +291,7 @@ module konata(
             // ========================================
             // Stage 3: IS (Issue)
             // ========================================
-            for (int i = 0; i < 8; i++) begin
+            for (int i = 0; i < 16; i++) begin
                 if (next_IS[i] && !insn_tracker[i].is_started) begin
                     // S command: Start IS stage
                     $fwrite(fd, "S\t%0d\t0\tIS\n", insn_tracker[i].id);
@@ -299,7 +304,7 @@ module konata(
             // Stage 2: DC (Decode)
             // ========================================
             if (IF_valid && DC_ready) begin
-                for (int i = 0; i < 8; i++) begin
+                for (int i = 0; i < 16; i++) begin
                     if (insn_tracker[i].valid && 
                         insn_tracker[i].if_started && 
                         !insn_tracker[i].dc_started &&
@@ -395,7 +400,7 @@ module konata(
             // ========================================
             // Find free slot in tracker
             if(IM_r_addr != IF_pc_r) begin
-                for (int i = 0; i < 8; i++) begin
+                for (int i = 0; i < 16; i++) begin
                     if (insn_tracker[i].valid == 0) begin
                         // I command: Start new instruction
                         $fwrite(fd, "I\t%0d\t%0d\t0\n", insn_id, insn_id);
