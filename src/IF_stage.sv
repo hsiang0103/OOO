@@ -1,32 +1,27 @@
 module IF_stage(
-        input logic         clk,
-        input logic         rst,
-
+        input   logic           clk,
+        input   logic           rst,
         // From IM
-        input logic [31:0]  IM_r_data,
-
+        input   logic [31:0]    IM_r_data,
         // From IS stage
-        input logic         mispredict,
-
+        input   logic           mispredict,
+        input   logic           stall,
         // From EXE stage
-        input logic [15:0]  jb_pc,
-
+        input   logic [31:0]    jb_pc,
         // To IM
-        output logic [15:0] IM_r_addr,
-        output logic        IM_ready,
-
-        // To DC stage
-        output logic [15:0] IF_out_pc,
-        output logic [31:0] IF_out_inst,
-
-        // Handshake signals
-        // IF --- DC
-        output logic        IF_valid,
-        input  logic        DC_ready
+        output  logic [31:0]    IM_r_addr,
+        output  logic           IM_ready,
+        // To DC stage  
+        output  logic [31:0]    IF_out_pc,
+        output  logic [31:0]    IF_out_inst,
+        // Handshake signals    
+        // IF --- DC    
+        output  logic           IF_valid,
+        input   logic           DC_ready
     );
 
-    logic [15:0] next_pc;
-    logic [15:0] IF_DC_pc;
+    logic [31:0] next_pc;
+    logic [31:0] IF_DC_pc;
 
     assign IM_r_addr = mispredict ? jb_pc : next_pc;
 

@@ -18,18 +18,8 @@
 //////////////////////////////////////////////////////////////////////
 `include "../include/define.svh"
 `include "SRAM_wrapper.sv"
-`include "IF_stage.sv"
-`include "DC_stage.sv"
-`include "IS_stage.sv"
-`include "EXE_stage.sv"
-`include "RegFile.sv"
-`include "LSU.sv"
-`include "ALU.sv"
-`include "FPU.sv"
-`include "MDR.sv"
-`include "CSR.sv"
 `include "CPU.sv"
-`include "konata.sv" 
+
 module top(
     input clk,
     input rst
@@ -66,7 +56,7 @@ SRAM_wrapper IM1(
     .CLK(clk),
     .RST(rst),
     .CEB(1'b0),
-    .WEB(IM_ready), 
+    .WEB(1'b1), 
     .BWEB(32'hFFFFFFFF),
     .A(IM_r_addr[15:2]),
     .DI(32'b0), 

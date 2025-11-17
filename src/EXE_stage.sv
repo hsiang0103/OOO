@@ -1,61 +1,72 @@
 module EXE_stage(
-    input logic clk,
-    input logic rst,
-
-    // From IS stage
-    input logic [2:0]   EXE_in_fu_sel,
-    input logic [31:0]  EXE_in_inst,
-    input logic [31:0]  EXE_in_rs1_data,
-    input logic [31:0]  EXE_in_rs2_data,
-    input logic [31:0]  EXE_in_imm,
-    input logic [15:0]  EXE_in_pc,
-    input logic [5:0]   EXE_in_rd,   
-    input logic [4:0]   EXE_in_op,    
-    input logic [2:0]   EXE_in_f3,
-    input logic [6:0]   EXE_in_f7,
-    input logic [2:0]   EXE_in_rob_idx,
-
-    // From LSU 
-    input logic [31:0]  lsu_ld_data,
-    input logic         lsu_o_valid,
-    input logic [2:0]   lsu_rob_idx,
-
-
-    // TO IF stage
-    output logic [15:0] EXE_out_jb_pc,  
-    output logic        mispredict,  
-    output logic [2:0]  mis_rob_idx,
-
-    // To LSU
-    output logic        lsu_o_ready,
-
-    // To WB stage
-    output logic [31:0] WB_out_data,
-    output logic [2:0]  WB_out_rob_idx, 
-    output logic        WB_out_valid,
-
+    input   logic           clk,
+    input   logic           rst,
+    // RR stage
+    input   logic [2:0]     EXE_in_fu_sel,
+    input   logic [31:0]    EXE_in_inst,
+    input   logic [31:0]    EXE_in_rs1_data,
+    input   logic [31:0]    EXE_in_rs2_data,
+    input   logic [31:0]    EXE_in_imm,
+    input   logic [31:0]    EXE_in_pc,
+    input   logic [6:0]     EXE_in_rd,   
+    input   logic [4:0]     EXE_in_op,    
+    input   logic [2:0]     EXE_in_f3,
+    input   logic [6:0]     EXE_in_f7,
+    input   logic [2:0]     EXE_in_rob_idx,
+    // LSU 
+    output  logic           ld_i_valid,
+    output  logic           st_i_valid,
+    output  logic [2:0]     lsu_i_rob_idx,
+    output  logic [31:0]    lsu_i_rs1_data,
+    output  logic [31:0]    lsu_i_rs2_data,
+    output  logic [31:0]    lsu_i_imm,
+    input   logic           ld_o_valid,
+    input   logic [2:0]     ld_o_rob_idx,
+    input   logic [6:0]     ld_o_rd,
+    input   logic [31:0]    ld_o_data,
+    // mispredict
+    output  logic [31:0]    jb_pc,  
+    output  logic           mispredict,  
+    output  logic [2:0]     mis_rob_idx,
+    // write back
+    output  logic [31:0]    WB_out_data,
+    output  logic [2:0]     WB_out_rob_idx, 
+    output  logic           WB_out_valid,
+    output  logic [6:0]     WB_out_rd,
     // Handshake signals
-    // IS --- EXE
-    input  logic        IS_valid,
-    output logic [4:0]  EXE_ready
+    input  logic            RR_valid,
+    output logic [7:0]      EX_ready
 );  
 
-    typedef struct {
+    typedef struct packed{
         logic [31:0] data;
         logic [2:0]  rob_idx;
-    } fu_out;
+        logic [6:0]  rd;
+    } data_t;
 
-    logic [3:0]  out_sel;
+    logic [7:0] out_sel; 
+    logic [7:0] o_valid;    
+    data_t      o_data [7:0];
 
-    // =========== ALU ===========
-    fu_out alu_out, alu_skid, alu_wb;
+    // fu selection
+    // 0: alu/csr  
+    // 1: mul      
+    // 2: div/rem  
+    // 3: falu     
+    // 4: fmul     
+    // 5: fdiv     
+    // 6: load     
+    // 7: store    
+
+    // =======================================================
+    //                         ALU/[0]           
+    // =======================================================
+    data_t alu_o_data;
+    data_t alu_data_rg;
     logic alu_o_valid;
-    logic alu_o_ready;
-    logic alu_wb_valid;
-    logic alu_start;
     logic alu_bypass;
 
-    ALU ALU1(
+    ALU alu(
         .opcode         (EXE_in_op),
         .funct3         (EXE_in_f3),
         .funct7         (EXE_in_f7[5]),
@@ -63,261 +74,261 @@ module EXE_stage(
         .rs2_data       (EXE_in_rs2_data),
         .imm            (EXE_in_imm),
         .pc             (EXE_in_pc),
-        .alu_start      (alu_start),
-        .EXE_rob_idx    (EXE_in_rob_idx),
-        .alu_out        (alu_out.data),
-        .alu_rob_idx    (alu_out.rob_idx),
-        .alu_jb_out     (EXE_out_jb_pc),
+
+        // control
+        .alu_i_valid    (RR_valid && EXE_in_fu_sel == 3'd0),
+        .alu_i_rob_idx  (EXE_in_rob_idx),
+        .alu_i_rd       (EXE_in_rd),
         .alu_o_valid    (alu_o_valid),
+        .alu_o_rob_idx  (alu_o_data.rob_idx),
+        .alu_o_rd       (alu_o_data.rd),
+        .alu_o_data     (alu_o_data.data),
+
+        // jump
+        .alu_jb_out     (jb_pc),
         .mispredict     (mispredict)
     );
+    assign mis_rob_idx  = EXE_in_rob_idx;
 
-    // Skid buffer for ALU output
-    always_ff @(posedge clk) begin
-        if(rst) begin
-            alu_skid.data       <= 32'b0;
-            alu_skid.rob_idx    <= 3'b0;
+    always @(posedge clk) begin
+           if (rst) begin      
+            alu_data_rg         <= '0;     
             alu_bypass          <= 1'b1;
-        end
-        else begin
-            if(alu_bypass) begin
-                if(!out_sel[0] && alu_o_valid) begin
-                    alu_skid.data       <= alu_out.data;
-                    alu_skid.rob_idx    <= alu_out.rob_idx;
-                    alu_bypass          <= 1'b0;
-                end
-            end
-            else begin
-                alu_skid.data       <= alu_skid.data;
-                alu_skid.rob_idx    <= alu_skid.rob_idx;
-                alu_bypass          <= out_sel[0];
+        end   
+        else begin      
+            if (alu_bypass) begin         
+                if (!out_sel[0] && alu_o_valid) begin
+                    alu_data_rg     <= alu_o_data;      
+                    alu_bypass      <= 1'b0;      
+                end 
+            end 
+            else begin         
+                alu_bypass  <= out_sel[0];        
             end
         end
-    end       
-
-    always_comb begin
-        if(alu_bypass) begin
-            alu_wb.data     = alu_out.data;
-            alu_wb.rob_idx  = alu_out.rob_idx;
-        end
-        else begin
-            alu_wb.data     = alu_skid.data;
-            alu_wb.rob_idx  = alu_skid.rob_idx;
-        end
-    
-        alu_start    = (EXE_in_fu_sel == 3'b000) && IS_valid  && alu_o_ready; // ALU start signal
-        alu_wb_valid = alu_bypass ? alu_o_valid : 1'b1;
-        alu_o_ready  = alu_bypass;
-        mis_rob_idx  = alu_out.rob_idx;
     end
 
-    // =========== MDR ===========
-    fu_out mdr_out, mdr_skid, mdr_wb;
-    logic mdr_o_valid;
-    logic mdr_o_ready;
-    logic mdr_wb_valid;
-    logic mdr_start;
-    logic mdr_bypass;
+    assign EX_ready[0]  = alu_bypass;
+    assign o_data[0]    = alu_bypass ? alu_o_data : alu_data_rg;
+    assign o_valid[0]   = alu_bypass ? alu_o_valid : 1'b1;
+    // =======================================================
+    //                         MUL/[1]           
+    // =======================================================
+    data_t mul_o_data;
+    data_t mul_data_rg;
+    logic mul_o_valid;
+    logic mul_bypass;
+    logic mul_idle;
 
-    MDR mdr1(
+    MUL mul(
         .clk            (clk),
         .rst            (rst),
         .funct3         (EXE_in_f3),
         .rs1_data       (EXE_in_rs1_data),
         .rs2_data       (EXE_in_rs2_data),
-        .mdr_start      (mdr_start),
-        .EXE_rob_idx    (EXE_in_rob_idx),
-        .mdr_out        (mdr_out.data),
-        .mdr_rob_idx    (mdr_out.rob_idx),
-        .mdr_o_valid    (mdr_o_valid)
+
+        // control
+        .mul_i_valid    (RR_valid && EXE_in_fu_sel == 3'd1),
+        .mul_i_rob_idx  (EXE_in_rob_idx),
+        .mul_i_rd       (EXE_in_rd),
+        .mul_o_valid    (mul_o_valid),
+        .mul_o_rob_idx  (mul_o_data.rob_idx),
+        .mul_o_rd       (mul_o_data.rd),
+        .mul_o_data     (mul_o_data.data),
+        .mul_idle       (mul_idle)
     );
 
-    // Skid buffer for mdr output
-    always_ff @(posedge clk) begin
-        if(rst) begin
-            mdr_skid.data       <= 32'b0;
-            mdr_skid.rob_idx    <= 3'b0;
-            mdr_bypass          <= 1'b1;
-        end
-        else begin
-            if(mdr_bypass) begin
-                if(!out_sel[1] && mdr_o_valid) begin
-                    mdr_skid.data       <= mdr_out.data;
-                    mdr_skid.rob_idx    <= mdr_out.rob_idx;
-                    mdr_bypass          <= 1'b0;
-                end
-            end
-            else begin
-                mdr_skid.data       <= mdr_skid.data;
-                mdr_skid.rob_idx    <= mdr_skid.rob_idx;
-                mdr_bypass          <= out_sel[1];
+    always @(posedge clk) begin
+           if (rst) begin      
+            mul_data_rg         <= '0;     
+            mul_bypass          <= 1'b1;
+        end   
+        else begin      
+            if (mul_bypass) begin         
+                if (!out_sel[1] && mul_o_valid) begin
+                    mul_data_rg     <= mul_o_data;      
+                    mul_bypass      <= 1'b0;      
+                end 
+            end 
+            else begin         
+                mul_bypass  <= out_sel[1];        
             end
         end
-    end       
-
-    always_comb begin
-        if(mdr_bypass) begin
-            mdr_wb.data     = mdr_out.data;
-            mdr_wb.rob_idx  = mdr_out.rob_idx;
-        end
-        else begin
-            mdr_wb.data     = mdr_skid.data;
-            mdr_wb.rob_idx  = mdr_skid.rob_idx;
-        end
-
-        mdr_start    = (EXE_in_fu_sel == 3'b001) && IS_valid  && mdr_o_ready; // mdr start signal
-        mdr_wb_valid = mdr_bypass ? mdr_o_valid : 1'b1;
-        mdr_o_ready  = mdr_bypass;
     end
 
-    // =========== LSU ===========
-    fu_out lsu_skid, lsu_wb;
-    logic lsu_wb_valid;
-    logic lsu_bypass;
+    assign EX_ready[1]  = mul_bypass && mul_idle;
+    assign o_data[1]    = mul_bypass ? mul_o_data : mul_data_rg;
+    assign o_valid[1]   = mul_bypass ? mul_o_valid : 1'b1;
+    // =======================================================
+    //                       DIV/REM/[2]           
+    // =======================================================
+    assign EX_ready[2]  = 1'b0;
+    // TODO: DIV/REM implementation
 
-    // Skid buffer for lsu output
-    always_ff @(posedge clk) begin
-        if(rst) begin
-            lsu_skid.data       <= 32'b0;
-            lsu_skid.rob_idx    <= 3'b0;
-            lsu_bypass          <= 1'b1;
-        end
-        else begin
-            if(lsu_bypass) begin
-                if(!out_sel[2] && lsu_o_valid) begin
-                    lsu_skid.data       <= lsu_ld_data;
-                    lsu_skid.rob_idx    <= lsu_rob_idx;
-                    lsu_bypass          <= 1'b0;
-                end
-            end
-            else begin
-                lsu_skid.data       <= lsu_skid.data;
-                lsu_skid.rob_idx    <= lsu_skid.rob_idx;
-                lsu_bypass          <= out_sel[2];
-            end
-        end
-    end       
+    // =======================================================
+    //                        FALU/[3]           
+    // =======================================================
+    data_t falu_o_data;
+    data_t falu_data_rg;
+    logic falu_o_valid;
+    logic falu_bypass;
+    logic falu_idle;
 
-    always_comb begin
-        if(lsu_bypass) begin
-            lsu_wb.data     = lsu_ld_data;
-            lsu_wb.rob_idx  = lsu_rob_idx;
-        end
-        else begin
-            lsu_wb.data     = lsu_skid.data;
-            lsu_wb.rob_idx  = lsu_skid.rob_idx;
-        end
-
-        lsu_wb_valid = lsu_bypass ? lsu_o_valid : 1'b1;
-        lsu_o_ready  = lsu_bypass;
-    end
-
-    // =========== FPU ===========
-    fu_out fpu_out, fpu_skid, fpu_wb;
-    logic fpu_o_valid;
-    logic fpu_o_ready;
-    logic fpu_wb_valid;
-    logic fpu_start;
-    logic fpu_bypass;
-
-    FPU fpu1(
+    FALU falu(
         .clk            (clk),
         .rst            (rst),
         .funct5         (EXE_in_f7[6:2]),
         .operand1       (EXE_in_rs1_data),
         .operand2       (EXE_in_rs2_data),
-        .fpu_start      (fpu_start),
-        .EXE_rob_idx    (EXE_in_rob_idx),
-        .fpu_out        (fpu_out.data),
-        .fpu_rob_idx    (fpu_out.rob_idx),
-        .fpu_o_valid    (fpu_o_valid)
+
+        // control
+        .falu_i_valid    (RR_valid && EXE_in_fu_sel == 3'd3),
+        .falu_i_rob_idx  (EXE_in_rob_idx),
+        .falu_i_rd       (EXE_in_rd),
+        .falu_o_valid    (falu_o_valid),
+        .falu_o_rob_idx  (falu_o_data.rob_idx),
+        .falu_o_rd       (falu_o_data.rd),
+        .falu_o_data     (falu_o_data.data)
     );
 
-    // Skid buffer for fpu output
-    always_ff @(posedge clk) begin
-        if(rst) begin
-            fpu_skid.data       <= 32'b0;
-            fpu_skid.rob_idx    <= 3'b0;
-            fpu_bypass          <= 1'b1;
+    always @(posedge clk) begin
+           if (rst) begin      
+            falu_data_rg         <= '0;     
+            falu_bypass          <= 1'b1;
+        end   
+        else begin      
+            if (falu_bypass) begin         
+                if (!out_sel[3] && falu_o_valid) begin
+                    falu_data_rg     <= falu_o_data;      
+                    falu_bypass      <= 1'b0;      
+                end 
+            end 
+            else begin         
+                falu_bypass  <= out_sel[3];        
+            end
         end
-        else begin
-            if(fpu_bypass) begin
-                if(!out_sel[3] && fpu_o_valid) begin
-                    fpu_skid.data       <= fpu_out.data;
-                    fpu_skid.rob_idx    <= fpu_out.rob_idx;
-                    fpu_bypass          <= 1'b0;
+    end
+
+    assign EX_ready[3]  = falu_bypass;
+    assign o_data[3]    = falu_bypass ? falu_o_data : falu_data_rg;
+    assign o_valid[3]   = falu_bypass ? falu_o_valid : 1'b1;
+    // =======================================================
+    //                        FMUL[4]           
+    // =======================================================
+    assign EX_ready[4]  = 1'b0;
+    // TODO: FMUL implementation
+
+    // =======================================================
+    //                        FDIV[5]           
+    // =======================================================
+    assign EX_ready[5]  = 1'b0;
+    // TODO: FDIV implementation
+
+    // =======================================================
+    //                   LOAD/STORE[6]/[7]           
+    // =======================================================
+    data_t lsu_o_data;
+    data_t lsu_data_rg;
+    logic lsu_o_valid;
+    logic lsu_bypass;
+
+    assign ld_i_valid           = RR_valid && (EXE_in_fu_sel == 3'd6);
+    assign st_i_valid           = RR_valid && (EXE_in_fu_sel == 3'd7);
+    assign lsu_i_rob_idx        = EXE_in_rob_idx;
+    assign lsu_i_rs1_data       = EXE_in_rs1_data;
+    assign lsu_i_rs2_data       = EXE_in_rs2_data;
+    assign lsu_i_imm            = EXE_in_imm;
+
+    assign lsu_o_data.data      = ld_o_data;
+    assign lsu_o_data.rob_idx   = ld_o_rob_idx;
+    assign lsu_o_data.rd        = ld_o_rd;
+    assign lsu_o_valid          = ld_o_valid;
+
+    always @(posedge clk) begin
+        if (rst) begin      
+            lsu_data_rg         <= '0;     
+            lsu_bypass          <= 1'b1;
+        end   
+        else begin      
+            if (lsu_bypass) begin         
+                if (!out_sel[6] && lsu_o_valid) begin
+                    lsu_data_rg     <= lsu_o_data;      
+                    lsu_bypass      <= 1'b0;      
                 end
-            end
-            else begin
-                fpu_skid.data       <= fpu_skid.data;
-                fpu_skid.rob_idx    <= fpu_skid.rob_idx;
-                fpu_bypass          <= out_sel[3];
+            end 
+            else begin         
+                lsu_bypass  <= out_sel[6];        
             end
         end
-    end       
-
-    always_comb begin
-        if(fpu_bypass) begin
-            fpu_wb.data     = fpu_out.data;
-            fpu_wb.rob_idx  = fpu_out.rob_idx;
-        end
-        else begin
-            fpu_wb.data     = fpu_skid.data;
-            fpu_wb.rob_idx  = fpu_skid.rob_idx;
-        end
-
-        fpu_start    = (EXE_in_fu_sel == 3'b011) && IS_valid  && fpu_o_ready; // fpu start signal
-        fpu_wb_valid = fpu_bypass ? fpu_o_valid : 1'b1;
-        fpu_o_ready  = fpu_bypass;
     end
 
-    // =========== WB MUX ===========
-    // FU selection
-    // 0: ALU
-    // 1: MDR 
-    // 2: Load 
-    // 3: Store 
-    // 4: FPU
+    assign EX_ready[6]  = lsu_bypass;
+    assign EX_ready[7]  = 1'b1; // store always ready
+    assign o_data[6]    = lsu_bypass ? lsu_o_data : lsu_data_rg;
+    assign o_valid[6]   = lsu_bypass ? lsu_o_valid : 1'b1;
+    // =======================================================
+    //                      OUTPUT MUX           
+    // =======================================================
+    logic [31:0]    EX_o_data;
+    logic           EX_o_valid;
+    logic [2:0]     EX_o_rob_idx;
+    logic [6:0]     EX_o_rd;
 
     always_comb begin
-        case(1'b1) 
-            mdr_wb_valid: out_sel = 4'b0010;
-            lsu_wb_valid: out_sel = 4'b0100;
-            fpu_wb_valid: out_sel = 4'b1000;
-            alu_wb_valid: out_sel = 4'b0001;
-            default:      out_sel = 4'b0000;
-        endcase 
-
-        EXE_ready = {fpu_o_ready, 1'b1, lsu_o_ready, mdr_o_ready, alu_o_ready};
-    end
-
-    always_comb begin
-        unique case(1'b1)
-            out_sel[0]: begin
-                WB_out_data     = alu_wb.data;
-                WB_out_rob_idx  = alu_wb.rob_idx;
-                WB_out_valid    = alu_wb_valid;
+        priority case(1'b1)
+            o_valid[1]: begin
+                out_sel         = 8'b0000_0010;
+                EX_o_data       = o_data[1].data;
+                EX_o_valid      = o_valid[1];
+                EX_o_rob_idx    = o_data[1].rob_idx;
+                EX_o_rd         = o_data[1].rd;
             end
-            out_sel[1]: begin
-                WB_out_data     = mdr_wb.data;
-                WB_out_rob_idx  = mdr_wb.rob_idx;
-                WB_out_valid    = mdr_wb_valid;
+            o_valid[6]: begin
+                out_sel         = 8'b0100_0000;
+                EX_o_data       = o_data[6].data;
+                EX_o_valid      = o_valid[6];
+                EX_o_rob_idx    = o_data[6].rob_idx;
+                EX_o_rd         = o_data[6].rd;
             end
-            out_sel[2]: begin
-                WB_out_data     = lsu_wb.data;
-                WB_out_rob_idx  = lsu_wb.rob_idx;
-                WB_out_valid    = lsu_wb_valid;
+            o_valid[0]: begin
+                out_sel         = 8'b0000_0001;
+                EX_o_data       = o_data[0].data;
+                EX_o_valid      = o_valid[0];
+                EX_o_rob_idx    = o_data[0].rob_idx;
+                EX_o_rd         = o_data[0].rd;
             end
-            out_sel[3]: begin
-                WB_out_data     = fpu_wb.data;
-                WB_out_rob_idx  = fpu_wb.rob_idx;
-                WB_out_valid    = fpu_wb_valid;
+            o_valid[3]: begin
+                out_sel         = 8'b0000_1000;
+                EX_o_data       = o_data[3].data;
+                EX_o_valid      = o_valid[3];
+                EX_o_rob_idx    = o_data[3].rob_idx;
+                EX_o_rd         = o_data[3].rd;
             end
             default: begin
-                WB_out_data     = 32'b0;
-                WB_out_rob_idx  = 3'b0;
-                WB_out_valid    = 1'b0;
+                out_sel         = 8'b0000_0000;
+                EX_o_data       = 32'b0;
+                EX_o_valid      = 1'b0;
+                EX_o_rob_idx    = 3'b0;
             end
-        endcase
+        endcase        
+    end
+
+    //======================================================
+    //                      WB stage           
+    //======================================================
+
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            WB_out_data    <= 32'b0;
+            WB_out_rob_idx <= 3'b0;
+            WB_out_valid   <= 1'b0;
+            WB_out_rd      <= 7'b0;
+        end
+        else begin
+            WB_out_data    <= EX_o_data;
+            WB_out_rob_idx <= EX_o_rob_idx;
+            WB_out_valid   <= EX_o_valid ;
+            WB_out_rd      <= EX_o_rd;
+        end
     end
 endmodule

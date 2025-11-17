@@ -1,46 +1,36 @@
 module konata(
     input logic clk,
     input logic rst,
-    
     // IF stage signals
-    input logic [15:0] IM_r_addr,
-
-    input logic        IF_valid,
-    input logic [15:0] IF_out_pc,
-    input logic [31:0] IF_out_inst,
-    
+    input logic [31:0] IM_r_addr,
     // DC stage signals
-    input logic        DC_valid,
+    input logic        IF_valid,
     input logic        DC_ready,
-    input logic [15:0] DC_out_pc,
-    input logic [31:0] DC_out_inst,
-    input logic [4:0]  DC_out_op,
-    input logic [2:0]  DC_out_f3,
-    input logic [6:0]  DC_out_f7,
-    
-    // IS stage signals
+    input logic [31:0] IF_out_pc,
+    input logic [31:0] IF_out_inst,
     input logic [2:0]  ROB_tail,
-    input logic        IS_valid,
+    // IS stage signals
+    input logic        DC_valid,
     input logic        IS_ready,
-    input logic [15:0] IS_out_pc,
-    input logic [31:0] IS_out_inst,
+    input logic [31:0] DC_out_pc,
+    // RR stage signals
+    input logic        IS_valid,
+    input logic        RR_ready,
     input logic [2:0]  IS_out_rob_idx,
-    
-    // EXE stage signals
-    input logic [4:0]  EXE_ready,
-    
+    // EX stage signals
+    input logic        RR_valid,
+    input logic        EX_ready,
+    input logic [2:0]  RR_out_rob_idx,
+    input logic [31:0] RR_out_pc,
     // WB stage signals
-    input logic        WB_out_valid,
-    input logic [2:0]  WB_out_rob_idx,
-    
+    input logic        EX_valid,
+    input logic [2:0]  EX_out_rob_idx,
     // Commit signals
     input logic        commit,
     input logic [2:0]  commit_rob_idx,
-    
     // Flush signals
     input logic        mispredict,
-    input logic [2:0]  mis_rob_idx,
-    input logic        recovery
+    input logic [7:0]  flush_mask
 );
 
     // File descriptor
@@ -64,7 +54,7 @@ module konata(
     typedef struct packed {
         logic        valid;
         logic [31:0] id;           // Instruction ID in file
-        logic [15:0] pc;
+        logic [31:0] pc;
         logic [31:0] inst;
         logic [2:0]  rob_idx;
         
@@ -72,6 +62,7 @@ module konata(
         logic        if_started;
         logic        dc_started;
         logic        is_started;
+        logic        rr_started;
         logic        ex_started;
         logic        wb_started;
         logic        cm_started;
@@ -202,85 +193,79 @@ module konata(
             // Output cycle progression (C command)
             $fwrite(fd, "C\t1\n");
             
-            if(mispredict) begin
-                for(int i = 0; i < 16; i++) begin
-                    if (insn_tracker[i].valid && 
-                        insn_tracker[i].pc > IS_out_pc) begin
-
-                        insn_tracker[i].retired <= 1'b1;
-                        insn_tracker[i].flushed <= 1'b1;
-                    end
-                end
-            end
-
-
             // ========================================
             // Retired 
             // ========================================
-
             for (int i = 0; i < 16; i++) begin
                 if (insn_tracker[i].retired) begin
                     // R command: 
                     $fwrite(fd, "R\t%0d\t0\t%d\n", insn_tracker[i].id, insn_tracker[i].flushed);
-
                     insn_tracker[i] <= 'b0;
                     retire_id++;
                 end
             end
 
             // ========================================
-            // Stage 6: CM (Commit)
+            // Stage 8: Retire (Only in konata) 
             // ========================================
-            if (cm_valid_r) begin
+            if(commit) begin
                 for (int i = 0; i < 16; i++) begin
-                    if (insn_tracker[i].valid && 
-                        insn_tracker[i].rob_idx == cm_rob_idx &&
-                        (insn_tracker[i].wb_started || insn_tracker[i].inst[6:2] == `B_TYPE) &&
-                        !insn_tracker[i].cm_started &&
-                        !insn_tracker[i].retired &&
-                        !insn_tracker[i].flushed) begin
-                        
-                        // S command: Start CM stage
-                        $fwrite(fd, "S\t%0d\t0\tCM\n", insn_tracker[i].id);
-                        insn_tracker[i].cm_started <= 1'b1;
-                        
+                    if (insn_tracker[i].wb_started && 
+                        insn_tracker[i].rob_idx == commit_rob_idx &&
+                        !insn_tracker[i].retired) begin
                         insn_tracker[i].retired <= 1'b1;
-                        insn_tracker[i].valid <= 1'b0;
-                        retire_id++;
-                        break;
                     end
                 end
             end
 
             // ========================================
-            // Stage 5: WB (Writeback)
+            // Stage 7: Commit 
             // ========================================
-            if (wb_valid_r) begin
+            for (int i = 0; i < 16; i++) begin
+                if (insn_tracker[i].wb_started &&
+                    !insn_tracker[i].cm_started) begin
+                    // S command: Start CM stage
+                    $fwrite(fd, "S\t%0d\t0\tCM\n", insn_tracker[i].id);
+                    insn_tracker[i].cm_started  <= 1'b1;
+                end
+            end
+
+            // ========================================
+            // Stage 6: Write Back 
+            // ========================================
+            for (int i = 0; i < 16; i++) begin
+                if (insn_tracker[i].rob_idx == EX_out_rob_idx &&
+                    insn_tracker[i].ex_started &&
+                    !insn_tracker[i].wb_started && EX_valid) begin
+                    // S command: Start WB stage
+                    $fwrite(fd, "S\t%0d\t0\tWB\n", insn_tracker[i].id);
+                    insn_tracker[i].wb_started <= 1'b1;
+                    break;
+                end
+            end
+
+            // ========================================
+            // Stage 5: Execute
+            // ========================================
+            if (RR_valid && EX_ready) begin
                 for (int i = 0; i < 16; i++) begin
-                    if (insn_tracker[i].valid && 
-                        insn_tracker[i].rob_idx == wb_rob_idx &&
-                        insn_tracker[i].ex_started &&
-                        !insn_tracker[i].wb_started) begin
-                        
-                        // S command: Start WB stage
-                        $fwrite(fd, "S\t%0d\t0\tWB\n", insn_tracker[i].id);
+                    if (insn_tracker[i].rr_started &&
+                        !insn_tracker[i].ex_started && 
+                        (insn_tracker[i].inst[6:2] == `S_TYPE || 
+                        insn_tracker[i].inst[6:2] == `FSTORE ||
+                        insn_tracker[i].inst[6:2] == `B_TYPE)) begin
+                        // S command: Start EX stage
+                        $fwrite(fd, "S\t%0d\t0\tEX\n", insn_tracker[i].id);
+                        insn_tracker[i].ex_started <= 1'b1;
                         insn_tracker[i].wb_started <= 1'b1;
                         break;
                     end
-                end
-            end
 
-            // ========================================
-            // Stage 4: EX (Execute)
-            // ========================================
-            if (IS_valid) begin
-                for (int i = 0; i < 16; i++) begin
                     if (insn_tracker[i].valid && 
-                        insn_tracker[i].is_started && 
+                        insn_tracker[i].rr_started &&
                         !insn_tracker[i].ex_started &&
-                        insn_tracker[i].pc == IS_out_pc) begin
-                        
-                        // S command: Start EX stage (use X for dependency arrows)
+                        insn_tracker[i].rob_idx == RR_out_rob_idx) begin
+                        // S command: Start EX stage
                         $fwrite(fd, "S\t%0d\t0\tEX\n", insn_tracker[i].id);
                         insn_tracker[i].ex_started <= 1'b1;
                         break;
@@ -289,19 +274,40 @@ module konata(
             end
 
             // ========================================
-            // Stage 3: IS (Issue)
+            // Stage 4: Register Read
             // ========================================
-            for (int i = 0; i < 16; i++) begin
-                if (next_IS[i] && !insn_tracker[i].is_started) begin
-                    // S command: Start IS stage
-                    $fwrite(fd, "S\t%0d\t0\tIS\n", insn_tracker[i].id);
-                    insn_tracker[i].is_started <= 1'b1;
-                    break;
+            if (IS_valid && RR_ready) begin
+                for (int i = 0; i < 16; i++) begin
+                    if (IS_valid && RR_ready &&
+                        insn_tracker[i].is_started && 
+                        !insn_tracker[i].rr_started &&
+                        insn_tracker[i].rob_idx == IS_out_rob_idx) begin
+                        // S command: Start RR stage
+                        $fwrite(fd, "S\t%0d\t0\tRR\n", insn_tracker[i].id);
+                        insn_tracker[i].rr_started <= 1'b1;
+                        break;
+                    end
                 end
             end
 
             // ========================================
-            // Stage 2: DC (Decode)
+            // Stage 3: Issue
+            // ========================================
+            if (DC_valid && IS_ready) begin
+                for (int i = 0; i < 16; i++) begin
+                    if(insn_tracker[i].dc_started && 
+                    !insn_tracker[i].is_started &&
+                    insn_tracker[i].pc == DC_out_pc) begin
+                        // S command: Start IS stage
+                        $fwrite(fd, "S\t%0d\t0\tIS\n", insn_tracker[i].id);
+                        insn_tracker[i].is_started <= 1'b1;
+                        break;
+                    end
+                end
+            end
+
+            // ========================================
+            // Stage 2: Decode 
             // ========================================
             if (IF_valid && DC_ready) begin
                 for (int i = 0; i < 16; i++) begin
@@ -309,11 +315,8 @@ module konata(
                         insn_tracker[i].if_started && 
                         !insn_tracker[i].dc_started &&
                         insn_tracker[i].pc == IF_out_pc) begin
-                                                
                         insn_tracker[i].inst = IF_out_inst;
-
                         // Decode the instruction and write (example: li x0,0 /addi	sp,sp,-4)
-
                         begin
                             logic [6:0] opcode;
                             logic [4:0] rd, rs1, rs2;
@@ -375,28 +378,19 @@ module konata(
                                 end
                             endcase
                         end
-                        
                         // S command: Start DC stage
-                        $fwrite(fd, "S\t%0d\t0\tDC\n", insn_tracker[i].id);
-                        insn_tracker[i].dc_started <= 1'b1;
-
-                        next_IS = 1 << i;
-                        insn_tracker[i].rob_idx <= ROB_tail;
-                        
+                        $fwrite(fd, "S\t%0d\t0\tDD\n", insn_tracker[i].id);
+                        insn_tracker[i].dc_started  <= 1'b1;
+                        insn_tracker[i].rob_idx     <= ROB_tail;
                         // L command: Add ROB allocation info
-                        $fwrite(fd, "L\t%0d\t1\tROB[%0d]\n", 
-                                insn_tracker[i].id, ROB_tail);
-
+                        $fwrite(fd, "L\t%0d\t1\tROB[%0d]\n", insn_tracker[i].id, ROB_tail);
                         break;
                     end
                 end
             end
-            else begin
-                next_IS = 0;
-            end
 
             // ========================================
-            // Stage 1: IF (Fetch)
+            // Stage 1: Instruction Fetch
             // ========================================
             // Find free slot in tracker
             if(IM_r_addr != IF_pc_r) begin
@@ -404,27 +398,45 @@ module konata(
                     if (insn_tracker[i].valid == 0) begin
                         // I command: Start new instruction
                         $fwrite(fd, "I\t%0d\t%0d\t0\n", insn_id, insn_id);
-                        
                         // S command: Start IF stage
                         $fwrite(fd, "S\t%0d\t0\tIF\n", insn_id);
-                        
                         // Initialize tracker entry
                         insn_tracker[i].valid       <= 1'b1;
                         insn_tracker[i].id          <= insn_id;
                         insn_tracker[i].pc          <= IM_r_addr;
                         insn_tracker[i].if_started  <= 1'b1;
-                        
                         insn_id++;
                         break;
                     end
                 end
             end
             IF_pc_r     <= IM_r_addr;
-            wb_rob_idx  <= WB_out_rob_idx;
-            wb_valid_r  <= WB_out_valid;
-            cm_rob_idx  <= commit_rob_idx;
-            cm_valid_r  <= commit;
-
+                
+            // ========================================
+            // Handle mispredict flushes
+            // ========================================    
+            if(mispredict) begin
+                for(int i = 0; i < 16; i++) begin
+                    if (insn_tracker[i].valid && !insn_tracker[i].retired &&
+                        flush_mask[insn_tracker[i].rob_idx]) begin
+                        insn_tracker[i].retired <= 1'b1;
+                        insn_tracker[i].flushed <= 1'b1;
+                    end
+                    if (insn_tracker[i].valid && 
+                        insn_tracker[i].dc_started &&
+                        !insn_tracker[i].is_started) begin
+                        insn_tracker[i].retired <= 1'b1;
+                        insn_tracker[i].flushed <= 1'b1;
+                    end
+                    if (insn_tracker[i].valid && 
+                        insn_tracker[i].if_started &&
+                        !insn_tracker[i].dc_started) begin
+                        insn_tracker[i].retired <= 1'b1;
+                        insn_tracker[i].flushed <= 1'b1;
+                    end
+                end
+            end
+            
             $fflush(fd);
         end
     end
