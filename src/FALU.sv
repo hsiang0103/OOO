@@ -1,15 +1,17 @@
-module FPU (
-    input logic clk,
-    input logic rst,
-    input  logic [4:0]  funct5,
-    input  logic [31:0] operand1,
-    input  logic [31:0] operand2,
+module FALU (
+    input   logic           clk,
+    input   logic           rst,
+    input   logic [4:0]     funct5,
+    input   logic [31:0]    operand1,
+    input   logic [31:0]    operand2,
 
-    input logic         fpu_start,
-    input logic [2:0]   EXE_rob_idx,
-    output logic [31:0] fpu_out,
-    output logic [2:0]  fpu_rob_idx,
-    output logic        fpu_o_valid
+    input   logic           falu_i_valid,
+    input   logic [2:0]     falu_i_rob_idx,
+    input   logic [6:0]     falu_i_rd,
+    output  logic           falu_o_valid,
+    output  logic [2:0]     falu_o_rob_idx,
+    output  logic [6:0]     falu_o_rd,
+    output  logic [31:0]    falu_o_data
 );
 
     logic [31:0] result;
@@ -36,11 +38,6 @@ module FPU (
         sign_b = (funct5 == `FSUBS) ^ operand2[31]; 
         exp_a  = operand1[30:23];
         exp_b  = operand2[30:23];
-    end
-
-    always_ff @(posedge clk) begin
-        fpu_rob_idx <= EXE_rob_idx;
-        fpu_o_valid <= fpu_start;
     end
 
     always_comb begin
@@ -71,9 +68,12 @@ module FPU (
     end
 
     always_ff @(posedge clk) begin
-        sign_res_2nd_stage <= sign_res;
-        mant_res_2nd_stage <= mant_res;
-        exp_res_2nd_stage  <= exp_res;
+        sign_res_2nd_stage  <= sign_res;
+        mant_res_2nd_stage  <= mant_res;
+        exp_res_2nd_stage   <= exp_res;
+        falu_o_rob_idx      <= falu_i_rob_idx;
+        falu_o_valid        <= falu_i_valid;
+        falu_o_rd           <= falu_i_rd;
     end
 
     always_comb begin
@@ -122,6 +122,6 @@ module FPU (
         S           = mant_norm[0];
         rounding    = G & (R | S);
         mant_out    = (rounding)? (mant_norm[25:3] + 23'd1) : (mant_norm[25:3]);
-        fpu_out     = {sign_res_2nd_stage, exp_norm, mant_out};
+        falu_o_data = {sign_res_2nd_stage, exp_norm, mant_out};
     end
 endmodule

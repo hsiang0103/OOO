@@ -1,23 +1,28 @@
 module ALU (
-    input logic [4:0] opcode,
-    input logic [2:0] funct3,
-    input logic funct7,
-    input logic signed [31:0] rs1_data,
-    input logic signed [31:0] rs2_data,
-    input logic signed [31:0] imm,
-    input logic        [15:0] pc,
+    input   logic           [4:0]   opcode,
+    input   logic           [2:0]   funct3,
+    input   logic                   funct7,
+    input   logic signed    [31:0]  rs1_data,
+    input   logic signed    [31:0]  rs2_data,
+    input   logic signed    [31:0]  imm,
+    input   logic           [31:0]  pc,
 
-    input logic         alu_start,
-    input logic [2:0]   EXE_rob_idx,
-    output logic [31:0] alu_out,
-    output logic [2:0]  alu_rob_idx,
-    output logic [31:0] alu_jb_out, 
-    output logic        alu_o_valid,
-    output logic        mispredict
+    // control
+    input   logic                   alu_i_valid,
+    input   logic           [2:0]   alu_i_rob_idx,
+    input   logic           [6:0]   alu_i_rd,
+    output  logic                   alu_o_valid,
+    output  logic           [2:0]   alu_o_rob_idx,
+    output  logic           [6:0]   alu_o_rd,
+    output  logic           [31:0]  alu_o_data,
+    
+    // jump
+    output  logic           [31:0]  alu_jb_out,
+    output  logic                   mispredict
 );
-    logic [31:0] operand1, operand2;
+    logic signed [31:0] operand1, operand2;
+    logic signed [31:0] alu_out;
 
-    // ALU operations
     always_comb begin
         case (opcode)
             `I_TYPE: operand2 = imm;
@@ -60,24 +65,26 @@ module ALU (
             `JAL:    alu_out = pc + 32'd4;  // JAL
             `JALR:   alu_out = pc + 32'd4;  // JALR
             `LUI:    alu_out = imm;         // LUI
-            `CSR:    alu_out = rs1_data;    // CSR
+            `CSR:    alu_out = 32'b0;       // CSR
             default: alu_out = 32'b0;
         endcase
         
         case(opcode) 
             `JAL:       alu_jb_out = pc + imm;
-            `JALR:      alu_jb_out = (rs1_data + imm) & 16'hfffe;
-            `B_TYPE:    alu_jb_out = alu_out ? pc + imm : pc + 32'd4;
+            `JALR:      alu_jb_out = (rs1_data + imm) & 32'hfffffffe;
+            `B_TYPE:    alu_jb_out = alu_out[0] ? pc + imm : pc + 32'd4;
             default:    alu_jb_out = 32'b0;
         endcase
 
         case (opcode)
-            `JAL, `JALR:    mispredict = 1'b1;
-            `B_TYPE:        mispredict = alu_out ? 1'b1 : 1'b0;
+            `JAL, `JALR:    mispredict = 1'b1 && alu_i_valid;
+            `B_TYPE:        mispredict = alu_out[0] && alu_i_valid;
             default:        mispredict = 1'b0;
         endcase
 
-        alu_rob_idx = EXE_rob_idx;
-        alu_o_valid = alu_start && opcode != `B_TYPE;
+        alu_o_rob_idx   = alu_i_rob_idx;
+        alu_o_valid     = alu_i_valid && opcode != `B_TYPE;
+        alu_o_rd        = alu_i_rd;
+        alu_o_data      = alu_out;
     end
 endmodule

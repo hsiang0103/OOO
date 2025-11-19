@@ -1,18 +1,18 @@
 module RegFile (
-        input logic clk,
-        input logic rst,
+    input   logic           clk,
+    input   logic           rst,
 
-        // Decode Read
-        input logic [6:0] rs1_index,
-        input logic [6:0] rs2_index,
-        output logic [31:0] rs1_data_out,
-        output logic [31:0] rs2_data_out,
+    // Decode Read
+    input   logic   [6:0]   rs1_index,
+    input   logic   [6:0]   rs2_index,
+    output  logic   [31:0]  rs1_data_out,
+    output  logic   [31:0]  rs2_data_out,
 
-        // Write back
-        input logic wb_en,
-        input logic [31:0] wb_data,
-        input logic [6:0] rd_index
-    );
+    // Write back
+    input   logic           wb_en,
+    input   logic   [31:0]  wb_data,
+    input   logic   [6:0]   rd_index
+);
 
     logic [31:0] registers [0:79];
 
