@@ -379,32 +379,6 @@ module konata(
             end
 
             // ========================================
-            // Handle mispredict flushes
-            // ========================================    
-            if(mispredict) begin
-                for(int i = 0; i < 16; i++) begin
-                    if (insn_tracker[i].valid && insn_tracker[i].dc_started && !insn_tracker[i].retired &&
-                        flush_mask[insn_tracker[i].rob_idx]) begin
-                        insn_tracker[i].retired <= 1'b1;
-                        insn_tracker[i].flushed <= 1'b1;
-                    end
-                    if (insn_tracker[i].valid && 
-                        insn_tracker[i].dc_started &&
-                        !insn_tracker[i].is_started) begin
-                        insn_tracker[i].retired <= 1'b1;
-                        insn_tracker[i].flushed <= 1'b1;
-                    end
-                    if (insn_tracker[i].valid && 
-                        insn_tracker[i].if_started &&
-                        !insn_tracker[i].dc_started/* &&
-                        insn_tracker[i].pc != jb_pc*/) begin
-                        insn_tracker[i].retired <= 1'b1;
-                        insn_tracker[i].flushed <= 1'b1;
-                    end
-                end
-            end
-
-            // ========================================
             // Stage 1: Instruction Fetch
             // ========================================
             // Find free slot in tracker
@@ -426,6 +400,31 @@ module konata(
                 end
             end
             IF_pc_r     <= IM_r_addr;
+
+            // ========================================
+            // Handle mispredict flushes
+            // ========================================    
+            if(mispredict) begin
+                for(int i = 0; i < 16; i++) begin
+                    if (insn_tracker[i].valid && insn_tracker[i].dc_started && !insn_tracker[i].retired &&
+                        flush_mask[insn_tracker[i].rob_idx]) begin
+                        insn_tracker[i].retired <= 1'b1;
+                        insn_tracker[i].flushed <= 1'b1;
+                    end
+                    if (insn_tracker[i].valid && 
+                        insn_tracker[i].dc_started &&
+                        !insn_tracker[i].is_started) begin
+                        insn_tracker[i].retired <= 1'b1;
+                        insn_tracker[i].flushed <= 1'b1;
+                    end
+                    if (insn_tracker[i].valid && 
+                        insn_tracker[i].if_started &&
+                        !insn_tracker[i].dc_started && insn_tracker[i].id < insn_id - 1) begin
+                        insn_tracker[i].retired <= 1'b1;
+                        insn_tracker[i].flushed <= 1'b1;
+                    end
+                end
+            end
 
             // ========================================
             // Retired 
