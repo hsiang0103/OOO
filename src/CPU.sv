@@ -11,6 +11,7 @@
 `include "Rename.sv"
 `include "ROB.sv"
 `include "konata.sv"
+`include "commit_tracker.sv"
 
 module CPU (
     input logic clk,
@@ -142,6 +143,9 @@ module CPU (
     logic [6:0]  commit_P_rd_new;
     logic [6:0]  commit_P_rd_old;
     logic [5:0]  commit_A_rd;
+    logic [31:0] commit_data;
+    logic [31:0] commit_pc;
+    logic [31:0] commit_inst;
     logic        commit;
     logic [2:0]  commit_rob_idx;
     
@@ -264,6 +268,10 @@ module CPU (
         .RR_out_st_idx(RR_out_st_idx),
         .RR_out_rob_idx(RR_out_rob_idx),
         .RR_out_rd(RR_out_rd),
+        // EX forwarding
+        .EX_in_data(EX_out_data),
+        .EX_in_rd(EX_out_rd), 
+        .EX_in_valid(EX_out_valid),
         // write back
         .WB_valid(WB_out_valid),
         .WB_data(WB_out_data),
@@ -422,6 +430,7 @@ module CPU (
         // Write Back
         .WB_valid(WB_out_valid),
         .WB_rob_idx(WB_out_rob_idx),
+        .WB_data(WB_out_data),
         .writeback_free(writeback_free),
         // mispredict
         .mispredict(mispredict),
@@ -432,6 +441,9 @@ module CPU (
         .commit_P_rd_old(commit_P_rd_old),
         .commit_P_rd_new(commit_P_rd_new),
         .commit_A_rd(commit_A_rd),
+        .commit_data(commit_data),
+        .commit_pc(commit_pc),
+        .commit_inst(commit_inst),
         .ld_commit(ld_commit),
         .st_commit(st_commit),
         // recovery
@@ -454,7 +466,7 @@ module CPU (
         .IF_out_inst(IF_out_inst),
         .ROB_tail(DC_rob_idx),
         .DC_valid(DC_valid),
-        .IS_ready(IS_ready),
+        .IS_ready(dispatch_ready),
         .DC_out_pc(DC_out_pc),
         .IS_valid(IS_valid),
         .RR_ready(RR_ready),
@@ -470,6 +482,16 @@ module CPU (
         .mispredict(mispredict),
         .flush_mask(flush_mask),
         .jb_pc(jb_pc)
+    );
+
+    commit_tracker ct1(
+        .clk(clk),
+        .rst(rst),
+        .commit_valid(commit),
+        .commit_pc(commit_pc),
+        .commit_inst(commit_inst),
+        .commit_Ard(commit_A_rd),
+        .commit_data(commit_data)
     );
     // synopsys translate_on
 endmodule
