@@ -51,6 +51,7 @@ module CPU (
     logic [1:0]  DC_out_LQ_tail;
     logic [1:0]  DC_out_SQ_tail;
     logic        DC_valid;
+    logic        dispatch_ready;
     
     // IS stage output (RR = Register Read)
     logic        IS_valid;
@@ -92,7 +93,13 @@ module CPU (
     logic [2:0]  DC_fu_sel;
     logic        decode_valid;
     logic [2:0]  DC_rob_idx;
-    
+
+    // EX forwarding 
+    logic [31:0] EX_out_data;
+    logic [2:0]  EX_out_rob_idx; 
+    logic        EX_out_valid;
+    logic [6:0]  EX_out_rd;
+
     // Write back wires
     logic [31:0] WB_out_data;
     logic [2:0]  WB_out_rob_idx;
@@ -192,6 +199,7 @@ module CPU (
         .DC_P_rd_new(DC_P_rd_new),
         .DC_fu_sel(DC_fu_sel),
         .decode_valid(decode_valid),
+        .dispatch_ready(dispatch_ready),
         // IS stage
         .DC_out_pc(DC_out_pc),
         .DC_out_inst(DC_out_inst),
@@ -225,6 +233,7 @@ module CPU (
         .clk(clk),
         .rst(rst),
         // DC stage
+        .dispatch_ready(dispatch_ready),
         .IS_in_pc(DC_out_pc),
         .IS_in_inst(DC_out_inst),
         .IS_in_imm(DC_out_imm),
@@ -262,6 +271,7 @@ module CPU (
         .writeback_free(writeback_free),
         // mispredict
         .mispredict(mispredict),
+        .stall(stall),
         .flush_mask(flush_mask),
         // Handshake signals
         .IS_ready(IS_ready),
@@ -304,6 +314,11 @@ module CPU (
         .jb_pc(jb_pc),  
         .mispredict(mispredict), 
         .mis_rob_idx(mis_rob_idx),
+        // EX forwarding
+        .EX_out_data(EX_out_data),
+        .EX_out_rob_idx(EX_out_rob_idx),
+        .EX_out_valid(EX_out_valid),
+        .EX_out_rd(EX_out_rd),
         // write back
         .WB_out_data(WB_out_data),
         .WB_out_rob_idx(WB_out_rob_idx),
@@ -321,7 +336,7 @@ module CPU (
         .DC_fu_sel(DC_fu_sel),
         .DC_rd(DC_P_rd_new),
         .DC_rob_idx(DC_rob_idx),
-        .decode_valid(decode_valid),
+        .decode_valid(IF_valid && dispatch_ready),
         // EX stage
         .ld_i_valid(ld_i_valid),
         .st_i_valid(st_i_valid),
@@ -366,7 +381,7 @@ module CPU (
         .A_rs1(A_rs1),
         .A_rs2(A_rs2),
         .A_rd(A_rd),
-        .allocate_rd(allocate_rd),
+        .allocate_rd(allocate_rd && IF_valid && dispatch_ready),
         .P_rs1(P_rs1),
         .P_rs2(P_rs2),
         .P_rd_new(P_rd_new),
@@ -394,7 +409,7 @@ module CPU (
         .clk(clk),
         .rst(rst),
         // Dispatch
-        .DC_valid(decode_valid),
+        .DC_valid(IF_valid && dispatch_ready),
         .DC_pc(DC_pc),
         .DC_inst(DC_inst),
         .DC_P_rd_new(DC_P_rd_new),
@@ -453,8 +468,8 @@ module CPU (
         .commit(commit),
         .commit_rob_idx(commit_rob_idx),
         .mispredict(mispredict),
-        .flush_mask(flush_mask)
+        .flush_mask(flush_mask),
+        .jb_pc(jb_pc)
     );
-
     // synopsys translate_on
 endmodule

@@ -2,6 +2,7 @@ module IS_stage (
     input clk,
     input rst,
     // DC stage
+    input   logic           dispatch_ready,
     input   logic [31:0]    IS_in_pc,
     input   logic [31:0]    IS_in_inst, 
     input   logic [31:0]    IS_in_imm,
@@ -39,6 +40,7 @@ module IS_stage (
     output  logic           writeback_free,
     // mispredict
     input   logic           mispredict,
+    input   logic           stall,
     input   logic [7:0]     flush_mask,
     // Handshake signals
     input   logic           DC_valid,
@@ -83,7 +85,7 @@ module IS_stage (
     logic [1:0] issue_ptr;
     logic [3:0] rs1_valid, rs2_valid;
 
-    assign IS_ready = !(iq[0].valid && iq[1].valid && iq[2].valid && iq[3].valid);
+    assign IS_ready = !(iq[0].valid && iq[1].valid && iq[2].valid && iq[3].valid) && !mispredict && !stall;
 
     // Bad issue strategy
     // TODO: use age matric to implement oldest first issue
@@ -95,6 +97,7 @@ module IS_stage (
             iq[1].valid == 1'b0: dispatch_ptr = 2'd1;
             iq[2].valid == 1'b0: dispatch_ptr = 2'd2;
             iq[3].valid == 1'b0: dispatch_ptr = 2'd3;
+            default: dispatch_ptr = 2'd0;
         endcase
         // check rs1/rs2 ready
         for(int i = 0; i < 4; i = i + 1) begin : rs_ready_check
@@ -103,19 +106,19 @@ module IS_stage (
         end
         // find ready entry
         priority case(1'b1)
-            iq[0].valid && rs1_valid[0] && rs2_valid[0]: begin
+            iq[0].valid && rs1_valid[0] && rs2_valid[0] && EX_ready[iq[0].fu_sel]: begin
                 issue_ptr = 2'd0;
                 IS_valid  = 1'b1;   
             end
-            iq[1].valid && rs1_valid[1] && rs2_valid[1]: begin
+            iq[1].valid && rs1_valid[1] && rs2_valid[1] && EX_ready[iq[1].fu_sel]: begin
                 issue_ptr = 2'd1;
                 IS_valid  = 1'b1;   
             end
-            iq[2].valid && rs1_valid[2] && rs2_valid[2]: begin
+            iq[2].valid && rs1_valid[2] && rs2_valid[2] && EX_ready[iq[2].fu_sel]: begin
                 issue_ptr = 2'd2;
                 IS_valid  = 1'b1;   
             end
-            iq[3].valid && rs1_valid[3] && rs2_valid[3]: begin
+            iq[3].valid && rs1_valid[3] && rs2_valid[3] && EX_ready[iq[3].fu_sel]: begin
                 issue_ptr = 2'd3;
                 IS_valid  = 1'b1;   
             end 
@@ -135,7 +138,7 @@ module IS_stage (
         else begin
             for(int i = 0; i < 4; i = i + 1) begin : update_iq
                 // Dispatch
-                if(DC_valid && IS_ready && dispatch_ptr == i) begin
+                if(DC_valid && dispatch_ready && dispatch_ptr == i && (!mispredict || !flush_mask[IS_in_rob_idx])) begin
                     iq[i].pc            <= IS_in_pc;
                     iq[i].inst          <= IS_in_inst;
                     iq[i].imm           <= IS_in_imm;
@@ -210,8 +213,9 @@ module IS_stage (
     logic   valid_rg, ready_rg;    
     logic   ready;    
     data_t  i_data, o_data;         
-    data_t  data_rg;
-    data_t  sparebuff_rg;  
+    
+    data_t  temp_data;  
+    logic   temp_valid;
 
     logic   i_ready, i_valid;
     logic   o_ready, o_valid;
@@ -232,22 +236,48 @@ module IS_stage (
     
     always @(posedge clk) begin
         if (rst) begin      
-            o_data      <= '0;
-            RR_valid    <= 1'b0;
+            temp_data   <= '0;
+            temp_valid    <= 1'b0;
         end
         else begin 
             if (mispredict && flush_mask[i_data.rob_idx]) begin
-                o_data      <= '0;
-                RR_valid    <= 1'b0;      
+                temp_data   <= '0;
+                temp_valid    <= 1'b0;      
             end 
             else begin
-                o_data      <= i_data;
-                RR_valid    <= IS_valid;
+                temp_data   <= i_data;
+                temp_valid    <= IS_valid && RR_ready;
             end
         end
     end
-    
-    assign RR_ready         = EX_ready[i_data.fu_sel];
+
+    logic bypass_rg;
+    data_t  data_rg;
+
+    logic [2:0] bypass_fu_sel;
+    assign bypass_fu_sel = bypass_rg? temp_data.fu_sel : data_rg.fu_sel;
+
+    always @(posedge clk) begin
+        if (rst) begin      
+            data_rg   <= '0;     
+            bypass_rg <= 1'b1;
+        end   
+        else begin      
+            if (bypass_rg) begin         
+                if (!EX_ready[bypass_fu_sel] && temp_valid) begin
+                    data_rg   <= temp_data;       
+                    bypass_rg <= 1'b0;     
+                end 
+            end 
+            else if (EX_ready[bypass_fu_sel]) begin
+                bypass_rg <= 1'b1;           
+            end
+        end
+    end
+
+    assign o_data           = bypass_rg ? temp_data  : data_rg ;       
+    assign RR_valid         = bypass_rg ? temp_valid : 1'b1    ;       
+    assign RR_ready         = bypass_rg && EX_ready[bypass_fu_sel];
 
     assign RR_out_pc        = o_data.pc        ;
     assign RR_out_inst      = o_data.inst      ;
@@ -263,7 +293,7 @@ module IS_stage (
     assign RR_out_st_idx    = o_data.st_idx    ;
     assign RR_out_fu_sel    = o_data.fu_sel    ;
 
-    assign writeback_free   = o_data.op == `B_TYPE || o_data.op == `S_TYPE;
+    assign writeback_free   = o_data.op == `B_TYPE || o_data.op == `S_TYPE || o_data.op == `FSTORE;
 
     // konata
     assign IS_out_rob_idx = iq[issue_ptr].rob_idx;

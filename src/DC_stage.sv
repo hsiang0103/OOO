@@ -22,6 +22,7 @@ module DC_stage(
     output  logic [6:0]     DC_P_rd_old,
     output  logic [2:0]     DC_fu_sel, 
     output  logic           decode_valid,
+    output  logic           dispatch_ready,
     // IS stage
     output  logic [31:0]    DC_out_pc,
     output  logic [31:0]    DC_out_inst, 
@@ -58,7 +59,7 @@ module DC_stage(
     logic           f_rs1, f_rs2, f_rd;
     logic           use_rd;
     logic           st_valid, ld_valid;
-    logic           downstream_ready;
+    logic           dispatch_ready;
     
     // Decode
     assign DC_op            = DC_in_inst[6:2];
@@ -73,11 +74,12 @@ module DC_stage(
     assign A_rs2            = {f_rs2, DC_in_inst[24:20]};
     assign A_rd             = {f_rd , DC_in_inst[11:7]};
 
-    assign allocate_rd      = ((DC_op != `S_TYPE) && (DC_op != `FSTORE)) && (DC_op != `B_TYPE) && A_rd != 6'd0 && decode_valid;
+    assign allocate_rd      = ((DC_op != `S_TYPE) && (DC_op != `FSTORE)) && (DC_op != `B_TYPE) && A_rd != 6'd0;
     assign st_valid         = ((DC_op != `S_TYPE) && (DC_op != `FSTORE)) || st_ready;
     assign ld_valid         = ((DC_op != `LOAD)   && (DC_op != `FLOAD )) || ld_ready;
 
-    assign decode_valid     = IF_valid && !mispredict && !stall && DC_ready;
+    assign dispatch_ready   = rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall;
+    assign decode_valid     = IF_valid && rob_ready && st_valid && ld_valid && !mispredict && !stall;
     assign DC_pc            = DC_in_pc;
     assign DC_inst          = DC_in_inst;
     assign DC_P_rd_new      = P_rd_new;
@@ -164,23 +166,21 @@ module DC_stage(
     logic temp;
     always @(posedge clk) begin
         if (rst) begin      
-            o_data   <= '0; 
-            temp        <= 1'b0;    
+            o_data   <= '0;
+            temp     <= 1'b0; 
         end
         else begin      
             if (mispredict || stall) begin
                 o_data      <= '0;  
-                temp        <= 1'b0;    
             end 
-            else if(decode_valid && IS_ready) begin
+            else if(IF_valid && dispatch_ready)begin
                 o_data      <= i_data;
-                temp        <= decode_valid;
             end
             else begin
-                o_data      <= o_data;  
-                temp        <= 1'b0;    
+                o_data      <= o_data;
             end
         end
+        temp <= IF_valid && !mispredict && !stall;
     end    
 
     // Output assignments
@@ -197,6 +197,6 @@ module DC_stage(
     assign DC_out_rob_idx  = o_data.rob_idx;
     assign DC_out_LQ_tail  = o_data.LQ_tail;
     assign DC_out_SQ_tail  = o_data.SQ_tail;
-    assign DC_valid        = decode_valid; 
-    assign DC_ready        = IS_ready && rob_ready && st_valid && ld_valid && !mispredict && !stall;
+    assign DC_valid        = temp; 
+    assign DC_ready        = dispatch_ready;
 endmodule

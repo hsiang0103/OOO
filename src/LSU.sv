@@ -16,6 +16,7 @@ module LSU (
     input   logic           RR_valid,
     input   logic [1:0]     EX_ld_idx,
     input   logic [1:0]     EX_st_idx,
+    input   logic           ld_i_ready,
     output  logic           ld_o_valid,
     output  logic [2:0]     ld_o_rob_idx,
     output  logic [6:0]     ld_o_rd,
@@ -66,14 +67,6 @@ module LSU (
     logic [1:0] LQ_h, LQ_t;
     logic DC_ld, DC_st;
     logic EX_ld, EX_st;
-    
-    logic [3:0] SQ_cmp;
-    logic [3:0] age_mask;
-
-    logic load_valid;
-    logic ld_from_issue;
-    logic [31:0] LQ_h_addr;
-    logic [1:0]  LQ_h_SQ_t;
      
     assign ld_ready         = !(LQ_t == LQ_h && LQ[LQ_h].valid); 
     assign st_ready         = !(SQ_t == SQ_h && SQ[SQ_h].valid); 
@@ -84,39 +77,69 @@ module LSU (
     assign LQ_tail          = LQ_t;
     assign SQ_tail          = SQ_t;
 
-    assign ld_from_issue    = EX_ld_idx == LQ_h && EX_ld;
-    assign load_valid       = (ld_from_issue || (LQ[LQ_h].issued && !LQ[LQ_h].done)) && ((SQ_cmp & age_mask) == 4'b0000);
-    assign LQ_h_SQ_t        = LQ[LQ_h].SQ_t;
-    assign LQ_h_addr        = ld_from_issue ? (lsu_i_rs1_data[31:0] + lsu_i_imm[31:0]) : LQ[LQ_h].addr;
-    
+    // Load handle
+    logic [3:0] can_request;
+    logic [3:0] age_mask [0:3];
+    logic [3:0] sq_addr_cmp [0:3];
+    logic [1:0] LQ_order [0:3];
+
+    logic [1:0] load_request_idx;
+    logic       load_request_valid;
+
     always_comb begin
-        for(int i = 0; i < 4; i = i + 1) begin : age_compare
-            if(LQ_h_SQ_t < SQ_h) begin
-                age_mask[i] = (i < LQ_h_SQ_t) || (i >= SQ_h);
+        for(int i = 0; i < 4; i = i + 1) begin
+            for(int j = 0; j < 4; j = j + 1) begin
+                if(LQ[i].valid) begin
+                    if(LQ[i].SQ_t >= SQ_h) begin
+                        age_mask[i][j] = (j < LQ[i].SQ_t) && (j >= SQ_h);
+                    end
+                    else begin
+                        age_mask[i][j] = (j < LQ[i].SQ_t) || (j >= SQ_h);
+                    end
+                end
+                else begin
+                    age_mask[i][j] = 0;
+                end
+                sq_addr_cmp[i][j] = SQ[j].valid && (!SQ[j].issued || SQ[j].addr == LQ[i].addr);
             end
-            else begin
-                age_mask[i] = (i < LQ_h_SQ_t) && (i >= SQ_h);
-            end
-            SQ_cmp[i] = !SQ[i].valid;
         end
+
+        for(int i = 0; i < 4; i = i + 1) begin
+            can_request[i] = ((sq_addr_cmp[i] & age_mask[i]) == 4'b0000) && LQ[i].issued && !LQ[i].done;
+        end
+
+        for(int i = 0; i < 4; i = i + 1) begin
+            LQ_order[i] = (LQ_h + i) & 2'b11; // max
+        end
+
+        priority case(1'b1)
+            can_request[LQ_order[0]]: load_request_idx = LQ_order[0];
+            can_request[LQ_order[1]]: load_request_idx = LQ_order[1];
+            can_request[LQ_order[2]]: load_request_idx = LQ_order[2];
+            can_request[LQ_order[3]]: load_request_idx = LQ_order[3];
+            default: load_request_idx = 2'b00;
+        endcase
+        load_request_valid = |can_request;
     end
 
     // DM interface
     assign DM_r_en          = !st_commit;               // read when not commit
     assign DM_w_en          = {32{!st_commit}};         // bit write enable
-    assign DM_addr          = DM_r_en ? LQ_h_addr : SQ[SQ_h].addr;
+    assign DM_addr          = DM_r_en ? LQ[load_request_idx].addr : SQ[SQ_h].addr;
     assign DM_w_data        = SQ[SQ_h].data;
     assign DM_c_en          = 1'b0;                     // always enable 
 
     logic load_done;
+    logic [1:0] load_request_idx_reg;
     // LSU output to EXE stage
     always_ff @(posedge clk) begin
-        load_done <= (load_valid && !st_commit);
+        load_done               <= load_request_valid && !st_commit;
+        load_request_idx_reg    <= load_request_idx;
     end
     assign ld_o_data        = DM_rd_data;
-    assign ld_o_rob_idx     = LQ[LQ_h].rob_idx;
-    assign ld_o_rd          = LQ[LQ_h].rd;
-    assign ld_o_valid       = LQ[LQ_h].valid && load_done;
+    assign ld_o_rob_idx     = LQ[load_request_idx_reg].rob_idx;
+    assign ld_o_rd          = LQ[load_request_idx_reg].rd;
+    assign ld_o_valid       = load_done;
 
     // LQ and SQ management
     always_ff @(posedge clk) begin
@@ -145,11 +168,11 @@ module LSU (
                 // Issue
                 if(EX_ld && i == EX_ld_idx) begin
                     LQ[i].issued    <= 1'b1;
-                    LQ[i].addr      <= lsu_i_rs1_data[15:0] + lsu_i_imm[15:0];
+                    LQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
                 end
                 // Execute 
-                if(load_valid && i == LQ_h) begin
-                    LQ[i].done  <= !st_commit;
+                if(load_request_valid && i == load_request_idx && !st_commit) begin
+                    LQ[i].done  <= 1'b1;
                 end
                 // Commit
                 if(ld_commit && i == LQ_h) begin

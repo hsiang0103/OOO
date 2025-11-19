@@ -28,6 +28,11 @@ module EXE_stage(
     output  logic [31:0]    jb_pc,  
     output  logic           mispredict,  
     output  logic [2:0]     mis_rob_idx,
+    // forwarding
+    output  logic [31:0]    EX_out_data,
+    output  logic [2:0]     EX_out_rob_idx, 
+    output  logic           EX_out_valid,
+    output  logic [6:0]     EX_out_rd,
     // write back
     output  logic [31:0]    WB_out_data,
     output  logic [2:0]     WB_out_rob_idx, 
@@ -312,6 +317,11 @@ module EXE_stage(
             end
         endcase        
     end
+
+    assign EX_out_data     = EX_o_data;
+    assign EX_out_rob_idx  = EX_o_rob_idx;
+    assign EX_out_valid    = EX_o_valid;
+    assign EX_out_rd       = EX_o_rd;
 
     //======================================================
     //                      WB stage           

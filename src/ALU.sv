@@ -77,8 +77,8 @@ module ALU (
         endcase
 
         case (opcode)
-            `JAL, `JALR:    mispredict = 1'b1;
-            `B_TYPE:        mispredict = alu_out[0];
+            `JAL, `JALR:    mispredict = 1'b1 && alu_i_valid;
+            `B_TYPE:        mispredict = alu_out[0] && alu_i_valid;
             default:        mispredict = 1'b0;
         endcase
 

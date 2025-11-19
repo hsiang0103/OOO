@@ -44,8 +44,8 @@ logic use_rs1, use_rs2;
 assign use_rs1  = DC_op != `LUI    && DC_op != `AUIPC  && DC_op != `JAL;
 assign use_rs2  = DC_op == `R_TYPE || DC_op == `S_TYPE || DC_op == `FSTORE || DC_op == `B_TYPE || DC_op == `F_TYPE;
 
-assign DC_P_rs1_valid   = !use_rs1 || valid_map[DC_rs1] || DC_rs1 == commit_P_rd_new;
-assign DC_P_rs2_valid   = !use_rs2 || valid_map[DC_rs2] || DC_rs2 == commit_P_rd_new;
+assign DC_P_rs1_valid   = !use_rs1 || valid_map[DC_rs1] || (DC_rs1 == commit_P_rd_new && commit_wb_en);
+assign DC_P_rs2_valid   = !use_rs2 || valid_map[DC_rs2] || (DC_rs2 == commit_P_rd_new && commit_wb_en);
 
 always_ff @(posedge clk) begin
     if (rst) begin
@@ -81,16 +81,12 @@ always_ff @(posedge clk) begin
                 valid_map[i] <= 1'b1;
             end
             // write back
-            else if(WB_rd == i && WB_valid) begin
+            if(WB_rd == i && WB_valid) begin
                 valid_map[i] <= 1'b1;
             end
             // dispatch
-            else if(P_rd_new == i && allocate_rd) begin
+            if(P_rd_new == i && allocate_rd) begin
                 valid_map[i] <= 1'b0;
-            end
-            // do nothing
-            else begin
-                valid_map[i] <= valid_map[i];
             end
         end
 
