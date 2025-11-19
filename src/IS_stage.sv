@@ -33,6 +33,10 @@ module IS_stage (
     output  logic [1:0]     RR_out_st_idx,
     output  logic [2:0]     RR_out_rob_idx, 
     output  logic [6:0]     RR_out_rd,
+    // EX forwarding
+    input   logic [31:0]    EX_in_data,
+    input   logic [6:0]     EX_in_rd, 
+    input   logic           EX_in_valid,
     // write back
     input   logic           WB_valid,
     input   logic [31:0]    WB_data,
@@ -101,8 +105,8 @@ module IS_stage (
         endcase
         // check rs1/rs2 ready
         for(int i = 0; i < 4; i = i + 1) begin : rs_ready_check
-            rs1_valid[i] = iq[i].P_rs1_valid || (iq[i].P_rs1 == WB_rd && WB_valid);
-            rs2_valid[i] = iq[i].P_rs2_valid || (iq[i].P_rs2 == WB_rd && WB_valid);
+            rs1_valid[i] = iq[i].P_rs1_valid || (iq[i].P_rs1 == WB_rd && WB_valid) || (iq[i].P_rs1 == EX_in_rd && EX_in_valid);
+            rs2_valid[i] = iq[i].P_rs2_valid || (iq[i].P_rs2 == WB_rd && WB_valid) || (iq[i].P_rs2 == EX_in_rd && EX_in_valid);
         end
         // find ready entry
         priority case(1'b1)
@@ -147,8 +151,8 @@ module IS_stage (
                     iq[i].f7            <= IS_in_f7;
                     iq[i].P_rs1         <= IS_in_rs1;
                     iq[i].P_rs2         <= IS_in_rs2;
-                    iq[i].P_rs1_valid   <= IS_in_rs1_valid || (IS_in_rs1 == WB_rd && WB_valid);
-                    iq[i].P_rs2_valid   <= IS_in_rs2_valid || (IS_in_rs2 == WB_rd && WB_valid);
+                    iq[i].P_rs1_valid   <= IS_in_rs1_valid || (IS_in_rs1 == WB_rd && WB_valid) || (IS_in_rs1 == EX_in_rd && EX_in_valid);
+                    iq[i].P_rs2_valid   <= IS_in_rs2_valid || (IS_in_rs2 == WB_rd && WB_valid) || (IS_in_rs2 == EX_in_rd && EX_in_valid);
                     iq[i].P_rd          <= IS_in_rd;
                     iq[i].ld_idx        <= IS_in_LQ_tail;
                     iq[i].st_idx        <= IS_in_SQ_tail;
@@ -156,8 +160,14 @@ module IS_stage (
                     iq[i].rob_idx       <= IS_in_rob_idx;
                     iq[i].valid         <= 1'b1;
                 end
+                
+                // EX forwarding
+                if(EX_in_valid && EX_in_rd != 7'b0 && iq[i].valid) begin
+                    iq[i].P_rs1_valid   <= (iq[i].P_rs1 == EX_in_rd)? 1'b1 : iq[i].P_rs1_valid;
+                    iq[i].P_rs2_valid   <= (iq[i].P_rs2 == EX_in_rd)? 1'b1 : iq[i].P_rs2_valid;
+                end
                 // write back
-                if(WB_valid && WB_rd != 7'b0 && iq[i].valid) begin
+                else if(WB_valid && WB_rd != 7'b0 && iq[i].valid) begin
                     iq[i].P_rs1_valid   <= (iq[i].P_rs1 == WB_rd)? 1'b1 : iq[i].P_rs1_valid;
                     iq[i].P_rs2_valid   <= (iq[i].P_rs2 == WB_rd)? 1'b1 : iq[i].P_rs2_valid;
                 end
@@ -226,27 +236,49 @@ module IS_stage (
     assign i_data.op        = iq[issue_ptr].op     ;
     assign i_data.f3        = iq[issue_ptr].f3     ;
     assign i_data.f7        = iq[issue_ptr].f7     ;
-    assign i_data.rs1_data  = (WB_rd == iq[issue_ptr].P_rs1 && WB_valid) ? WB_data : RR_rs1_data;
-    assign i_data.rs2_data  = (WB_rd == iq[issue_ptr].P_rs2 && WB_valid) ? WB_data : RR_rs2_data;
+    // assign i_data.rs1_data  = (WB_rd == iq[issue_ptr].P_rs1 && WB_valid) ? WB_data : RR_rs1_data;
+    // assign i_data.rs2_data  = (WB_rd == iq[issue_ptr].P_rs2 && WB_valid) ? WB_data : RR_rs2_data;
     assign i_data.P_rd      = iq[issue_ptr].P_rd   ;
     assign i_data.rob_idx   = iq[issue_ptr].rob_idx;
     assign i_data.ld_idx    = iq[issue_ptr].ld_idx ;
     assign i_data.st_idx    = iq[issue_ptr].st_idx ;
     assign i_data.fu_sel    = iq[issue_ptr].fu_sel ;
+
+    always_comb begin
+        if(EX_in_valid && EX_in_rd != 7'b0 && EX_in_rd == iq[issue_ptr].P_rs1) begin
+            i_data.rs1_data = EX_in_data;
+        end 
+        else if(WB_valid && WB_rd != 7'b0 && WB_rd == iq[issue_ptr].P_rs1) begin
+            i_data.rs1_data = WB_data;
+        end 
+        else begin
+            i_data.rs1_data = RR_rs1_data;
+        end
+
+        if(EX_in_valid && EX_in_rd != 7'b0 && EX_in_rd == iq[issue_ptr].P_rs2) begin
+            i_data.rs2_data = EX_in_data;
+        end 
+        else if(WB_valid && WB_rd != 7'b0 && WB_rd == iq[issue_ptr].P_rs2) begin
+            i_data.rs2_data = WB_data;
+        end 
+        else begin
+            i_data.rs2_data = RR_rs2_data;
+        end
+    end
     
     always @(posedge clk) begin
         if (rst) begin      
             temp_data   <= '0;
-            temp_valid    <= 1'b0;
+            temp_valid  <= 1'b0;
         end
         else begin 
             if (mispredict && flush_mask[i_data.rob_idx]) begin
                 temp_data   <= '0;
-                temp_valid    <= 1'b0;      
+                temp_valid  <= 1'b0;      
             end 
             else begin
                 temp_data   <= i_data;
-                temp_valid    <= IS_valid && RR_ready;
+                temp_valid  <= IS_valid && RR_ready;
             end
         end
     end

@@ -434,7 +434,7 @@ module konata(
                     // R command: 
                     $fwrite(fd, "R\t%0d\t0\t%d\n", insn_tracker[i].id, insn_tracker[i].flushed);
                     insn_tracker[i] <= 'b0;
-                    retire_id++;
+                    retire_id = retire_id + !insn_tracker[i].flushed;
                 end
             end
             

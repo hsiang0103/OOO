@@ -207,7 +207,7 @@ module LSU (
                 // Issue
                 if(EX_st && i == EX_st_idx) begin
                     SQ[i].issued    <= 1'b1;
-                    SQ[i].addr      <= lsu_i_rs1_data[15:0] + lsu_i_imm[15:0];
+                    SQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
                     SQ[i].data      <= lsu_i_rs2_data;
                 end
                 // Commit

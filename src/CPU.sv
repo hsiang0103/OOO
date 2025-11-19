@@ -268,6 +268,10 @@ module CPU (
         .RR_out_st_idx(RR_out_st_idx),
         .RR_out_rob_idx(RR_out_rob_idx),
         .RR_out_rd(RR_out_rd),
+        // EX forwarding
+        .EX_in_data(EX_out_data),
+        .EX_in_valid(EX_out_valid),
+        .EX_in_rd(EX_out_rd),
         // write back
         .WB_valid(WB_out_valid),
         .WB_data(WB_out_data),
