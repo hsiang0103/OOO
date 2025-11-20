@@ -16,6 +16,7 @@ module IS_stage (
     input   logic [2:0]     IS_in_rob_idx,
     input   logic [1:0]     IS_in_LQ_tail,
     input   logic [1:0]     IS_in_SQ_tail,
+    input   logic           IS_in_jump,
     // rename 
     input   logic           IS_in_rs1_valid,
     input   logic           IS_in_rs2_valid,
@@ -33,6 +34,7 @@ module IS_stage (
     output  logic [1:0]     RR_out_st_idx,
     output  logic [2:0]     RR_out_rob_idx, 
     output  logic [6:0]     RR_out_rd,
+    output  logic           RR_out_jump,
     // EX forwarding
     input   logic [31:0]    EX_in_data,
     input   logic [6:0]     EX_in_rd, 
@@ -73,6 +75,7 @@ module IS_stage (
         logic [2:0]     fu_sel;
         logic [2:0]     rob_idx;
         logic           valid;
+        logic           jump;
     } IS_data_t;
 
     // fu selection 
@@ -158,6 +161,7 @@ module IS_stage (
                     iq[i].st_idx        <= IS_in_SQ_tail;
                     iq[i].fu_sel        <= IS_in_fu_sel;
                     iq[i].rob_idx       <= IS_in_rob_idx;
+                    iq[i].jump          <= IS_in_jump;
                     iq[i].valid         <= 1'b1;
                 end
                 
@@ -216,6 +220,7 @@ module IS_stage (
         logic [1:0]     ld_idx;
         logic [1:0]     st_idx;
         logic [2:0]     fu_sel;
+        logic           jump;
     } data_t ;
     
     
@@ -243,6 +248,7 @@ module IS_stage (
     assign i_data.ld_idx    = iq[issue_ptr].ld_idx ;
     assign i_data.st_idx    = iq[issue_ptr].st_idx ;
     assign i_data.fu_sel    = iq[issue_ptr].fu_sel ;
+    assign i_data.jump      = iq[issue_ptr].jump   ;
 
     always_comb begin
         if(EX_in_valid && EX_in_rd != 7'b0 && EX_in_rd == iq[issue_ptr].P_rs1) begin
@@ -324,6 +330,7 @@ module IS_stage (
     assign RR_out_ld_idx    = o_data.ld_idx    ;
     assign RR_out_st_idx    = o_data.st_idx    ;
     assign RR_out_fu_sel    = o_data.fu_sel    ;
+    assign RR_out_jump      = o_data.jump      ;
 
     assign writeback_free   = o_data.op == `B_TYPE || o_data.op == `S_TYPE || o_data.op == `FSTORE;
 

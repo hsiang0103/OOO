@@ -18,7 +18,7 @@ module ALU (
     
     // jump
     output  logic           [31:0]  alu_jb_out,
-    output  logic                   mispredict
+    output  logic                   jump
 );
     logic signed [31:0] operand1, operand2;
     logic signed [31:0] alu_out;
@@ -77,9 +77,9 @@ module ALU (
         endcase
 
         case (opcode)
-            `JAL, `JALR:    mispredict = 1'b1 && alu_i_valid;
-            `B_TYPE:        mispredict = alu_out[0] && alu_i_valid;
-            default:        mispredict = 1'b0;
+            `JAL, `JALR:    jump = 1'b1 && alu_i_valid;
+            `B_TYPE:        jump = alu_out[0] && alu_i_valid;
+            default:        jump = 1'b0;
         endcase
 
         alu_o_rob_idx   = alu_i_rob_idx;
