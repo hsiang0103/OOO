@@ -101,7 +101,7 @@ module EXE_stage(
     );
 
     always @(posedge clk) begin
-           if (rst) begin      
+        if (rst) begin      
             alu_data_rg         <= '0;     
             alu_bypass          <= 1'b1;
         end   
@@ -327,6 +327,7 @@ module EXE_stage(
                 EX_o_data       = 32'b0;
                 EX_o_valid      = 1'b0;
                 EX_o_rob_idx    = 3'b0;
+                EX_o_rd         = 7'b0;
             end
         endcase        
     end

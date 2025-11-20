@@ -68,12 +68,22 @@ module FALU (
     end
 
     always_ff @(posedge clk) begin
-        sign_res_2nd_stage  <= sign_res;
-        mant_res_2nd_stage  <= mant_res;
-        exp_res_2nd_stage   <= exp_res;
-        falu_o_rob_idx      <= falu_i_rob_idx;
-        falu_o_valid        <= falu_i_valid;
-        falu_o_rd           <= falu_i_rd;
+        if(rst) begin
+            sign_res_2nd_stage  <= 1'b0;
+            mant_res_2nd_stage  <= 28'b0;
+            exp_res_2nd_stage   <= 8'b0;
+            falu_o_rob_idx      <= 3'b0;
+            falu_o_valid        <= 1'b0;
+            falu_o_rd           <= 7'b0;
+        end
+        else begin
+            sign_res_2nd_stage  <= sign_res;
+            mant_res_2nd_stage  <= mant_res;
+            exp_res_2nd_stage   <= exp_res;
+            falu_o_rob_idx      <= falu_i_rob_idx;
+            falu_o_valid        <= falu_i_valid;
+            falu_o_rd           <= falu_i_rd;
+        end
     end
 
     always_comb begin

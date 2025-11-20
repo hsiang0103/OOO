@@ -171,7 +171,7 @@ module DC_stage(
     always @(posedge clk) begin
         if (rst) begin      
             o_data   <= '0;
-            temp     <= 1'b0; 
+            DC_valid     <= 1'b0; 
         end
         else begin      
             if (mispredict || stall) begin
@@ -183,8 +183,8 @@ module DC_stage(
             else begin
                 o_data      <= o_data;
             end
+            DC_valid <= IF_valid && !mispredict && !stall;
         end
-        temp <= IF_valid && !mispredict && !stall;
     end    
 
     // Output assignments
@@ -202,6 +202,6 @@ module DC_stage(
     assign DC_out_LQ_tail  = o_data.LQ_tail;
     assign DC_out_SQ_tail  = o_data.SQ_tail;
     assign DC_out_jump     = o_data.jump   ;
-    assign DC_valid        = temp; 
+    // assign DC_valid        = temp; 
     assign DC_ready        = dispatch_ready;
 endmodule

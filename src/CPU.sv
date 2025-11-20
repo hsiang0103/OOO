@@ -11,15 +11,17 @@
 `include "Rename.sv"
 `include "ROB.sv"
 `include "BPU.sv"
+// synopsys translate_off
 `include "konata.sv"
 `include "commit_tracker.sv"
+// synopsys translate_on
 
 module CPU (
     input logic clk,
     input logic rst,
     // IM 
     input  logic [31:0] IM_r_data,
-    output logic [15:0] IM_r_addr,
+    output logic [31:0] IM_r_addr,
     output logic        IM_ready,
     // DM
     input  logic [31:0] DM_rd_data,
@@ -520,7 +522,7 @@ module CPU (
         .flush_mask(flush_mask),
         .jb_pc(jb_pc)
     );
-
+    
     commit_tracker ct1(
         .clk(clk),
         .rst(rst),

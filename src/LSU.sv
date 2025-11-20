@@ -133,8 +133,14 @@ module LSU (
     logic [1:0] load_request_idx_reg;
     // LSU output to EXE stage
     always_ff @(posedge clk) begin
-        load_done               <= load_request_valid && !st_commit;
-        load_request_idx_reg    <= load_request_idx;
+        if(rst) begin
+            load_done               <= 1'b0;
+            load_request_idx_reg    <= 2'b0;
+        end
+        else begin
+            load_done               <= load_request_valid && !st_commit;
+            load_request_idx_reg    <= load_request_idx;
+        end    
     end
     assign ld_o_data        = DM_rd_data;
     assign ld_o_rob_idx     = LQ[load_request_idx_reg].rob_idx;

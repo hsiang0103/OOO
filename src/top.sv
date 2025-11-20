@@ -26,14 +26,14 @@ module top(
 );
 
 logic [31:0] IM_r_data;
-logic [15:0] IM_r_addr;
+logic [31:0] IM_r_addr;
 logic        IM_ready;
 
 logic [31:0] DM_rd_data;
 logic        DM_c_en;
 logic        DM_r_en;
 logic [31:0] DM_w_en;
-logic [15:0] DM_addr;
+logic [31:0] DM_addr;
 logic [31:0] DM_w_data;
 
 CPU CPU(

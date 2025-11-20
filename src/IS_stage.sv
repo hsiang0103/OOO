@@ -164,7 +164,6 @@ module IS_stage (
                     iq[i].jump          <= IS_in_jump;
                     iq[i].valid         <= 1'b1;
                 end
-                
                 // EX forwarding
                 if(EX_in_valid && EX_in_rd != 7'b0 && iq[i].valid) begin
                     iq[i].P_rs1_valid   <= (iq[i].P_rs1 == EX_in_rd)? 1'b1 : iq[i].P_rs1_valid;
