@@ -13,6 +13,7 @@ module EXE_stage(
     input   logic [2:0]     EXE_in_f3,
     input   logic [6:0]     EXE_in_f7,
     input   logic [2:0]     EXE_in_rob_idx,
+    input   logic           EXE_in_jump,
     // LSU 
     output  logic           ld_i_valid,
     output  logic           st_i_valid,
@@ -25,6 +26,10 @@ module EXE_stage(
     input   logic [6:0]     ld_o_rd,
     input   logic [31:0]    ld_o_data,
     // mispredict
+    input   logic           DC_in_jump,
+    input   logic           IF_valid,
+    input   logic           DC_ready,
+    output  logic           is_jb,
     output  logic [31:0]    jb_pc,  
     output  logic           mispredict,  
     output  logic [2:0]     mis_rob_idx,
@@ -70,6 +75,7 @@ module EXE_stage(
     data_t alu_data_rg;
     logic alu_o_valid;
     logic alu_bypass;
+    logic jump;
 
     ALU alu(
         .opcode         (EXE_in_op),
@@ -91,9 +97,8 @@ module EXE_stage(
 
         // jump
         .alu_jb_out     (jb_pc),
-        .mispredict     (mispredict)
+        .jump           (jump)
     );
-    assign mis_rob_idx  = EXE_in_rob_idx;
 
     always @(posedge clk) begin
            if (rst) begin      
@@ -116,6 +121,14 @@ module EXE_stage(
     assign EX_ready[0]  = alu_bypass;
     assign o_data[0]    = alu_bypass ? alu_o_data : alu_data_rg;
     assign o_valid[0]   = alu_bypass ? alu_o_valid : 1'b1;
+
+    // mispredict logic
+    always_comb begin
+        is_jb = (EXE_in_op == `B_TYPE || EXE_in_op == `JAL/* || EXE_in_op == `JALR*/);
+    end
+    assign mispredict   = ((EXE_in_jump != jump) && RR_valid && EXE_in_fu_sel == 3'd0)/* || EXE_in_op == `JALR*/;
+    assign mis_rob_idx  = EXE_in_rob_idx;
+
     // =======================================================
     //                         MUL/[1]           
     // =======================================================

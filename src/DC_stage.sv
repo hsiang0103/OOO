@@ -4,6 +4,7 @@ module DC_stage(
     // IF stage
     input   logic [31:0]    DC_in_pc,
     input   logic [31:0]    DC_in_inst,
+    input   logic           DC_in_jump,
     // rename 
     input   logic [6:0]     P_rs1,
     input   logic [6:0]     P_rs2,
@@ -37,6 +38,7 @@ module DC_stage(
     output  logic [1:0]     DC_out_LQ_tail,
     output  logic [1:0]     DC_out_SQ_tail,
     output  logic [2:0]     DC_out_rob_idx, 
+    output  logic           DC_out_jump,
     // mispredict
     input   logic           mispredict,
     input   logic           stall,
@@ -138,6 +140,7 @@ module DC_stage(
         logic [1:0]     LQ_tail;
         logic [1:0]     SQ_tail;
         logic [2:0]     fu_sel;
+        logic           jump;
     } data_t;
     
     logic   valid_rg, ready_rg;    
@@ -162,6 +165,7 @@ module DC_stage(
     assign i_data.LQ_tail   = LQ_tail          ;
     assign i_data.SQ_tail   = SQ_tail          ;
     assign i_data.fu_sel    = DC_fu_sel        ;
+    assign i_data.jump      = DC_in_jump       ;
     
     logic temp;
     always @(posedge clk) begin
@@ -197,6 +201,7 @@ module DC_stage(
     assign DC_out_rob_idx  = o_data.rob_idx;
     assign DC_out_LQ_tail  = o_data.LQ_tail;
     assign DC_out_SQ_tail  = o_data.SQ_tail;
+    assign DC_out_jump     = o_data.jump   ;
     assign DC_valid        = temp; 
     assign DC_ready        = dispatch_ready;
 endmodule

@@ -1,6 +1,9 @@
 module IF_stage(
         input   logic           clk,
         input   logic           rst,
+        // BPU
+        input   logic [31:0]    next_pc,
+        input   logic           next_jump,
         // From IM
         input   logic [31:0]    IM_r_data,
         // From IS stage
@@ -11,77 +14,76 @@ module IF_stage(
         // To IM
         output  logic [31:0]    IM_r_addr,
         output  logic           IM_ready,
-        // To DC stage  
+        // To DC stage
         output  logic [31:0]    IF_out_pc,
         output  logic [31:0]    IF_out_inst,
-        // Handshake signals    
-        // IF --- DC    
+        output  logic           IF_out_jump,
+        // Handshake signals
+        // IF --- DC
         output  logic           IF_valid,
         input   logic           DC_ready
     );
 
-    logic [31:0] next_pc;
+    logic [31:0] pc;
     logic [31:0] IF_DC_pc;
+    logic        IF_DC_jump;
 
-    assign IM_r_addr = mispredict ? jb_pc : next_pc;
+    assign IM_r_addr = mispredict ? jb_pc : pc;
 
-    // IM_r_addr register
+    // PC register
     always_ff @(posedge clk) begin
         if (rst) begin
-            next_pc <= 16'b0;
+            pc <= 32'b0;
         end
         else begin
-            if(mispredict) begin
-                next_pc <= jb_pc + 16'd4;
-            end
-            else begin
-                if(DC_ready) begin
-                    next_pc <= next_pc + 16'd4;
-                end
-                else begin
-                    next_pc <= next_pc;
-                end
-            end
+            pc <= next_pc;
         end
     end
 
     // IF_DC register
     always_ff @(posedge clk) begin
         if (rst) begin
-            IF_DC_pc <= 16'b0;
+            IF_DC_pc    <= 32'b0;
+            IF_DC_jump  <= 1'b0;
         end
         else begin
-            IF_DC_pc <= IM_r_addr;
+            IF_DC_pc    <= IM_r_addr;
+            IF_DC_jump  <= next_jump;
         end
     end
 
     // skid buffer for IF out
     logic [31:0] IM_r_data_buf;
-    logic [15:0] IF_out_pc_buf;
+    logic [31:0] IF_out_pc_buf;
+    logic        IF_out_jump_buf;
     logic        bypass;
 
     always_ff @(posedge clk) begin
         if (rst) begin
             IM_r_data_buf   <= 32'b0;
-            IF_out_pc_buf   <= 16'b0;
+            IF_out_pc_buf   <= 32'b0;
+            IF_out_jump_buf <= 1'b0;
             bypass          <= 1'b1;
-        end 
+        end
         else begin
             if(mispredict) begin
                 IM_r_data_buf   <= 32'b0;
-                IF_out_pc_buf   <= 16'b0;
+                IF_out_pc_buf   <= 32'b0;
+                IF_out_jump_buf <= 1'b0;
                 bypass          <= 1'b1;
             end
             else if (bypass) begin
                 if (!DC_ready) begin
                     IM_r_data_buf   <= IM_r_data;
                     IF_out_pc_buf   <= IF_DC_pc;
+                    IF_out_jump_buf <= IF_DC_jump;
                     bypass          <= 1'b0;
                 end
             end
             else begin
                 IM_r_data_buf   <= IM_r_data_buf;
                 IF_out_pc_buf   <= IF_out_pc_buf;
+                IF_out_jump_buf <= IF_out_jump_buf;
                 bypass          <= DC_ready;
             end
         end
@@ -97,17 +99,19 @@ module IF_stage(
         end
     end
 
-    // Main output 
+    // Main output
     always_comb begin
         if(mispredict) begin
             IF_out_inst = 32'h0;
-            IF_out_pc   = 16'h0;
+            IF_out_pc   = 32'h0;
+            IF_out_jump = 1'b0;
             IM_ready    = 1'b1;
             IF_valid    = 1'b0;
         end
         else begin
-            IF_out_inst = bypass ? IM_r_data : IM_r_data_buf;
-            IF_out_pc   = bypass ? IF_DC_pc : IF_out_pc_buf;
+            IF_out_inst = bypass ? IM_r_data  : IM_r_data_buf;
+            IF_out_pc   = bypass ? IF_DC_pc   : IF_out_pc_buf;
+            IF_out_jump = bypass ? IF_DC_jump : IF_out_jump_buf;
             IM_ready    = bypass;
             IF_valid    = temp;
         end

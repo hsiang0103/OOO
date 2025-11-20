@@ -10,6 +10,7 @@
 `include "CSR.sv"
 `include "Rename.sv"
 `include "ROB.sv"
+`include "BPU.sv"
 `include "konata.sv"
 `include "commit_tracker.sv"
 
@@ -35,6 +36,7 @@ module CPU (
     // IF stage output 
     logic [31:0] IF_out_pc;
     logic [31:0] IF_out_inst;
+    logic        IF_out_jump;
     logic        IF_valid;
     
     // DC stage output
@@ -51,6 +53,7 @@ module CPU (
     logic [2:0]  DC_out_rob_idx;
     logic [1:0]  DC_out_LQ_tail;
     logic [1:0]  DC_out_SQ_tail;
+    logic        DC_out_jump;
     logic        DC_valid;
     logic        dispatch_ready;
     
@@ -71,6 +74,7 @@ module CPU (
     logic [1:0]  RR_out_st_idx;
     logic [2:0]  RR_out_rob_idx;
     logic [6:0]  RR_out_rd;
+    logic        RR_out_jump;
     logic        RR_valid;
     
     // Rename stage wires
@@ -148,6 +152,11 @@ module CPU (
     logic [31:0] commit_inst;
     logic        commit;
     logic [2:0]  commit_rob_idx;
+
+    // BPU 
+    logic        is_jb;
+    logic [31:0] next_pc;
+    logic        jump_out;
     
     // Handshake signals
     logic        DC_ready;
@@ -161,6 +170,9 @@ module CPU (
     IF_stage IF (
         .clk(clk),
         .rst(rst),
+        // BPU
+        .next_pc(next_pc),
+        .next_jump(next_jump),
         // From IM
         .IM_r_data(IM_r_data),
         // From IS stage
@@ -174,6 +186,7 @@ module CPU (
         // To DC stage
         .IF_out_pc(IF_out_pc),
         .IF_out_inst(IF_out_inst),
+        .IF_out_jump(IF_out_jump),
         // Handshake signals
         .IF_valid(IF_valid),
         .DC_ready(DC_ready)
@@ -185,6 +198,7 @@ module CPU (
         // IF stage
         .DC_in_pc(IF_out_pc),
         .DC_in_inst(IF_out_inst),
+        .DC_in_jump(IF_out_jump),
         // rename
         .P_rs1(P_rs1),
         .P_rs2(P_rs2),
@@ -218,6 +232,7 @@ module CPU (
         .DC_out_LQ_tail(DC_out_LQ_tail),
         .DC_out_SQ_tail(DC_out_SQ_tail),
         .DC_out_rob_idx(DC_out_rob_idx),
+        .DC_out_jump(DC_out_jump),
         // mispredict
         .mispredict(mispredict),
         .stall(stall),
@@ -251,6 +266,7 @@ module CPU (
         .IS_in_rob_idx(DC_out_rob_idx),        
         .IS_in_LQ_tail(DC_out_LQ_tail),
         .IS_in_SQ_tail(DC_out_SQ_tail),
+        .IS_in_jump(DC_out_jump),
         // rename
         .IS_in_rs1_valid(DC_P_rs1_valid),
         .IS_in_rs2_valid(DC_P_rs2_valid),
@@ -268,6 +284,7 @@ module CPU (
         .RR_out_st_idx(RR_out_st_idx),
         .RR_out_rob_idx(RR_out_rob_idx),
         .RR_out_rd(RR_out_rd),
+        .RR_out_jump(RR_out_jump),
         // EX forwarding
         .EX_in_data(EX_out_data),
         .EX_in_valid(EX_out_valid),
@@ -307,6 +324,7 @@ module CPU (
         .EXE_in_f3(RR_out_f3),
         .EXE_in_f7(RR_out_f7),
         .EXE_in_rob_idx(RR_out_rob_idx),
+        .EXE_in_jump(RR_out_jump),
         // LSU
         .ld_i_valid(ld_i_valid),
         .st_i_valid(st_i_valid),
@@ -319,6 +337,10 @@ module CPU (
         .ld_o_rd(ld_o_rd),
         .ld_o_data(ld_o_data),
         // mispredict
+        .DC_in_jump(IF_out_jump),
+        .IF_valid(IF_valid),
+        .DC_ready(DC_ready),
+        .is_jb(is_jb),
         .jb_pc(jb_pc),  
         .mispredict(mispredict), 
         .mis_rob_idx(mis_rob_idx),
@@ -454,6 +476,21 @@ module CPU (
         .commit_rob_idx(commit_rob_idx)
     );
 
+    // BPU
+    BPU BPU (
+        .clk(clk),
+        .rst(rst),
+        .IM_addr(IM_r_addr),
+        .DC_ready(DC_ready),
+        .RR_valid(RR_valid),
+        .EX_ready(EX_ready[0]),
+        .RR_out_pc(RR_out_pc),
+        .mispredict(mispredict),
+        .is_jb(is_jb),
+        .jb_pc(jb_pc),
+        .jump_out(next_jump),
+        .next_pc(next_pc)
+    );
 
     // synopsys translate_off
     konata k1(
