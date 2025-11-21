@@ -61,7 +61,6 @@ module DC_stage(
     logic           f_rs1, f_rs2, f_rd;
     logic           use_rd;
     logic           st_valid, ld_valid;
-    logic           dispatch_ready;
     
     // Decode
     assign DC_op            = DC_in_inst[6:2];

@@ -159,6 +159,16 @@ module CPU (
     logic        is_jb;
     logic [31:0] next_pc;
     logic        jump_out;
+
+    // rollback
+    logic        rollback_en_0;
+    logic [5:0]  rollback_A_rd_0;
+    logic [6:0]  rollback_P_rd_old_0;
+    logic [6:0]  rollback_P_rd_new_0;
+    logic        rollback_en_1;
+    logic [5:0]  rollback_A_rd_1;
+    logic [6:0]  rollback_P_rd_old_1;
+    logic [6:0]  rollback_P_rd_new_1;
     
     // Handshake signals
     logic        DC_ready;
@@ -433,7 +443,16 @@ module CPU (
         .commit_P_rd_old(commit_P_rd_old),
         .commit_A_rd(commit_A_rd),
         // recovery
-        .recovery(recovery)
+        .recovery(recovery),
+        // rollback
+        .rollback_en_0(rollback_en_0),
+        .rollback_A_rd_0(rollback_A_rd_0),
+        .rollback_P_rd_old_0(rollback_P_rd_old_0),
+        .rollback_P_rd_new_0(rollback_P_rd_new_0),
+        .rollback_en_1(rollback_en_1),
+        .rollback_A_rd_1(rollback_A_rd_1),
+        .rollback_P_rd_old_1(rollback_P_rd_old_1),
+        .rollback_P_rd_new_1(rollback_P_rd_new_1)
     );
     
 
@@ -449,7 +468,7 @@ module CPU (
         .DC_rob_idx(DC_rob_idx),
         .ROB_ready(rob_ready),
         // Issue/Register Read
-        .RR_valid(RR_valid),
+        .RR_valid(RR_valid && EX_ready[RR_out_fu_sel]),
         .RR_rob_idx(RR_out_rob_idx),
         // Write Back
         .WB_valid(WB_out_valid),
@@ -473,6 +492,15 @@ module CPU (
         // recovery
         .stall(stall),
         .recovery(recovery),
+        // rollback
+        .rollback_en_0(rollback_en_0),
+        .rollback_A_rd_0(rollback_A_rd_0),
+        .rollback_P_rd_old_0(rollback_P_rd_old_0),
+        .rollback_P_rd_new_0(rollback_P_rd_new_0),
+        .rollback_en_1(rollback_en_1),
+        .rollback_A_rd_1(rollback_A_rd_1),
+        .rollback_P_rd_old_1(rollback_P_rd_old_1),
+        .rollback_P_rd_new_1(rollback_P_rd_new_1),
         // konata
         .commit(commit),
         .commit_rob_idx(commit_rob_idx)

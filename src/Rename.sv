@@ -25,7 +25,16 @@ module Rename (
     input   logic [6:0]     commit_P_rd_old,
     input   logic [5:0]     commit_A_rd,
     // recovery 
-    input   logic           recovery
+    input   logic           recovery,
+    // rollback
+    input   logic           rollback_en_0,
+    input   logic [5:0]     rollback_A_rd_0,
+    input   logic [6:0]     rollback_P_rd_old_0,
+    input   logic [6:0]     rollback_P_rd_new_0,
+    input   logic           rollback_en_1,
+    input   logic [5:0]     rollback_A_rd_1,
+    input   logic [6:0]     rollback_P_rd_old_1,
+    input   logic [6:0]     rollback_P_rd_new_1
 );
 
 logic [6:0]     RAT [0:63];         // Register Alias Table
@@ -61,14 +70,15 @@ always_ff @(posedge clk) begin
         end
     end
     else begin
-        if(recovery) begin
-            free_t  <= free_h;
+        if (rollback_en_0 || rollback_en_1) begin
+            free_t <= free_t - (rollback_en_0 && rollback_P_rd_new_0 != 7'd0)
+                             - (rollback_en_1 && rollback_P_rd_new_1 != 7'd0);
         end
-        else if(allocate_rd) begin
-            free_t  <= free_t + 4'd1;
+        else if (allocate_rd) begin
+            free_t <= free_t + 4'd1;
         end
         else begin
-            free_t  <= free_t;
+            free_t <= free_t;
         end
 
         if(commit_wb_en) begin
@@ -84,6 +94,11 @@ always_ff @(posedge clk) begin
             if(WB_rd == i && WB_valid) begin
                 valid_map[i] <= 1'b1;
             end
+            // rollback
+            if ((rollback_en_0 && rollback_P_rd_new_0 == i && rollback_P_rd_new_0 != 7'd0) || 
+                (rollback_en_1 && rollback_P_rd_new_1 == i && rollback_P_rd_new_1 != 7'd0)) begin
+                valid_map[i] <= 1'b1;
+            end
             // dispatch
             if(P_rd_new == i && allocate_rd) begin
                 valid_map[i] <= 1'b0;
@@ -91,12 +106,17 @@ always_ff @(posedge clk) begin
         end
 
         for (int i = 0; i < 64; i = i + 1) begin : RAT_update
-            // recovery
-            if (recovery) begin
-                RAT[i] <= CMT[i];
+            // rollback
+            if (rollback_en_0 || rollback_en_1) begin
+                if (rollback_en_1 && rollback_A_rd_1 == i && rollback_P_rd_new_1 != 7'd0) begin
+                    RAT[i] <= rollback_P_rd_old_1;
+                end
+                else if (rollback_en_0 && rollback_A_rd_0 == i && rollback_P_rd_new_0 != 7'd0) begin
+                    RAT[i] <= rollback_P_rd_old_0;
+                end
             end
             // rename
-            else if(A_rd == i && allocate_rd) begin
+            else if (A_rd == i && allocate_rd) begin
                 RAT[i] <= P_rd_new;
             end
             // do nothing
