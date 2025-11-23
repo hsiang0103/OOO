@@ -45,7 +45,7 @@ CPU CPU(
     .IM_ready(IM_ready),
     // DM
     .DM_rd_data(DM_rd_data),
-    .DM_c_en(DM_c_en),
+    .DM_c_en(1'b0),
     .DM_r_en(DM_r_en),
     .DM_w_en(DM_w_en),
     .DM_addr(DM_addr),
@@ -66,7 +66,7 @@ SRAM_wrapper IM1(
 SRAM_wrapper DM1(
     .CLK(clk),
     .RST(rst),
-    .CEB(DM_c_en),
+    .CEB(1'b0),
     .WEB(DM_r_en), 
     .BWEB(DM_w_en),
     .A(DM_addr[15:2]),

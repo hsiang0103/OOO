@@ -391,6 +391,7 @@ module CPU (
         // EX stage
         .ld_i_valid(ld_i_valid),
         .st_i_valid(st_i_valid),
+        .funct3(RR_out_f3),
         .lsu_i_rob_idx(lsu_i_rob_idx),
         .lsu_i_rs1_data(lsu_i_rs1_data),
         .lsu_i_rs2_data(lsu_i_rs2_data),

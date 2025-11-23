@@ -17,6 +17,7 @@ module LSU (
     input   logic [1:0]     EX_ld_idx,
     input   logic [1:0]     EX_st_idx,
     input   logic           ld_i_ready,
+    input   logic [2:0]     funct3,
     output  logic           ld_o_valid,
     output  logic [2:0]     ld_o_rob_idx,
     output  logic [6:0]     ld_o_rd,
@@ -47,6 +48,7 @@ module LSU (
         logic [31:0]    addr;
         logic [31:0]    data;
         logic [2:0]     rob_idx;
+        logic [2:0]     f3;
         logic           valid;
         logic           issued;
     } SQ_entry;
@@ -56,6 +58,7 @@ module LSU (
         logic [1:0]     SQ_t;
         logic [6:0]     rd;
         logic [2:0]     rob_idx;
+        logic [2:0]     f3;
         logic           valid;
         logic           issued;
         logic           done;
@@ -79,12 +82,9 @@ module LSU (
 
     // Load handle
     logic [3:0] can_request;
-    logic [3:0] can_forward;
     logic [3:0] age_mask [0:3];
     logic [3:0] sq_addr_cmp [0:3];
     logic [1:0] LQ_order [0:3];
-    logic [3:0] st_ld_addr [0:3];
-    logic [3:0] st_ld_forwarding [0:3];
 
     logic [1:0] load_request_idx;
     logic       load_request_valid;
@@ -108,14 +108,11 @@ module LSU (
                     age_mask[i][j] = 0;
                 end
                 sq_addr_cmp[i][j] = SQ[j].valid && (!SQ[j].issued || SQ[j].addr == LQ[i].addr);
-                st_ld_addr[i][j]  = SQ[j].issued && SQ[j].addr == LQ[i].addr;
             end
         end
 
         for(int i = 0; i < 4; i = i + 1) begin
-            st_ld_forwarding[i] = (LQ[i].valid)? st_ld_addr[i] & age_mask[i] : 4'b0;
             can_request[i]      = ((sq_addr_cmp[i] & age_mask[i]) == 4'b0000) && LQ[i].issued && !LQ[i].done;
-            can_forward[i]      = st_ld_forwarding[i] != 4'b0000;
         end
 
         for(int i = 0; i < 4; i = i + 1) begin
@@ -130,23 +127,8 @@ module LSU (
             default: load_request_idx = 2'b00;
         endcase
         load_request_valid = |can_request;
-        priority case(1'b1)
-            can_forward[LQ_order[0]]: st_ld_forwarding_idx = LQ_order[0];
-            can_forward[LQ_order[1]]: st_ld_forwarding_idx = LQ_order[1];
-            can_forward[LQ_order[2]]: st_ld_forwarding_idx = LQ_order[2];
-            can_forward[LQ_order[3]]: st_ld_forwarding_idx = LQ_order[3];
-            default: st_ld_forwarding_idx = 2'b00;
-        endcase
-        st_ld_forwarding_valid = |can_forward;
-        // TODO : SQ select
+        // TODO : forwarding logic
     end
-
-    // DM interface
-    assign DM_r_en          = !st_commit;               // read when not commit
-    assign DM_w_en          = {32{!st_commit}};         // bit write enable
-    assign DM_addr          = DM_r_en ? LQ[load_request_idx].addr : SQ[SQ_h].addr;
-    assign DM_w_data        = SQ[SQ_h].data;
-    assign DM_c_en          = 1'b0;                     // always enable 
 
     logic load_done;
     logic [1:0] load_request_idx_reg;
@@ -161,10 +143,67 @@ module LSU (
             load_request_idx_reg    <= load_request_idx;
         end    
     end
-    assign ld_o_data        = load_done ? DM_rd_data : '0;
+    //assign ld_o_data        = load_done ? DM_rd_data : '0;
     assign ld_o_rob_idx     = load_done ? LQ[load_request_idx_reg].rob_idx : '0;
     assign ld_o_rd          = load_done ? LQ[load_request_idx_reg].rd : '0;
     assign ld_o_valid       = load_done ? 1'b1 : 1'b0;
+
+    always_comb begin
+        case (LQ[load_request_idx_reg].f3)
+            `LB:  ld_o_data = {{24{DM_rd_data[7]}}, DM_rd_data[7:0]};
+            `LBU: ld_o_data = {24'b0, DM_rd_data[7:0]};
+            `LH:  ld_o_data = {{16{DM_rd_data[15]}}, DM_rd_data[15:0]};
+            `LHU: ld_o_data = {16'b0, DM_rd_data[15:0]};
+            `LW:  ld_o_data = DM_rd_data;
+            default: ld_o_data = DM_rd_data;
+        endcase
+    end
+
+    // DM interface
+    assign DM_r_en          = !st_commit;   // read when not commit
+    assign DM_addr          = DM_r_en ? LQ[load_request_idx].addr : SQ[SQ_h].addr;
+
+    always_comb begin
+        case (SQ[SQ_h].f3)
+            `SB: begin
+                case (SQ[SQ_h].addr[1:0])
+                    2'b00:   DM_w_en = 32'hFFFFFF00;
+                    2'b01:   DM_w_en = 32'hFFFF00FF;
+                    2'b10:   DM_w_en = 32'hFF00FFFF;
+                    2'b11:   DM_w_en = 32'h00FFFFFF;
+                endcase
+            end
+            `SH:begin
+                case (SQ[SQ_h].addr[1])
+                    1'b0:    DM_w_en = 32'hFFFF0000;
+                    1'b1:    DM_w_en = 32'h0000FFFF;
+                endcase
+            end
+            `SW:             DM_w_en = 32'h00000000;
+            default:         DM_w_en = 32'hFFFFFFFF;
+        endcase
+    end
+
+    always_comb begin
+        case (SQ[SQ_h].f3)
+            `SB: begin
+                case (SQ[SQ_h].addr[1:0])
+                    2'b00:   DM_w_data = {24'b0, SQ[SQ_h].data[7:0]};
+                    2'b01:   DM_w_data = {16'b0, SQ[SQ_h].data[7:0], 8'b0};
+                    2'b10:   DM_w_data = {8'b0, SQ[SQ_h].data[7:0], 16'b0};
+                    2'b11:   DM_w_data = {SQ[SQ_h].data[7:0], 24'b0};
+                endcase
+            end
+            `SH:begin
+                case (SQ[SQ_h].addr[1])
+                    1'b0:    DM_w_data = {16'b0, SQ[SQ_h].data[15:0]};
+                    1'b1:    DM_w_data = {SQ[SQ_h].data[15:0], 16'b0};
+                endcase
+            end
+            `SW:             DM_w_data = SQ[SQ_h].data;
+            default:         DM_w_data = 32'h0;
+        endcase
+    end
 
     // LQ and SQ management
     always_ff @(posedge clk) begin
@@ -193,16 +232,13 @@ module LSU (
                 // Issue
                 if(EX_ld && i == EX_ld_idx) begin
                     LQ[i].issued    <= 1'b1;
+                    LQ[i].f3        <= funct3;
                     LQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
                 end
                 // Execute 
                 if(load_request_valid && i == load_request_idx && !st_commit) begin
                     LQ[i].done  <= 1'b1;
                 end
-                // Forwarding from Store
-                // if(st_ld_forwarding_valid && i == st_ld_forwarding_idx) begin
-                //     LQ[i].done  <= 1'b1;
-                // end 
                 // Commit
                 if(ld_commit && i == LQ_h) begin
                     LQ[i]       <= '0;
@@ -230,7 +266,7 @@ module LSU (
             for(int i = 0; i < 4; i = i + 1) begin : SQ_operation
                 // Dispatch
                 if(DC_st && st_ready && i == SQ_t) begin
-                    SQ[i].valid  <= 1'b1;
+                    SQ[i].valid     <= 1'b1;
                     SQ[i].rob_idx   <= DC_rob_idx;
                 end
                 // Issue
@@ -238,6 +274,7 @@ module LSU (
                     SQ[i].issued    <= 1'b1;
                     SQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
                     SQ[i].data      <= lsu_i_rs2_data;
+                    SQ[i].f3        <= funct3;
                 end
                 // Commit
                 if(st_commit && i == SQ_h) begin
