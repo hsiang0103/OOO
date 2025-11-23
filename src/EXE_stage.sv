@@ -126,7 +126,8 @@ module EXE_stage(
     always_comb begin
         is_jb = (EXE_in_op == `B_TYPE || EXE_in_op == `JAL);
     end
-    assign mispredict   = EXE_in_jump != jump && RR_valid && EXE_in_fu_sel == 3'd0 && alu_bypass;
+    assign mispredict   = ((EXE_in_jump != jump && EXE_in_op == `B_TYPE) || EXE_in_op == `JALR) && 
+                           (RR_valid && EXE_in_fu_sel == 3'd0 && alu_bypass);
     assign mis_rob_idx  = EXE_in_rob_idx;
 
     // =======================================================

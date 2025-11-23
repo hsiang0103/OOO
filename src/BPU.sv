@@ -13,7 +13,10 @@ module BPU (
     input   logic [31:0] jb_pc,
     // To IF stage
     output  logic [31:0] next_pc,
-    output  logic jump_out
+    output  logic jump_out,
+    // early branch
+    input   logic           DC_mispredict,
+    input   logic [31:0]    DC_redirect_pc
 );
 
     // Branch Target Buffer
@@ -39,6 +42,10 @@ module BPU (
         if(mispredict) begin
             next_pc     = jb_pc + 32'd4;
             jump_out    = 1'b0;
+        end
+        else if(DC_mispredict) begin
+            next_pc     = DC_redirect_pc + 32'd4;
+            jump_out    = 1'b1;
         end
         else if(DC_ready) begin
             if((BTB_valid[pc_index] && (BTB_tag[pc_index] == pc_tag))) begin

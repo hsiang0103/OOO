@@ -42,6 +42,9 @@ module DC_stage(
     // mispredict
     input   logic           mispredict,
     input   logic           stall,
+    // early branch
+    output  logic           DC_mispredict,
+    output  logic [31:0]    DC_redirect_pc,
     // LSU
     input   logic [1:0]     LQ_tail,
     input   logic [1:0]     SQ_tail,
@@ -86,14 +89,14 @@ module DC_stage(
     assign DC_P_rd_new      = P_rd_new;
     assign DC_P_rd_old      = P_rd_old;
     // FU selection
-    // 0: alu/csr   0   
-    // 1: mul       0   
-    // 2: div/rem   0   
-    // 3: falu      1
-    // 4: fmul      1
-    // 5: fdiv      1
-    // 6: load      2
-    // 7: store     2
+    // 0: alu/csr 
+    // 1: mul     
+    // 2: div/rem 
+    // 3: falu    
+    // 4: fmul    
+    // 5: fdiv    
+    // 6: load    
+    // 7: store   
     always_comb begin
         case (DC_op)
             `R_TYPE : DC_fu_sel = {2'b0, DC_f7[0]}; // M extension
@@ -169,8 +172,8 @@ module DC_stage(
     logic temp;
     always @(posedge clk) begin
         if (rst) begin      
-            o_data   <= '0;
-            DC_valid     <= 1'b0; 
+            o_data          <= '0;
+            DC_valid        <= 1'b0; 
         end
         else begin      
             if (mispredict || stall) begin
@@ -203,4 +206,13 @@ module DC_stage(
     assign DC_out_jump     = o_data.jump   ;
     // assign DC_valid        = temp; 
     assign DC_ready        = dispatch_ready;
+
+
+    // early branch 
+    logic [31:0] jal_target;
+    assign jal_target       = DC_pc + DC_imm;
+
+    assign DC_mispredict    = (DC_op == `JAL) && (!DC_in_jump) && IF_valid; 
+    assign DC_redirect_pc   = jal_target;
+    
 endmodule

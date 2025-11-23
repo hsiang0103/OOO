@@ -31,7 +31,8 @@ module konata(
     // Flush signals
     input logic        mispredict,
     input logic [31:0] jb_pc,
-    input logic [7:0]  flush_mask
+    input logic [7:0]  flush_mask,
+    input logic        DC_mispredict
 );
 
     // File descriptor
@@ -395,6 +396,11 @@ module konata(
                         insn_tracker[i].pc          <= IM_r_addr;
                         insn_tracker[i].if_started  <= 1'b1;
                         insn_id++;
+
+                        /*if(DC_mispredict && !mispredict) begin
+                            insn_tracker[i].retired <= 1'b1;
+                            insn_tracker[i].flushed <= 1'b1;
+                        end*/
                         break;
                     end
                 end

@@ -7,6 +7,8 @@ module IF_stage(
         // From IM
         input   logic [31:0]    IM_r_data,
         // From IS stage
+        input   logic           DC_mispredict,
+        input   logic [31:0]    DC_redirect_pc,
         input   logic           mispredict,
         input   logic           stall,
         // From EXE stage
@@ -28,7 +30,7 @@ module IF_stage(
     logic [31:0] IF_DC_pc;
     logic        IF_DC_jump;
 
-    assign IM_r_addr = mispredict ? jb_pc : pc;
+    assign IM_r_addr = mispredict ? jb_pc : (DC_mispredict)? DC_redirect_pc : pc;
 
     // PC register
     always_ff @(posedge clk) begin
@@ -101,19 +103,10 @@ module IF_stage(
 
     // Main output
     always_comb begin
-        if(mispredict) begin
-            IF_out_inst = 32'h0;
-            IF_out_pc   = 32'h0;
-            IF_out_jump = 1'b0;
-            IM_ready    = 1'b1;
-            IF_valid    = 1'b0;
-        end
-        else begin
-            IF_out_inst = bypass ? IM_r_data  : IM_r_data_buf;
-            IF_out_pc   = bypass ? IF_DC_pc   : IF_out_pc_buf;
-            IF_out_jump = bypass ? IF_DC_jump : IF_out_jump_buf;
-            IM_ready    = bypass;
-            IF_valid    = temp;
-        end
+        IF_out_inst = bypass ? IM_r_data  : IM_r_data_buf;
+        IF_out_pc   = bypass ? IF_DC_pc   : IF_out_pc_buf;
+        IF_out_jump = bypass ? IF_DC_jump : IF_out_jump_buf;
+        IM_ready    = bypass;
+        IF_valid    = temp;
     end
 endmodule
