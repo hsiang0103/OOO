@@ -85,7 +85,6 @@ module EXE_stage(
         .rs2_data       (EXE_in_rs2_data),
         .imm            (EXE_in_imm),
         .pc             (EXE_in_pc),
-
         // control
         .alu_i_valid    (RR_valid && EXE_in_fu_sel == 3'd0),
         .alu_i_rob_idx  (EXE_in_rob_idx),
@@ -94,7 +93,6 @@ module EXE_stage(
         .alu_o_rob_idx  (alu_o_data.rob_idx),
         .alu_o_rd       (alu_o_data.rd),
         .alu_o_data     (alu_o_data.data),
-
         // jump
         .alu_jb_out     (jb_pc),
         .jump           (jump)

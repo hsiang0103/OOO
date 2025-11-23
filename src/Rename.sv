@@ -24,8 +24,6 @@ module Rename (
     input   logic [6:0]     commit_P_rd_new,
     input   logic [6:0]     commit_P_rd_old,
     input   logic [5:0]     commit_A_rd,
-    // recovery 
-    input   logic           recovery,
     // rollback
     input   logic           rollback_en_0,
     input   logic [5:0]     rollback_A_rd_0,
@@ -37,99 +35,124 @@ module Rename (
     input   logic [6:0]     rollback_P_rd_new_1
 );
 
-logic [6:0]     RAT [0:63];         // Register Alias Table
-logic [6:0]     CMT [0:63];         // Commit Map Table
-logic [79:0]    valid_map;          // Valid Map
-logic [6:0]     freelist [0:15];    // Free List
-logic [3:0]     free_h, free_t;     // Free List Head and Tail
+    logic [6:0]     RAT [0:63];         // Register Alias Table
+    logic [6:0]     CMT [0:63];         // Commit Map Table
+    logic [79:0]    valid_map;          // Valid Map
+    logic [6:0]     freelist [0:15];    // Free List
+    logic [3:0]     free_h, free_t;     // Free List Head and Tail
+    logic [1:0]     rollback_count;
 
-assign P_rs1    = RAT[A_rs1];
-assign P_rs2    = RAT[A_rs2];
-assign P_rd_old = RAT[A_rd];
-assign P_rd_new = (allocate_rd) ? freelist[free_t] : 7'd0;
+    // Decode register mappings
+    assign P_rs1    = RAT[A_rs1];
+    assign P_rs2    = RAT[A_rs2];
+    assign P_rd_old = RAT[A_rd];
+    assign P_rd_new = (allocate_rd && A_rd != 6'd0) ? freelist[free_t] : 7'd0;
 
-logic use_rs1, use_rs2;
+    // Dispatch register valid bits
+    logic use_rs1, use_rs2;
+    assign use_rs1  = DC_op != `LUI    && DC_op != `AUIPC  && DC_op != `JAL;
+    assign use_rs2  = DC_op == `R_TYPE || DC_op == `S_TYPE || DC_op == `FSTORE || DC_op == `B_TYPE || DC_op == `F_TYPE;
+    assign DC_P_rs1_valid   = !use_rs1 || valid_map[DC_rs1] || (DC_rs1 == commit_P_rd_new && commit_wb_en);
+    assign DC_P_rs2_valid   = !use_rs2 || valid_map[DC_rs2] || (DC_rs2 == commit_P_rd_new && commit_wb_en);
 
-assign use_rs1  = DC_op != `LUI    && DC_op != `AUIPC  && DC_op != `JAL;
-assign use_rs2  = DC_op == `R_TYPE || DC_op == `S_TYPE || DC_op == `FSTORE || DC_op == `B_TYPE || DC_op == `F_TYPE;
-
-assign DC_P_rs1_valid   = !use_rs1 || valid_map[DC_rs1] || (DC_rs1 == commit_P_rd_new && commit_wb_en);
-assign DC_P_rs2_valid   = !use_rs2 || valid_map[DC_rs2] || (DC_rs2 == commit_P_rd_new && commit_wb_en);
-
-always_ff @(posedge clk) begin
-    if (rst) begin
-        valid_map       <= 80'hFFFFFFFFFFFFFFFFFFFF;
-        free_h          <= 4'd0;
-        free_t          <= 4'd0;
-        for (int i = 0; i < 16; i = i + 1) begin
-            freelist[i]   <= i + 64;
+    // Rollback count
+    always_comb begin
+        rollback_count = 2'd0;
+        if (rollback_en_0 && rollback_P_rd_new_0 != 7'd0) begin
+            rollback_count = rollback_count + 2'd1;
         end
-        for (int i = 0; i < 64; i = i + 1) begin
-            RAT[i] <= i;
-            CMT[i] <= i;
+        if (rollback_en_1 && rollback_P_rd_new_1 != 7'd0) begin
+            rollback_count = rollback_count + 2'd1;
         end
     end
-    else begin
-        if (rollback_en_0 || rollback_en_1) begin
-            free_t <= free_t - (rollback_en_0 && rollback_P_rd_new_0 != 7'd0)
-                             - (rollback_en_1 && rollback_P_rd_new_1 != 7'd0);
-        end
-        else if (allocate_rd) begin
-            free_t <= free_t + 4'd1;
+
+    // ====================
+    // Free List Management
+    // ====================
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            free_h <= '0;
+            free_t <= '0;
+            for (int i = 0; i < 16; i = i + 1) begin
+                freelist[i]   <= i + 64;
+            end
         end
         else begin
-            free_t <= free_t;
-        end
-
-        if(commit_wb_en) begin
-            free_h  <= free_h + 4'd1;
-        end
-
-        for(int i = 0; i < 80; i = i + 1) begin : valid_map_control
-            // recovery
-            if(recovery) begin
-                valid_map[i] <= 1'b1;
-            end
-            // write back
-            if(WB_rd == i && WB_valid) begin
-                valid_map[i] <= 1'b1;
-            end
-            // rollback
-            if ((rollback_en_0 && rollback_P_rd_new_0 == i && rollback_P_rd_new_0 != 7'd0) || 
-                (rollback_en_1 && rollback_P_rd_new_1 == i && rollback_P_rd_new_1 != 7'd0)) begin
-                valid_map[i] <= 1'b1;
-            end
-            // dispatch
-            if(P_rd_new == i && allocate_rd) begin
-                valid_map[i] <= 1'b0;
-            end
-        end
-
-        for (int i = 0; i < 64; i = i + 1) begin : RAT_update
-            // rollback
             if (rollback_en_0 || rollback_en_1) begin
-                if (rollback_en_1 && rollback_A_rd_1 == i && rollback_P_rd_new_1 != 7'd0) begin
-                    RAT[i] <= rollback_P_rd_old_1;
-                end
-                else if (rollback_en_0 && rollback_A_rd_0 == i && rollback_P_rd_new_0 != 7'd0) begin
-                    RAT[i] <= rollback_P_rd_old_0;
-                end
+                free_t <= free_t - rollback_count; 
             end
-            // rename
-            else if (A_rd == i && allocate_rd) begin
-                RAT[i] <= P_rd_new;
+            else if (allocate_rd) begin
+                free_t <= free_t + 4'b1;
             end
-            // do nothing
             else begin
-                RAT[i] <= RAT[i];
+                free_t <= free_t;
             end
-        end
-    
-        if (commit_wb_en) begin
-            freelist[free_h]    <= commit_P_rd_old;
-            CMT[commit_A_rd]    <= commit_P_rd_new;
+
+            if (commit_wb_en) begin
+                free_h              <= free_h + 4'b1;
+                freelist[free_h]    <= commit_P_rd_old;
+            end
         end
     end
-end
+
+    // ====================
+    // Valid Map Management
+    // ====================
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            valid_map       <= 80'hFFFFFFFFFFFFFFFFFFFF;
+        end
+        else begin
+            for(int i = 0; i < 80; i = i + 1) begin : valid_map_control
+                // rollback
+                if ((rollback_en_0 && rollback_P_rd_new_0 == i && rollback_P_rd_new_0 != 7'd0) || 
+                    (rollback_en_1 && rollback_P_rd_new_1 == i && rollback_P_rd_new_1 != 7'd0)) begin
+                    valid_map[i] <= 1'b1;
+                end
+                // write back
+                else if(WB_rd == i && WB_valid) begin
+                    valid_map[i] <= 1'b1;
+                end
+                // dispatch
+                else if(P_rd_new == i && allocate_rd) begin
+                    valid_map[i] <= 1'b0;
+                end
+                else begin
+                    valid_map[i] <= valid_map[i];
+                end
+            end
+        end
+    end
+
+    // ==============
+    // RAT Management
+    // ==============
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            for (int i = 0; i < 64; i = i + 1) begin
+                RAT[i] <= i;
+            end
+        end
+        else begin
+            for (int i = 1; i < 64; i = i + 1) begin : RAT_update
+                // rollback
+                if (rollback_en_0 || rollback_en_1) begin
+                    if (rollback_en_1 && rollback_A_rd_1 == i && rollback_P_rd_new_1 != 7'd0) begin
+                        RAT[i] <= rollback_P_rd_old_1;
+                    end
+                    else if (rollback_en_0 && rollback_A_rd_0 == i && rollback_P_rd_new_0 != 7'd0) begin
+                        RAT[i] <= rollback_P_rd_old_0;
+                    end
+                end
+                // rename
+                else if (A_rd == i && allocate_rd) begin
+                    RAT[i] <= P_rd_new;
+                end
+                else begin
+                    RAT[i] <= RAT[i];
+                end
+            end
+        end
+    end
 
 endmodule

@@ -1,4 +1,5 @@
 module ALU (
+    // data
     input   logic           [4:0]   opcode,
     input   logic           [2:0]   funct3,
     input   logic                   funct7,
@@ -6,7 +7,6 @@ module ALU (
     input   logic signed    [31:0]  rs2_data,
     input   logic signed    [31:0]  imm,
     input   logic           [31:0]  pc,
-
     // control
     input   logic                   alu_i_valid,
     input   logic           [2:0]   alu_i_rob_idx,
@@ -15,7 +15,6 @@ module ALU (
     output  logic           [2:0]   alu_o_rob_idx,
     output  logic           [6:0]   alu_o_rd,
     output  logic           [31:0]  alu_o_data,
-    
     // jump
     output  logic           [31:0]  alu_jb_out,
     output  logic                   jump
@@ -24,28 +23,25 @@ module ALU (
     logic signed [31:0] alu_out;
 
     always_comb begin
-        case (opcode)
-            `I_TYPE: operand2 = imm;
-            default: operand2 = rs2_data;
-        endcase
         operand1 = rs1_data;
+        operand2 = (opcode == `I_TYPE)? imm : rs2_data;
 
         case (opcode)
             `R_TYPE, `I_TYPE: begin
                 unique case (funct3)
                     `ADD: begin
                         if(opcode == `I_TYPE) begin
-                            alu_out = rs1_data + imm; // ADDI
+                            alu_out = operand1 + operand2;
                         end
                         else begin
-                            alu_out = (funct7)? rs1_data - rs2_data : rs1_data + rs2_data; // SUB ADD
+                            alu_out = (funct7)? operand1 - operand2 : operand1 + operand2; 
                         end
                     end
                     `SLL:   alu_out = operand1 << operand2[4:0];
                     `SLT:   alu_out = (operand1 < operand2)? 32'd1 : 32'd0; 
                     `SLTU:  alu_out = ($unsigned(operand1) < $unsigned(operand2))? 32'd1 : 32'd0;
                     `XOR:   alu_out = operand1 ^ operand2;
-                    `SRL:   alu_out = (funct7)? $signed(operand1) >>> operand2[4:0] : operand1 >> operand2[4:0]; // SRA SRL
+                    `SRL:   alu_out = (funct7)? $signed(operand1) >>> operand2[4:0] : operand1 >> operand2[4:0]; 
                     `OR:    alu_out = operand1 | operand2;
                     `AND:   alu_out = operand1 & operand2;                 
                 endcase
@@ -65,7 +61,6 @@ module ALU (
             `JAL:    alu_out = pc + 32'd4;  // JAL
             `JALR:   alu_out = pc + 32'd4;  // JALR
             `LUI:    alu_out = imm;         // LUI
-            `CSR:    alu_out = 32'b0;       // CSR
             default: alu_out = 32'b0;
         endcase
         
@@ -76,11 +71,16 @@ module ALU (
             default:    alu_jb_out = 32'b0;
         endcase
 
-        case (opcode)
-            `JAL, `JALR:    jump = 1'b1 && alu_i_valid;
-            `B_TYPE:        jump = alu_out[0] && alu_i_valid;
-            default:        jump = 1'b0;
-        endcase
+        if(alu_i_valid) begin
+            case (opcode)
+                `JALR:      jump = 1'b1;
+                `B_TYPE:    jump = alu_out[0];
+                default:    jump = 1'b0;
+            endcase
+        end
+        else begin
+            jump = 1'b0;
+        end
 
         alu_o_rob_idx   = alu_i_rob_idx;
         alu_o_valid     = alu_i_valid && opcode != `B_TYPE;

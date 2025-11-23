@@ -2,9 +2,11 @@ module DC_stage(
     input   logic           clk,
     input   logic           rst,
     // IF stage
+    input   logic           IF_valid,
     input   logic [31:0]    DC_in_pc,
     input   logic [31:0]    DC_in_inst,
     input   logic           DC_in_jump,
+    output  logic           DC_ready,
     // rename 
     input   logic [6:0]     P_rs1,
     input   logic [6:0]     P_rs2,
@@ -14,7 +16,7 @@ module DC_stage(
     output  logic [5:0]     A_rs2,
     output  logic [5:0]     A_rd,
     output  logic           allocate_rd,
-    // Dispatch/ROB
+    // dispatch
     input   logic           rob_ready,
     input   logic [2:0]     DC_rob_idx,
     output  logic [31:0]    DC_pc,
@@ -22,9 +24,10 @@ module DC_stage(
     output  logic [6:0]     DC_P_rd_new,
     output  logic [6:0]     DC_P_rd_old,
     output  logic [2:0]     DC_fu_sel, 
-    output  logic           decode_valid,
     output  logic           dispatch_ready,
+    output  logic           dispatch_valid,
     // IS stage
+    input   logic           IS_ready,
     output  logic [31:0]    DC_out_pc,
     output  logic [31:0]    DC_out_inst, 
     output  logic [31:0]    DC_out_imm,
@@ -39,6 +42,7 @@ module DC_stage(
     output  logic [1:0]     DC_out_SQ_tail,
     output  logic [2:0]     DC_out_rob_idx, 
     output  logic           DC_out_jump,
+    output  logic           DC_valid,
     // mispredict
     input   logic           mispredict,
     input   logic           stall,
@@ -49,12 +53,7 @@ module DC_stage(
     input   logic [1:0]     LQ_tail,
     input   logic [1:0]     SQ_tail,
     input   logic           ld_ready,
-    input   logic           st_ready,
-    // Handshake signals
-    input   logic           IF_valid,
-    output  logic           DC_ready,
-    output  logic           DC_valid,
-    input   logic           IS_ready
+    input   logic           st_ready 
 );
 
     logic [4:0]     DC_op;
@@ -65,29 +64,19 @@ module DC_stage(
     logic           use_rd;
     logic           st_valid, ld_valid;
     
+    // ================
     // Decode
+    // ================
     assign DC_op            = DC_in_inst[6:2];
     assign DC_f3            = DC_in_inst[14:12];
     assign DC_f7            = DC_in_inst[31:25];
-
     assign f_rs1            = (DC_op == `F_TYPE);
     assign f_rs2            = (DC_op == `F_TYPE) || (DC_op == `FSTORE);
     assign f_rd             = (DC_op == `F_TYPE) || (DC_op == `FLOAD);
-
     assign A_rs1            = {f_rs1, DC_in_inst[19:15]};
     assign A_rs2            = {f_rs2, DC_in_inst[24:20]};
     assign A_rd             = {f_rd , DC_in_inst[11:7]};
 
-    assign allocate_rd      = ((DC_op != `S_TYPE) && (DC_op != `FSTORE)) && (DC_op != `B_TYPE) && A_rd != 6'd0;
-    assign st_valid         = ((DC_op != `S_TYPE) && (DC_op != `FSTORE)) || st_ready;
-    assign ld_valid         = ((DC_op != `LOAD)   && (DC_op != `FLOAD )) || ld_ready;
-
-    assign dispatch_ready   = rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall;
-    assign decode_valid     = IF_valid && rob_ready && st_valid && ld_valid && !mispredict && !stall;
-    assign DC_pc            = DC_in_pc;
-    assign DC_inst          = DC_in_inst;
-    assign DC_P_rd_new      = P_rd_new;
-    assign DC_P_rd_old      = P_rd_old;
     // FU selection
     // 0: alu/csr 
     // 1: mul     
@@ -122,11 +111,32 @@ module DC_stage(
             `LUI:       DC_imm = {DC_in_inst[31:12], 12'b0};
             `AUIPC:     DC_imm = {DC_in_inst[31:12], 12'b0};
             `CSR:       DC_imm = {20'b0, DC_in_inst[31:20]};
-            `R_TYPE:    DC_imm = 32'b0;
-            `F_TYPE:    DC_imm = 32'b0;
             default:    DC_imm = 32'b0;
         endcase
     end
+
+    // rename allocate rd
+    assign allocate_rd      = ((DC_op != `S_TYPE) && (DC_op != `FSTORE)) && (DC_op != `B_TYPE) && A_rd != 6'd0;
+    
+    // load/store valid
+    assign st_valid         = ((DC_op != `S_TYPE) && (DC_op != `FSTORE)) || st_ready;
+    assign ld_valid         = ((DC_op != `LOAD)   && (DC_op != `FLOAD )) || ld_ready;
+
+    // allocate ROB/LSU
+    assign DC_pc            = DC_in_pc;
+    assign DC_inst          = DC_in_inst;
+    assign DC_P_rd_new      = P_rd_new;
+    assign DC_P_rd_old      = P_rd_old;
+
+    assign dispatch_valid   = IF_valid && rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall;
+
+    // early branch 
+    assign DC_mispredict    = (DC_op == `JAL) && (!DC_in_jump) && IF_valid; 
+    assign DC_redirect_pc   = DC_pc + DC_imm;
+
+    // ================
+    // Pipeline Register
+    // ================
     
     typedef struct packed {
         logic [31:0]    pc;
@@ -145,14 +155,7 @@ module DC_stage(
         logic           jump;
     } data_t;
     
-    logic   valid_rg, ready_rg;    
-    logic   ready;    
-    data_t  i_data, o_data, temp_data;         
-    data_t  data_rg;
-    data_t  sparebuff_rg;  
-
-    logic   i_ready, i_valid;
-    logic   o_ready, o_valid;
+    data_t  i_data, o_data;      
 
     assign i_data.pc        = DC_in_pc         ;
     assign i_data.inst      = DC_in_inst       ;
@@ -169,23 +172,23 @@ module DC_stage(
     assign i_data.fu_sel    = DC_fu_sel        ;
     assign i_data.jump      = DC_in_jump       ;
     
-    logic temp;
+    logic valid_r;
     always @(posedge clk) begin
         if (rst) begin      
-            o_data          <= '0;
-            DC_valid        <= 1'b0; 
+            o_data  <= '0;
+            valid_r <= 1'b0; 
         end
         else begin      
             if (mispredict || stall) begin
                 o_data      <= '0;  
             end 
-            else if(IF_valid && dispatch_ready)begin
+            else if(dispatch_valid)begin
                 o_data      <= i_data;
             end
             else begin
                 o_data      <= o_data;
             end
-            DC_valid <= IF_valid && !mispredict && !stall;
+            valid_r <= IF_valid && !mispredict && !stall;
         end
     end    
 
@@ -204,15 +207,7 @@ module DC_stage(
     assign DC_out_LQ_tail  = o_data.LQ_tail;
     assign DC_out_SQ_tail  = o_data.SQ_tail;
     assign DC_out_jump     = o_data.jump   ;
-    // assign DC_valid        = temp; 
-    assign DC_ready        = dispatch_ready;
-
-
-    // early branch 
-    logic [31:0] jal_target;
-    assign jal_target       = DC_pc + DC_imm;
-
-    assign DC_mispredict    = (DC_op == `JAL) && (!DC_in_jump) && IF_valid; 
-    assign DC_redirect_pc   = jal_target;
-    
+    // all downstream ready
+    assign DC_ready        = rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall; 
+    assign DC_valid        = valid_r && rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall;
 endmodule

@@ -2,7 +2,6 @@ module IS_stage (
     input clk,
     input rst,
     // DC stage
-    input   logic           dispatch_ready,
     input   logic [31:0]    IS_in_pc,
     input   logic [31:0]    IS_in_inst, 
     input   logic [31:0]    IS_in_imm,
@@ -17,10 +16,15 @@ module IS_stage (
     input   logic [1:0]     IS_in_LQ_tail,
     input   logic [1:0]     IS_in_SQ_tail,
     input   logic           IS_in_jump,
+    input   logic           DC_valid,
     // rename 
     input   logic           IS_in_rs1_valid,
     input   logic           IS_in_rs2_valid,
-    // EXE stage
+    // IS stage
+    output  logic           IS_valid,
+    output  logic           IS_ready,
+    output  logic [2:0]     IS_out_rob_idx,
+    // EX stage
     output  logic [31:0]    RR_out_pc,
     output  logic [31:0]    RR_out_inst, 
     output  logic [31:0]    RR_out_imm,
@@ -35,6 +39,9 @@ module IS_stage (
     output  logic [2:0]     RR_out_rob_idx, 
     output  logic [6:0]     RR_out_rd,
     output  logic           RR_out_jump,
+    output  logic           RR_ready,
+    output  logic           RR_valid,
+    input   logic [7:0]     EX_ready,
     // EX forwarding
     input   logic [31:0]    EX_in_data,
     input   logic [6:0]     EX_in_rd, 
@@ -47,16 +54,7 @@ module IS_stage (
     // mispredict
     input   logic           mispredict,
     input   logic           stall,
-    input   logic [7:0]     flush_mask,
-    // Handshake signals
-    input   logic           DC_valid,
-    output  logic           IS_ready,
-    output  logic           RR_valid,
-    input   logic [7:0]     EX_ready,
-    // konata
-    output  logic           IS_valid,
-    output  logic           RR_ready,
-    output  logic [2:0]     IS_out_rob_idx
+    input   logic [7:0]     flush_mask
 );
     typedef struct packed {
         logic [31:0]    pc;
@@ -78,25 +76,15 @@ module IS_stage (
         logic           jump;
     } IS_data_t;
 
-    // fu selection 
-    // 0: alu/csr   
-    // 1: mul       
-    // 2: div/rem   
-    // 3: falu      
-    // 4: fmul      
-    // 5: fdiv      
-    // 6: load      
-    // 7: store     
     IS_data_t iq [0:3];
     logic [1:0] dispatch_ptr;
     logic [1:0] issue_ptr;
     logic [3:0] rs1_valid, rs2_valid;
 
-    assign IS_ready = !(iq[0].valid && iq[1].valid && iq[2].valid && iq[3].valid) && !mispredict && !stall;
+    assign IS_ready = !(iq[0].valid && iq[1].valid && iq[2].valid && iq[3].valid);
 
     // Bad issue strategy
     // TODO: use age matric to implement oldest first issue
-
     always_comb begin
         // find free entry
         priority case(1'b1)
@@ -104,7 +92,7 @@ module IS_stage (
             iq[1].valid == 1'b0: dispatch_ptr = 2'd1;
             iq[2].valid == 1'b0: dispatch_ptr = 2'd2;
             iq[3].valid == 1'b0: dispatch_ptr = 2'd3;
-            default: dispatch_ptr = 2'd0;
+            default:             dispatch_ptr = 2'd0;
         endcase
         // check rs1/rs2 ready
         for(int i = 0; i < 4; i = i + 1) begin : rs_ready_check
@@ -136,6 +124,9 @@ module IS_stage (
         endcase
     end
 
+    // ======================
+    // Issue Queue Management
+    // ======================
     always_ff @(posedge clk) begin
         if(rst) begin
             for (int i = 0; i < 4; i = i + 1) begin : initialize_iq
@@ -144,43 +135,50 @@ module IS_stage (
         end
         else begin
             for(int i = 0; i < 4; i = i + 1) begin : update_iq
-                // Dispatch
-                if(DC_valid && dispatch_ready && dispatch_ptr == i && (!mispredict || !flush_mask[IS_in_rob_idx])) begin
-                    iq[i].pc            <= IS_in_pc;
-                    iq[i].inst          <= IS_in_inst;
-                    iq[i].imm           <= IS_in_imm;
-                    iq[i].op            <= IS_in_op;
-                    iq[i].f3            <= IS_in_f3;
-                    iq[i].f7            <= IS_in_f7;
-                    iq[i].P_rs1         <= IS_in_rs1;
-                    iq[i].P_rs2         <= IS_in_rs2;
-                    iq[i].P_rs1_valid   <= IS_in_rs1_valid || (IS_in_rs1 == WB_rd && WB_valid) || (IS_in_rs1 == EX_in_rd && EX_in_valid);
-                    iq[i].P_rs2_valid   <= IS_in_rs2_valid || (IS_in_rs2 == WB_rd && WB_valid) || (IS_in_rs2 == EX_in_rd && EX_in_valid);
-                    iq[i].P_rd          <= IS_in_rd;
-                    iq[i].ld_idx        <= IS_in_LQ_tail;
-                    iq[i].st_idx        <= IS_in_SQ_tail;
-                    iq[i].fu_sel        <= IS_in_fu_sel;
-                    iq[i].rob_idx       <= IS_in_rob_idx;
-                    iq[i].jump          <= IS_in_jump;
-                    iq[i].valid         <= 1'b1;
-                end
-                // EX forwarding
-                if(EX_in_valid && EX_in_rd != 7'b0 && iq[i].valid) begin
-                    iq[i].P_rs1_valid   <= (iq[i].P_rs1 == EX_in_rd)? 1'b1 : iq[i].P_rs1_valid;
-                    iq[i].P_rs2_valid   <= (iq[i].P_rs2 == EX_in_rd)? 1'b1 : iq[i].P_rs2_valid;
-                end
-                // write back
-                else if(WB_valid && WB_rd != 7'b0 && iq[i].valid) begin
-                    iq[i].P_rs1_valid   <= (iq[i].P_rs1 == WB_rd)? 1'b1 : iq[i].P_rs1_valid;
-                    iq[i].P_rs2_valid   <= (iq[i].P_rs2 == WB_rd)? 1'b1 : iq[i].P_rs2_valid;
-                end
-                // issue
-                if(issue_ptr == i && IS_valid && RR_ready) begin
-                    iq[i]   <= '0;
-                end
                 // mispredict
                 if(mispredict && flush_mask[iq[i].rob_idx]) begin
                     iq[i]   <= '0;
+                end
+                // issue
+                else if (issue_ptr == i && IS_valid && RR_ready) begin
+                    iq[i]   <= '0;
+                end
+                else if (iq[i].valid) begin
+                    if (EX_in_valid && EX_in_rd != 7'b0) begin
+                        iq[i].P_rs1_valid   <= (iq[i].P_rs1 == EX_in_rd)? 1'b1 : iq[i].P_rs1_valid;
+                        iq[i].P_rs2_valid   <= (iq[i].P_rs2 == EX_in_rd)? 1'b1 : iq[i].P_rs2_valid;
+                    end
+                    if (WB_valid && WB_rd != 7'b0) begin
+                        iq[i].P_rs1_valid   <= (iq[i].P_rs1 == WB_rd)? 1'b1 : iq[i].P_rs1_valid;
+                        iq[i].P_rs2_valid   <= (iq[i].P_rs2 == WB_rd)? 1'b1 : iq[i].P_rs2_valid;
+                    end
+                end
+                else if (DC_valid && dispatch_ptr == i) begin
+                    iq[i].valid       <= 1'b1;
+                    iq[i].pc          <= IS_in_pc;
+                    iq[i].inst        <= IS_in_inst;
+                    iq[i].imm         <= IS_in_imm;
+                    iq[i].op          <= IS_in_op;
+                    iq[i].f3          <= IS_in_f3;
+                    iq[i].f7          <= IS_in_f7;
+                    iq[i].P_rs1       <= IS_in_rs1;
+                    iq[i].P_rs2       <= IS_in_rs2;
+                    iq[i].P_rd        <= IS_in_rd;
+                    iq[i].ld_idx      <= IS_in_LQ_tail;
+                    iq[i].st_idx      <= IS_in_SQ_tail;
+                    iq[i].fu_sel      <= IS_in_fu_sel;
+                    iq[i].rob_idx     <= IS_in_rob_idx;
+                    iq[i].jump        <= IS_in_jump;
+                    iq[i].P_rs1_valid <= IS_in_rs1_valid || 
+                                         (IS_in_rs1 == WB_rd && WB_valid) || 
+                                         (IS_in_rs1 == EX_in_rd && EX_in_valid);
+                                         
+                    iq[i].P_rs2_valid <= IS_in_rs2_valid || 
+                                         (IS_in_rs2 == WB_rd && WB_valid) || 
+                                         (IS_in_rs2 == EX_in_rd && EX_in_valid);
+                end
+                else begin
+                    iq[i]   <= iq[i];
                 end
             end
         end
@@ -191,19 +189,16 @@ module IS_stage (
     RegFile R1 (
         .clk            (clk),
         .rst            (rst),
+        // read
         .rs1_index      (iq[issue_ptr].P_rs1),
         .rs2_index      (iq[issue_ptr].P_rs2),
         .rs1_data_out   (RR_rs1_data),
         .rs2_data_out   (RR_rs2_data),
-
+        // write
         .wb_en          (WB_valid),
         .wb_data        (WB_data),
         .rd_index       (WB_rd)
     );
-    
-    // State encoding
-    localparam PIPE  = 1'b0 ;
-    localparam SKID  = 1'b1 ;
 
     typedef struct packed {
         logic [31:0]    pc;     
@@ -222,17 +217,8 @@ module IS_stage (
         logic           jump;
     } data_t ;
     
-    
-    logic   state_rg;        
-    logic   valid_rg, ready_rg;    
-    logic   ready;    
-    data_t  i_data, o_data;         
-    
-    data_t  temp_data;  
+    data_t  i_data, o_data, temp_data;         
     logic   temp_valid;
-
-    logic   i_ready, i_valid;
-    logic   o_ready, o_valid;
 
     assign i_data.pc        = iq[issue_ptr].pc     ;
     assign i_data.inst      = iq[issue_ptr].inst   ;
@@ -240,15 +226,15 @@ module IS_stage (
     assign i_data.op        = iq[issue_ptr].op     ;
     assign i_data.f3        = iq[issue_ptr].f3     ;
     assign i_data.f7        = iq[issue_ptr].f7     ;
-    // assign i_data.rs1_data  = (WB_rd == iq[issue_ptr].P_rs1 && WB_valid) ? WB_data : RR_rs1_data;
-    // assign i_data.rs2_data  = (WB_rd == iq[issue_ptr].P_rs2 && WB_valid) ? WB_data : RR_rs2_data;
     assign i_data.P_rd      = iq[issue_ptr].P_rd   ;
     assign i_data.rob_idx   = iq[issue_ptr].rob_idx;
     assign i_data.ld_idx    = iq[issue_ptr].ld_idx ;
     assign i_data.st_idx    = iq[issue_ptr].st_idx ;
     assign i_data.fu_sel    = iq[issue_ptr].fu_sel ;
     assign i_data.jump      = iq[issue_ptr].jump   ;
+    assign IS_out_rob_idx   = iq[issue_ptr].rob_idx;
 
+    // Forwarding data selection
     always_comb begin
         if(EX_in_valid && EX_in_rd != 7'b0 && EX_in_rd == iq[issue_ptr].P_rs1) begin
             i_data.rs1_data = EX_in_data;
@@ -271,6 +257,9 @@ module IS_stage (
         end
     end
     
+    // =================
+    // Pipeline register
+    // =================
     always @(posedge clk) begin
         if (rst) begin      
             temp_data   <= '0;
@@ -287,6 +276,10 @@ module IS_stage (
             end
         end
     end
+
+    // ===============
+    // skid buffer
+    // ===============
 
     logic bypass_rg;
     data_t  data_rg;
@@ -312,10 +305,10 @@ module IS_stage (
         end
     end
 
-    assign o_data           = bypass_rg ? temp_data  : data_rg ;       
+    assign o_data           = bypass_rg ? temp_data  : data_rg ;   
+
     assign RR_valid         = bypass_rg ? temp_valid : 1'b1    ;       
     assign RR_ready         = bypass_rg && EX_ready[bypass_fu_sel];
-
     assign RR_out_pc        = o_data.pc        ;
     assign RR_out_inst      = o_data.inst      ;
     assign RR_out_imm       = o_data.imm       ;
@@ -330,9 +323,5 @@ module IS_stage (
     assign RR_out_st_idx    = o_data.st_idx    ;
     assign RR_out_fu_sel    = o_data.fu_sel    ;
     assign RR_out_jump      = o_data.jump      ;
-
     assign writeback_free   = o_data.op == `B_TYPE || o_data.op == `S_TYPE || o_data.op == `FSTORE;
-
-    // konata
-    assign IS_out_rob_idx = iq[issue_ptr].rob_idx;
 endmodule

@@ -58,6 +58,7 @@ module CPU (
     logic        DC_out_jump;
     logic        DC_valid;
     logic        dispatch_ready;
+    logic        dispatch_valid;
     
     // IS stage output (RR = Register Read)
     logic        IS_valid;
@@ -98,7 +99,6 @@ module CPU (
     logic [6:0]  DC_P_rd_old;
     logic [6:0]  DC_P_rd_new;
     logic [2:0]  DC_fu_sel;
-    logic        decode_valid;
     logic [2:0]  DC_rob_idx;
 
     // EX forwarding 
@@ -234,8 +234,7 @@ module CPU (
         .DC_P_rd_old(DC_P_rd_old),
         .DC_P_rd_new(DC_P_rd_new),
         .DC_fu_sel(DC_fu_sel),
-        .decode_valid(decode_valid),
-        .dispatch_ready(dispatch_ready),
+        .dispatch_valid(dispatch_valid),
         // IS stage
         .DC_out_pc(DC_out_pc),
         .DC_out_inst(DC_out_inst),
@@ -273,7 +272,6 @@ module CPU (
         .clk(clk),
         .rst(rst),
         // DC stage
-        .dispatch_ready(dispatch_ready),
         .IS_in_pc(DC_out_pc),
         .IS_in_inst(DC_out_inst),
         .IS_in_imm(DC_out_imm),
@@ -383,47 +381,45 @@ module CPU (
     LSU LSU (
         .clk(clk),
         .rst(rst),
-        // From DC stage
+        // dispatch
         .DC_fu_sel(DC_fu_sel),
         .DC_rd(DC_P_rd_new),
         .DC_rob_idx(DC_rob_idx),
-        .decode_valid(IF_valid && dispatch_ready),
-        // EX stage
-        .ld_i_valid(ld_i_valid),
-        .st_i_valid(st_i_valid),
-        .funct3(RR_out_f3),
-        .lsu_i_rob_idx(lsu_i_rob_idx),
+        .decode_valid(dispatch_valid),
+        .ld_ready(ld_ready),
+        .st_ready(st_ready),
+        // data
         .lsu_i_rs1_data(lsu_i_rs1_data),
         .lsu_i_rs2_data(lsu_i_rs2_data),
         .lsu_i_imm(lsu_i_imm),
-        .RR_valid(RR_valid),
+        .funct3(RR_out_f3),
+        // control
+        .ld_i_valid(ld_i_valid),
+        .st_i_valid(st_i_valid),
+        .lsu_i_rob_idx(lsu_i_rob_idx),
         .EX_ld_idx(RR_out_ld_idx),
         .EX_st_idx(RR_out_st_idx),
+        .ld_o_valid(ld_o_valid),
+        .ld_o_rob_idx(ld_o_rob_idx),
         .ld_o_rd(ld_o_rd),
         .ld_o_data(ld_o_data),
-        .ld_o_rob_idx(ld_o_rob_idx),
-        .ld_o_valid(ld_o_valid),
-        // From Commit
-        .ld_commit(ld_commit), // commit LQ head
-        .st_commit(st_commit), // commit SQ head
+        // commit
+        .ld_commit(ld_commit), 
+        .st_commit(st_commit), 
         // mispredict
         .mispredict(mispredict),
         .flush_mask(flush_mask),
         .mis_ld_idx(RR_out_ld_idx),
         .mis_st_idx(RR_out_st_idx),
-        // DM
+        // DM interface
         .DM_rd_data(DM_rd_data),
-        .DM_c_en(DM_c_en),
         .DM_r_en(DM_r_en),     
         .DM_w_en(DM_w_en),
         .DM_addr(DM_addr),
         .DM_w_data(DM_w_data),
-        // To ROB
+        // ROB
         .LQ_tail(LQ_tail),
-        .SQ_tail(SQ_tail),
-        // DC - LSU handshake
-        .ld_ready(ld_ready),
-        .st_ready(st_ready)
+        .SQ_tail(SQ_tail)
     );
 
     Rename rename (
@@ -433,7 +429,7 @@ module CPU (
         .A_rs1(A_rs1),
         .A_rs2(A_rs2),
         .A_rd(A_rd),
-        .allocate_rd(allocate_rd && IF_valid && dispatch_ready),
+        .allocate_rd(allocate_rd && dispatch_valid),
         .P_rs1(P_rs1),
         .P_rs2(P_rs2),
         .P_rd_new(P_rd_new),
@@ -452,8 +448,6 @@ module CPU (
         .commit_P_rd_new(commit_P_rd_new),
         .commit_P_rd_old(commit_P_rd_old),
         .commit_A_rd(commit_A_rd),
-        // recovery
-        .recovery(recovery),
         // rollback
         .rollback_en_0(rollback_en_0),
         .rollback_A_rd_0(rollback_A_rd_0),
@@ -470,7 +464,7 @@ module CPU (
         .clk(clk),
         .rst(rst),
         // Dispatch
-        .DC_valid(IF_valid && dispatch_ready),
+        .DC_valid(dispatch_valid),
         .DC_pc(DC_pc),
         .DC_inst(DC_inst),
         .DC_P_rd_new(DC_P_rd_new),
@@ -546,7 +540,7 @@ module CPU (
         .IF_out_inst(IF_out_inst),
         .ROB_tail(DC_rob_idx),
         .DC_valid(DC_valid),
-        .IS_ready(dispatch_ready),
+        .IS_ready(dispatch_valid),
         .DC_out_pc(DC_out_pc),
         .IS_valid(IS_valid),
         .RR_ready(RR_ready),
