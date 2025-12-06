@@ -141,6 +141,8 @@ module CPU (
     logic        st_ready;
     logic        ld_commit;
     logic        st_commit;
+    logic [31:0] st_addr;
+    logic [31:0] st_data;
     logic [1:0]  mis_ld_idx;
     logic [1:0]  mis_st_idx;
     
@@ -406,6 +408,8 @@ module CPU (
         // commit
         .ld_commit(ld_commit), 
         .st_commit(st_commit), 
+        .st_addr(st_addr),
+        .st_data(st_data),
         // mispredict
         .mispredict(mispredict),
         .flush_mask(flush_mask),
@@ -566,7 +570,10 @@ module CPU (
         .commit_pc(commit_pc),
         .commit_inst(commit_inst),
         .commit_Ard(commit_A_rd),
-        .commit_data(commit_data)
+        .commit_data(commit_data),
+        .st_commit(st_commit),
+        .st_addr(st_addr),
+        .st_data(st_data)
     );
     // synopsys translate_on
 endmodule

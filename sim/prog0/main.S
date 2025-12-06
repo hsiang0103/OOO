@@ -756,7 +756,7 @@ fsub:
   fsub.s	fa5,fa4,fa5
   fsw fa5, 0(s0)
   addi s0, s0, 4
-rdinst:
+/*rdinst:
   rdinstreth t0
   rdinstret  t1
   rdinstreth t2
@@ -773,7 +773,7 @@ rdcycle:
   sw t0, 0(s0)
   addi s0, s0, 4
   sw t1, 0(s0)
-  addi s0, s0, 4
+  addi s0, s0, 4*/
 main_exit:
   /* Simulation End */
   lw s0, 0(sp)

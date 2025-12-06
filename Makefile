@@ -38,7 +38,10 @@ rtl0: | $(bld_dir)
 	+define+prog0$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog0 \
 	+rdcycle=1 \
-	+notimingcheck
+	+notimingcheck; \
+	cd $(root_dir); \
+	echo "Comparing Trace Logs..."; \
+	python3 compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog0/commit.log
 
 rtl1: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
@@ -117,6 +120,23 @@ rtl6: | $(bld_dir)
 	+define+prog3$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog6 \
 	+notimingcheck
+
+rtl_gen: | $(bld_dir)
+	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
+		echo "Cycle time shouldn't exceed 20"; \
+		exit 1; \
+	fi; \
+	make -C $(sim_dir)/prog_gen/; \
+	cd $(bld_dir); \
+	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64  \
+	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
+	+define+prog_gen$(FSDB_DEF) \
+	+prog_path=$(root_dir)/$(sim_dir)/prog_gen \
+	+rdcycle=1 \
+	+notimingcheck; \
+	cd $(root_dir); \
+	echo "Comparing Trace Logs..."; \
+	python3 compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog_gen/commit.log
 
 # Post-Synthesis simulation
 syn_all: syn0 syn1 syn2 syn3 syn4 syn5 syn6

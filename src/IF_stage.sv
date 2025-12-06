@@ -35,7 +35,7 @@ module IF_stage(
     // PC register
     always_ff @(posedge clk) begin
         if (rst) begin
-            pc <= 32'b0;
+            pc <= 32'h2000;
         end
         else begin
             pc <= next_pc;

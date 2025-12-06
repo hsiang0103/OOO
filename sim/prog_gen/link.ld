@@ -56,6 +56,11 @@ SECTIONS {
     __sbss_end = .;
   } > dmem
 
+  .tohost : {
+    . = ALIGN(64);
+    *(.tohost)
+  } > dmem
+
   .sdata : {
     _gp = . + 0x800;
     *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata*)

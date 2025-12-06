@@ -4,14 +4,15 @@
 tohost: .dword 0
 .global fromhost    
 fromhost: .dword 0
+.global SystemExit
 
 # Define constants
 .section .text
 .align 2
 .globl _start
 _start:
- li t0, 0x00006000  
- csrs mstatus, t0 
+ // li t0, 0x00006000  
+ // csrs mstatus, t0 
 
  li x1, 0
  li x2, 0
@@ -80,7 +81,7 @@ write_test_pattern:
   jal fill_block
 
 SystemInit:
-  jal main
+  jal init
 
 SystemExit:
   /* End simulation */

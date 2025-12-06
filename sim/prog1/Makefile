@@ -1,6 +1,6 @@
 ELF_NAME := main
 
-export CROSS_PREFIX ?= riscv32-unknown-elf-
+export CROSS_PREFIX ?= riscv64-unknown-elf-
 export RISCV_GCC ?= $(CROSS_PREFIX)gcc
 export RISCV_OBJDUMP ?= $(CROSS_PREFIX)objdump -xsd
 export RISCV_OBJCOPY ?= $(CROSS_PREFIX)objcopy -O verilog

@@ -9,7 +9,6 @@ LDFILE := link.ld
 CFLAGS := -march=rv32imf -mabi=ilp32
 LDFLAGS := -static -nostdlib -nostartfiles -march=rv32imf -mabi=ilp32 -T$(LDFILE) -lgcc
 
-
 SRC_C := $(wildcard *.c)
 OBJ_C := $(patsubst %.c,%.o,$(SRC_C))
 SRC_S := $(wildcard *.S)
@@ -19,21 +18,25 @@ OBJ := $(OBJ_C) $(OBJ_S)
 
 .SUFFIXES: .o .S .c
 
-.PHONY: all
+.PHONY: all clean build_elf build_log build_hex run_spike
 
-all: build_elf build_log build_hex
+all: build_elf build_log build_hex run_spike
 
 build_elf: $(OBJ) | $(LDFILE)
-	$(RISCV_GCC) $^ $(LDFLAGS) -o $(ELF_NAME)
+	$(RISCV_GCC) $^ $(LDFLAGS) -o $(ELF_NAME).elf
 
-build_log: $(ELF_NAME)
+build_log: $(ELF_NAME).elf
 	$(RISCV_OBJDUMP) $< > $(ELF_NAME).log
 
-build_hex: $(ELF_NAME)
+build_hex: $(ELF_NAME).elf
 	$(RISCV_OBJCOPY) $< -i 4 -b 0 $(ELF_NAME)0.hex
 	$(RISCV_OBJCOPY) $< -i 4 -b 1 $(ELF_NAME)1.hex
 	$(RISCV_OBJCOPY) $< -i 4 -b 2 $(ELF_NAME)2.hex
 	$(RISCV_OBJCOPY) $< -i 4 -b 3 $(ELF_NAME)3.hex
+
+run_spike: $(ELF_NAME).elf
+	spike --isa=rv32imf -m0x2000:0xE000 --log-commits -l $< > golden.log 2>&1
+	python3 gen_commit_log.py golden.log
 
 %.o: %.S
 	$(RISCV_GCC) -c $(CFLAGS) $^
@@ -41,7 +44,5 @@ build_hex: $(ELF_NAME)
 %.o: %.c
 	$(RISCV_GCC) -c $(CFLAGS) $^
 
-.PHONY: clean
-
 clean:
-	rm -rf $(ELF_NAME) $(ELF_NAME).log $(ELF_NAME)*.hex *.o
+	rm -rf $(ELF_NAME) *.log $(ELF_NAME)*.hex *.o *.elf golden.log commit.log

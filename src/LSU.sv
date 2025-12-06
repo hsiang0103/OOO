@@ -26,6 +26,8 @@ module LSU (
     // commit
     input   logic           ld_commit,
     input   logic           st_commit,
+    output  logic [31:0]    st_addr,
+    output  logic [31:0]    st_data,
     // mispredict
     input   logic           mispredict,
     input   logic [7:0]     flush_mask,
@@ -73,6 +75,8 @@ module LSU (
     assign DC_st            = DC_fu_sel == 7 && decode_valid; 
     assign LQ_tail          = LQ_t;
     assign SQ_tail          = SQ_t;
+    assign st_addr          = SQ[SQ_h].addr;
+    assign st_data          = SQ[SQ_h].data;
 
     // ================
     // load select
