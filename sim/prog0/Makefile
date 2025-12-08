@@ -3,7 +3,7 @@ ELF_NAME := main
 export CROSS_PREFIX ?= riscv64-unknown-elf-
 export RISCV_GCC ?= $(CROSS_PREFIX)gcc
 export RISCV_OBJDUMP ?= $(CROSS_PREFIX)objdump -xsd
-export RISCV_OBJCOPY ?= $(CROSS_PREFIX)objcopy -O verilog
+export RISCV_OBJCOPY ?= $(CROSS_PREFIX)objcopy
 
 LDFILE := link.ld
 CFLAGS := -march=rv32imf -mabi=ilp32
@@ -29,10 +29,10 @@ build_log: $(ELF_NAME).elf
 	$(RISCV_OBJDUMP) $< > $(ELF_NAME).log
 
 build_hex: $(ELF_NAME).elf
-	$(RISCV_OBJCOPY) $< -i 4 -b 0 $(ELF_NAME)0.hex
-	$(RISCV_OBJCOPY) $< -i 4 -b 1 $(ELF_NAME)1.hex
-	$(RISCV_OBJCOPY) $< -i 4 -b 2 $(ELF_NAME)2.hex
-	$(RISCV_OBJCOPY) $< -i 4 -b 3 $(ELF_NAME)3.hex
+	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 0 $(ELF_NAME)0.hex
+	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 1 $(ELF_NAME)1.hex
+	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 2 $(ELF_NAME)2.hex
+	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 3 $(ELF_NAME)3.hex
 
 run_spike: $(ELF_NAME).elf
 	spike --isa=rv32imf -m0x2000:0xE000 --log-commits -l $< > golden.log 2>&1

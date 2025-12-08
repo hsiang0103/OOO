@@ -131,8 +131,9 @@ module DC_stage(
     assign dispatch_valid   = IF_valid && rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall;
 
     // early branch 
-    assign DC_mispredict    = (DC_op == `JAL) && (!DC_in_jump) && IF_valid; 
-    assign DC_redirect_pc   = DC_pc + DC_imm;
+    // assign DC_mispredict    = (DC_op == `JAL) && (!DC_in_jump) && IF_valid; 
+    // assign DC_redirect_pc   = DC_pc + DC_imm;
+    assign DC_mispredict    = 1'b0; 
 
     // ================
     // Pipeline Register

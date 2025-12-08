@@ -84,12 +84,12 @@ SystemInit:
 
 SystemExit:
   /* End simulation */
-  la t0, _sim_end
-  li t1, -1
-  sw t1, 0(t0)
   li t0, 1
   la t1, tohost
   sw t0, 0(t1) 
+  la t0, _sim_end
+  li t1, -1
+  sw t1, 0(t0)
 dead_loop:
   j dead_loop
 

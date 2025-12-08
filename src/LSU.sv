@@ -137,17 +137,36 @@ module LSU (
         end    
     end
 
+    logic [1:0]  addr_offset;
+    logic [7:0]  target_byte;
+    logic [15:0] target_half;
+
+    assign addr_offset   = LQ[load_request_idx_r].addr[1:0];
+
+    assign ld_o_rob_idx  = LQ[load_request_idx_r].rob_idx;
+    assign ld_o_rd       = LQ[load_request_idx_r].rd;
+    assign ld_o_valid    = load_done;
+
     always_comb begin
-        ld_o_rob_idx    = LQ[load_request_idx_r].rob_idx;
-        ld_o_rd         = LQ[load_request_idx_r].rd;
-        ld_o_valid      = load_done;
+        case (addr_offset)
+            2'b00: target_byte = DM_rd_data[7:0];
+            2'b01: target_byte = DM_rd_data[15:8];
+            2'b10: target_byte = DM_rd_data[23:16];
+            2'b11: target_byte = DM_rd_data[31:24];
+        endcase
+
+        case (addr_offset[1])
+            1'b0: target_half = DM_rd_data[15:0];
+            1'b1: target_half = DM_rd_data[31:16];
+        endcase
+
         case (LQ[load_request_idx_r].f3)
-            `LB:        ld_o_data = {{24{DM_rd_data[7]}}, DM_rd_data[7:0]};
-            `LBU:       ld_o_data = {24'b0, DM_rd_data[7:0]};
-            `LH:        ld_o_data = {{16{DM_rd_data[15]}}, DM_rd_data[15:0]};
-            `LHU:       ld_o_data = {16'b0, DM_rd_data[15:0]};
-            `LW:        ld_o_data = DM_rd_data;
-            default:    ld_o_data = DM_rd_data;
+            `LB:     ld_o_data = {{24{target_byte[7]}}, target_byte}; 
+            `LBU:    ld_o_data = {24'b0, target_byte};                
+            `LH:     ld_o_data = {{16{target_half[15]}}, target_half};
+            `LHU:    ld_o_data = {16'b0, target_half};                
+            `LW:     ld_o_data = DM_rd_data; 
+            default: ld_o_data = DM_rd_data;
         endcase
     end
 
@@ -168,9 +187,10 @@ module LSU (
                 endcase
             end
             `SH:begin
-                case (SQ[SQ_h].addr[1])
-                    1'b0:    DM_w_en = 32'hFFFF0000;
-                    1'b1:    DM_w_en = 32'h0000FFFF;
+                case (SQ[SQ_h].addr[1:0])
+                    2'b00:    DM_w_en = 32'hFFFF0000;
+                    // 2'b01:    DM_w_en = 32'hFF0000FF;
+                    2'b10:    DM_w_en = 32'h0000FFFF;
                 endcase
             end
             `SW:             DM_w_en = 32'h00000000;
@@ -189,9 +209,10 @@ module LSU (
                 endcase
             end
             `SH:begin
-                case (SQ[SQ_h].addr[1])
-                    1'b0:    DM_w_data = {16'b0, SQ[SQ_h].data[15:0]};
-                    1'b1:    DM_w_data = {SQ[SQ_h].data[15:0], 16'b0};
+                case (SQ[SQ_h].addr[1:0])
+                    2'b00:    DM_w_data = {16'b0, SQ[SQ_h].data[15:0]};
+                    // 2'b01:    DM_w_data = {8'b0, SQ[SQ_h].data[15:0], 8'b0};
+                    2'b10:    DM_w_data = {SQ[SQ_h].data[15:0], 16'b0};
                 endcase
             end
             `SW:             DM_w_data = SQ[SQ_h].data;
@@ -307,7 +328,7 @@ module LSU (
         end
         else begin
             for(int i = 0; i < 4; i = i + 1) begin : SQ_operation
-                if(mispredict) begin
+                if(mispredict && flush_mask[SQ[i].rob_idx]) begin
                     SQ[i]       <= '0;
                 end
                 else begin

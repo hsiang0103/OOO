@@ -4,6 +4,7 @@ syn_dir := ./syn
 inc_dir := ./include
 sim_dir := ./sim
 bld_dir := ./build
+riscv_dv_dir := ./riscv-dv
 FSDB_DEF :=
 ifeq ($(FSDB),1)
 FSDB_DEF := +FSDB
@@ -137,6 +138,11 @@ rtl_gen: | $(bld_dir)
 	cd $(root_dir); \
 	echo "Comparing Trace Logs..."; \
 	python3 compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog_gen/commit.log
+
+gen_prog:
+	cd $(riscv_dv_dir); \
+	python3 run.py --target rv32i --testlist hardware_config.yaml -o $(root_dir)/$(sim_dir)/prog_gen
+	mv $(root_dir)/$(sim_dir)/prog_gen/asm_test/main_0.S $(root_dir)/$(sim_dir)/prog_gen/main.S
 
 # Post-Synthesis simulation
 syn_all: syn0 syn1 syn2 syn3 syn4 syn5 syn6
@@ -339,3 +345,4 @@ clean:
 	make -C $(sim_dir)/prog4/ clean; \
 	make -C $(sim_dir)/prog5/ clean; \
 	make -C $(sim_dir)/prog6/ clean; \
+	make -C $(sim_dir)/prog_gen/ clean; \

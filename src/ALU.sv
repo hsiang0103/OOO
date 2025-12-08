@@ -73,6 +73,7 @@ module ALU (
 
         if(alu_i_valid) begin
             case (opcode)
+                `JAL:       jump = 1'b1;
                 `JALR:      jump = 1'b1;
                 `B_TYPE:    jump = alu_out[0];
                 default:    jump = 1'b0;

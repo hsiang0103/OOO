@@ -473,6 +473,7 @@ module CPU (
         .DC_inst(DC_inst),
         .DC_P_rd_new(DC_P_rd_new),
         .DC_P_rd_old(DC_P_rd_old),
+        .DC_A_rd(A_rd),
         .DC_rob_idx(DC_rob_idx),
         .ROB_ready(rob_ready),
         // Issue/Register Read
@@ -573,7 +574,7 @@ module CPU (
         .commit_data(commit_data),
         .st_commit(st_commit),
         .st_addr(st_addr),
-        .st_data(st_data)
+        .st_data(DM_w_data)
     );
     // synopsys translate_on
 endmodule

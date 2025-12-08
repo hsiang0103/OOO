@@ -1,0 +1,9 @@
+{"vcs1":{"timestamp_begin":1765163290.780171363, "rt":14.39, "ut":13.65, "st":0.27}}
+{"vcselab":{"timestamp_begin":1765163305.251366869, "rt":0.70, "ut":0.16, "st":0.03}}
+{"link":{"timestamp_begin":1765163306.014747811, "rt":1.07, "ut":0.64, "st":0.25}}
+{"SNPS_VCS_INTERNAL_ROOT_START_TIME": 1765163290.188373414}
+{"VCS_COMP_START_TIME": 1765163290.188373414}
+{"VCS_COMP_END_TIME": 1765163307.165469084}
+{"VCS_USER_OPTIONS": "-file /home/hsiang/Desktop/OOO/OOO/riscv-dv/vcs.compile.option.f +incdir+/home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i +incdir+/home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension +vcs+lic+wait -f /home/hsiang/Desktop/OOO/OOO/riscv-dv/files.f -full64 -l /home/hsiang/Desktop/OOO/OOO/sim/prog_gen/compile.log -LDFLAGS -Wl,--no-as-needed -CFLAGS --std=c99 -fno-extended-identifiers -Mdir=/home/hsiang/Desktop/OOO/OOO/sim/prog_gen/vcs_simv.csrc -o /home/hsiang/Desktop/OOO/OOO/sim/prog_gen/vcs_simv"}
+{"vcs1": {"peak_mem": 447984}}
+{"vcselab": {"peak_mem": 153012}}

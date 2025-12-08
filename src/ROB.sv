@@ -7,6 +7,7 @@ module ROB (
     input   logic [31:0]    DC_inst,
     input   logic [6:0]     DC_P_rd_new,
     input   logic [6:0]     DC_P_rd_old,
+    input   logic [5:0]     DC_A_rd,
     output  logic [2:0]     DC_rob_idx,
     output  logic           ROB_ready,
     // Issue/Register Read
@@ -227,7 +228,7 @@ module ROB (
                     ROB[i].inst        <= DC_inst;
                     ROB[i].P_rd_new    <= DC_P_rd_new;
                     ROB[i].P_rd_old    <= DC_P_rd_old;
-                    ROB[i].A_rd        <= DC_inst[11:7];
+                    ROB[i].A_rd        <= DC_A_rd;
                     ROB[i].dispatched  <= 1'b1;
                     ROB[i].issued      <= 1'b0;
                     ROB[i].written     <= 1'b0;

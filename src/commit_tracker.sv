@@ -4,49 +4,67 @@ module commit_tracker(
     input logic        commit_valid,
     input logic [31:0] commit_pc,
     input logic [31:0] commit_inst,
-    input logic [5:0]  commit_Ard,  // 目的地暫存器 Index (0-31)
-    input logic [31:0] commit_data, // 寫回的數據
-    input logic        st_commit,   // 是否為 Store 指令
-    input logic [31:0] st_addr,     // Store 地址
-    input logic [31:0] st_data      // Store 數據
+    input logic [5:0]  commit_Ard,
+    input logic [31:0] commit_data,
+    input logic        st_commit,
+    input logic [31:0] st_addr,
+    input logic [31:0] st_data,
+    input logic [3:0]  st_mask
 );
 
     integer f;
+    
+    // 用來暫存移位後和遮罩後的資料
+    logic [31:0] shifted_st_data;
+    logic [31:0] final_st_data;
+    logic [1:0]  byte_offset;
 
-    // 模擬開始時開啟檔案
     initial begin
         f = $fopen("rtl_commit.log", "w");
     end
 
-    // 模擬結束時關閉檔案 (可選，但在某些 Simulator 很重要)
     final begin
         $fclose(f);
     end
 
     always @(posedge clk) begin
-        // 只有在 Reset 解除且 Commit 有效時才記錄
         if (commit_valid && !rst) begin
             
-            // 過濾掉 BootROM (Spike 預設 0x1000-0x1FFF，你的 Code 從 0x2000 開始)
             if (commit_pc >= 32'h2000) begin
                 
-                // 優先權 1: Store 指令 (對應 mem 格式)
-                // 格式: PC (Inst) mem Addr Data
+                // --- 優先權 1: Store 指令 ---
                 if (st_commit) begin
-                    $fwrite(f, "0x%08h (0x%08h) mem 0x%08h 0x%08h\n", 
-                            commit_pc, commit_inst, st_addr, st_data);
+                    // 1. 計算 Byte Offset (地址的最後兩位)
+                    // 0x808f -> offset = 3 (binary 11)
+                    byte_offset = st_addr[1:0];
+
+                    // 2. 根據 Offset 將資料右移，讓有效資料回到 LSB
+                    // 如果 offset=3, 0x78000000 >> 24 = 0x00000078
+                    shifted_st_data = st_data >> (byte_offset * 8);
+
+                    // 3. 根據 funct3 進行遮罩 (Masking)
+                    // 根據 funct3 (inst[14:12]) 判斷資料大小並進行 Mask
+                    case (commit_inst[14:12])
+                        3'b000: begin
+                            $fwrite(f, "0x%08h (0x%08h) mem 0x%08h 0x%02h\n", 
+                            commit_pc, commit_inst, st_addr, shifted_st_data);
+                        end
+                        3'b001: begin
+                            $fwrite(f, "0x%08h (0x%08h) mem 0x%08h 0x%04h\n", 
+                            commit_pc, commit_inst, st_addr, shifted_st_data);
+                        end
+                        default: begin
+                            $fwrite(f, "0x%08h (0x%08h) mem 0x%08h 0x%08h\n", 
+                            commit_pc, commit_inst, st_addr, shifted_st_data);
+                        end
+                    endcase
                 end
                 
-                // 優先權 2: 一般暫存器寫入 (對應 x... 格式)
-                // 必須過濾掉寫入 x0 的情況 (例如 nop, branch, jump)
-                // 格式: PC (Inst) xIdx Data
-                else if (commit_Ard != 5'd0) begin
+                // --- 優先權 2: 一般暫存器寫入 ---
+                else if (commit_Ard != 6'd0 && commit_inst[6:2] != 5'b11000) begin
                     $fwrite(f, "0x%08h (0x%08h) x%-2d 0x%08h\n", 
                             commit_pc, commit_inst, commit_Ard, commit_data);
                 end
-                
-                // 注意: 如果是指標跳轉或 NOP (寫入 x0 且非 Store)，
-                // 這裡會自動跳過不印，與之前的 Python 邏輯保持一致。
             end
         end
     end

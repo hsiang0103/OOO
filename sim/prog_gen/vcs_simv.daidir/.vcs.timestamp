@@ -1,0 +1,975 @@
+638      
+0 uvm_macros.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/uvm_macros.svh
+0 macros/uvm_version_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_version_defines.svh
+0 macros/uvm_global_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_global_defines.svh
+0 macros/snps_macros.svp
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/snps_macros.svp
+0 macros/uvm_message_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_message_defines.svh
+0 macros/uvm_phase_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_phase_defines.svh
+0 macros/uvm_object_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_object_defines.svh
+0 macros/uvm_printer_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_printer_defines.svh
+0 macros/uvm_tlm_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_tlm_defines.svh
+0 tlm1/uvm_tlm_imps.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_tlm_imps.svh
+0 macros/uvm_sequence_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_sequence_defines.svh
+0 macros/uvm_callback_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_callback_defines.svh
+0 macros/uvm_reg_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_reg_defines.svh
+0 macros/uvm_deprecated_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/macros/uvm_deprecated_defines.svh
+0 dpi/uvm_dpi.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dpi/uvm_dpi.svh
+0 dpi/uvm_hdl.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dpi/uvm_hdl.svh
+0 dpi/uvm_svcmd_dpi.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dpi/uvm_svcmd_dpi.svh
+0 dpi/uvm_regex.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dpi/uvm_regex.svh
+0 base/uvm_base.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_base.svh
+0 base/uvm_coreservice.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_coreservice.svh
+0 base/uvm_version.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_version.svh
+0 base/uvm_object_globals.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_object_globals.svh
+0 base/uvm_misc.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_misc.svh
+0 base/uvm_object.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_object.svh
+0 base/uvm_pool.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_pool.svh
+0 base/uvm_queue.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_queue.svh
+0 base/uvm_factory.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_factory.svh
+0 base/uvm_registry.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_registry.svh
+0 base/uvm_spell_chkr.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_spell_chkr.svh
+0 base/uvm_resource.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_resource.svh
+0 base/uvm_resource_specializations.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_resource_specializations.svh
+0 base/uvm_resource_db.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_resource_db.svh
+0 base/uvm_config_db.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_config_db.svh
+0 base/uvm_printer.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_printer.svh
+0 base/uvm_comparer.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_comparer.svh
+0 base/uvm_packer.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_packer.svh
+0 base/uvm_links.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_links.svh
+0 base/uvm_tr_database.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_tr_database.svh
+0 base/uvm_tr_stream.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_tr_stream.svh
+0 base/uvm_recorder.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_recorder.svh
+0 base/uvm_event_callback.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_event_callback.svh
+0 base/uvm_event.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_event.svh
+0 base/uvm_barrier.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_barrier.svh
+0 base/uvm_callback.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_callback.svh
+0 base/uvm_report_message.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_report_message.svh
+0 base/uvm_report_catcher.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_report_catcher.svh
+0 base/uvm_report_server.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_report_server.svh
+0 base/uvm_report_handler.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_report_handler.svh
+0 base/uvm_report_object.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_report_object.svh
+0 base/uvm_transaction.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_transaction.svh
+0 base/uvm_phase.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_phase.svh
+0 base/uvm_domain.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_domain.svh
+0 base/uvm_bottomup_phase.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_bottomup_phase.svh
+0 base/uvm_topdown_phase.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_topdown_phase.svh
+0 base/uvm_task_phase.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_task_phase.svh
+0 base/uvm_common_phases.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_common_phases.svh
+0 base/uvm_runtime_phases.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_runtime_phases.svh
+0 base/uvm_component.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_component.svh
+0 base/uvm_root.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_root.svh
+0 base/uvm_objection.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_objection.svh
+0 base/uvm_heartbeat.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_heartbeat.svh
+0 base/uvm_globals.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_globals.svh
+0 base/uvm_cmdline_processor.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_cmdline_processor.svh
+0 base/uvm_traversal.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_traversal.svh
+0 dap/uvm_dap.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dap/uvm_dap.svh
+0 dap/uvm_set_get_dap_base.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dap/uvm_set_get_dap_base.svh
+0 dap/uvm_simple_lock_dap.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dap/uvm_simple_lock_dap.svh
+0 dap/uvm_get_to_lock_dap.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dap/uvm_get_to_lock_dap.svh
+0 dap/uvm_set_before_get_dap.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dap/uvm_set_before_get_dap.svh
+0 tlm1/uvm_tlm.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_tlm.svh
+0 tlm1/uvm_tlm_ifs.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_tlm_ifs.svh
+0 tlm1/uvm_sqr_ifs.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_sqr_ifs.svh
+0 base/uvm_port_base.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/base/uvm_port_base.svh
+0 tlm1/uvm_imps.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_imps.svh
+0 tlm1/uvm_ports.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_ports.svh
+0 tlm1/uvm_exports.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_exports.svh
+0 tlm1/uvm_analysis_port.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_analysis_port.svh
+0 tlm1/uvm_tlm_fifo_base.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_tlm_fifo_base.svh
+0 tlm1/uvm_tlm_fifos.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_tlm_fifos.svh
+0 tlm1/uvm_tlm_req_rsp.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_tlm_req_rsp.svh
+0 tlm1/uvm_sqr_connections.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm1/uvm_sqr_connections.svh
+0 comps/uvm_comps.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_comps.svh
+0 comps/uvm_pair.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_pair.svh
+0 comps/uvm_policies.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_policies.svh
+0 comps/uvm_in_order_comparator.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_in_order_comparator.svh
+0 comps/uvm_algorithmic_comparator.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_algorithmic_comparator.svh
+0 comps/uvm_random_stimulus.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_random_stimulus.svh
+0 comps/uvm_subscriber.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_subscriber.svh
+0 comps/uvm_monitor.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_monitor.svh
+0 comps/uvm_driver.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_driver.svh
+0 comps/uvm_push_driver.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_push_driver.svh
+0 comps/uvm_scoreboard.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_scoreboard.svh
+0 comps/uvm_agent.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_agent.svh
+0 comps/uvm_env.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_env.svh
+0 comps/uvm_test.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/comps/uvm_test.svh
+0 seq/uvm_seq.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_seq.svh
+0 seq/uvm_sequence_item.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_sequence_item.svh
+0 seq/uvm_sequencer_base.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_sequencer_base.svh
+0 seq/uvm_sequencer_analysis_fifo.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_sequencer_analysis_fifo.svh
+0 seq/uvm_sequencer_param_base.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_sequencer_param_base.svh
+0 seq/uvm_sequencer.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_sequencer.svh
+0 seq/uvm_push_sequencer.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_push_sequencer.svh
+0 seq/uvm_sequence_base.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_sequence_base.svh
+0 seq/uvm_sequence.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_sequence.svh
+0 seq/uvm_sequence_library.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_sequence_library.svh
+0 seq/uvm_sequence_builtin.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/seq/uvm_sequence_builtin.svh
+0 tlm2/uvm_tlm2.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2.svh
+0 tlm2/uvm_tlm2_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2_defines.svh
+0 tlm2/uvm_tlm2_time.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2_time.svh
+0 tlm2/uvm_tlm2_generic_payload.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2_generic_payload.svh
+0 tlm2/uvm_tlm2_ifs.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2_ifs.svh
+0 tlm2/uvm_tlm2_imps.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2_imps.svh
+0 tlm2/uvm_tlm2_ports.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2_ports.svh
+0 tlm2/uvm_tlm2_exports.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2_exports.svh
+0 tlm2/uvm_tlm2_sockets_base.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2_sockets_base.svh
+0 tlm2/uvm_tlm2_sockets.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/tlm2/uvm_tlm2_sockets.svh
+0 reg/uvm_reg_model.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_model.svh
+0 reg/uvm_reg_item.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_item.svh
+0 reg/uvm_reg_adapter.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_adapter.svh
+0 reg/uvm_reg_predictor.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_predictor.svh
+0 reg/uvm_reg_sequence.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_sequence.svh
+0 reg/uvm_reg_cbs.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_cbs.svh
+0 reg/uvm_reg_backdoor.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_backdoor.svh
+0 reg/uvm_reg_field.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_field.svh
+0 reg/uvm_vreg_field.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_vreg_field.svh
+0 reg/uvm_reg.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg.svh
+0 reg/uvm_reg_indirect.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_indirect.svh
+0 reg/uvm_reg_fifo.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_fifo.svh
+0 reg/uvm_reg_file.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_file.svh
+0 reg/uvm_mem_mam.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_mem_mam.svh
+0 reg/uvm_vreg.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_vreg.svh
+0 reg/uvm_mem.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_mem.svh
+0 reg/uvm_reg_map.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_map.svh
+0 reg/uvm_reg_block.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/uvm_reg_block.svh
+0 reg/sequences/uvm_reg_hw_reset_seq.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/sequences/uvm_reg_hw_reset_seq.svh
+0 reg/sequences/uvm_reg_bit_bash_seq.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/sequences/uvm_reg_bit_bash_seq.svh
+0 reg/sequences/uvm_mem_walk_seq.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/sequences/uvm_mem_walk_seq.svh
+0 reg/sequences/uvm_mem_access_seq.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/sequences/uvm_mem_access_seq.svh
+0 reg/sequences/uvm_reg_access_seq.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/sequences/uvm_reg_access_seq.svh
+0 reg/sequences/uvm_reg_mem_shared_access_seq.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/sequences/uvm_reg_mem_shared_access_seq.svh
+0 reg/sequences/uvm_reg_mem_built_in_seq.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/sequences/uvm_reg_mem_built_in_seq.svh
+0 reg/sequences/uvm_reg_mem_hdl_paths_seq.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/sequences/uvm_reg_mem_hdl_paths_seq.svh
+0 reg/snps_uvm_reg_bank.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/reg/snps_uvm_reg_bank.svh
+0 vcs/vcs_uvm_alt.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/vcs/vcs_uvm_alt.sv
+0 dv_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/dv_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dv_defines.svh
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/dv_defines.svh
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/dv_defines.svh
+0 riscv_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_defines.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_defines.svh
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_defines.svh
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_defines.svh
+0 isa/custom/riscv_custom_instr_enum.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/custom/riscv_custom_instr_enum.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/custom/riscv_custom_instr_enum.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/custom/riscv_custom_instr_enum.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/custom/riscv_custom_instr_enum.sv
+0 riscv_core_setting.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_core_setting.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_core_setting.sv
+0 riscv_vector_cfg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_vector_cfg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_vector_cfg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_vector_cfg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_vector_cfg.sv
+0 riscv_pmp_cfg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_pmp_cfg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_pmp_cfg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_pmp_cfg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_pmp_cfg.sv
+0 riscv_instr_gen_config.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_instr_gen_config.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_instr_gen_config.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_instr_gen_config.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_instr_gen_config.sv
+0 isa/riscv_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_instr.sv
+0 isa/riscv_instr_cov.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_instr_cov.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_instr_cov.svh
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_instr_cov.svh
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_instr_cov.svh
+0 isa/riscv_amo_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_amo_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_amo_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_amo_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_amo_instr.sv
+0 isa/riscv_zba_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_zba_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_zba_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_zba_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_zba_instr.sv
+0 isa/riscv_zbb_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_zbb_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_zbb_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_zbb_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_zbb_instr.sv
+0 isa/riscv_zbc_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_zbc_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_zbc_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_zbc_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_zbc_instr.sv
+0 isa/riscv_zbs_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_zbs_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_zbs_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_zbs_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_zbs_instr.sv
+0 isa/riscv_b_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_b_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_b_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_b_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_b_instr.sv
+0 isa/riscv_csr_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_csr_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_csr_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_csr_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_csr_instr.sv
+0 isa/riscv_floating_point_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_floating_point_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_floating_point_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_floating_point_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_floating_point_instr.sv
+0 isa/riscv_vector_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_vector_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_vector_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_vector_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_vector_instr.sv
+0 isa/riscv_compressed_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/riscv_compressed_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/riscv_compressed_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/riscv_compressed_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/riscv_compressed_instr.sv
+0 isa/rv32a_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32a_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32a_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32a_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32a_instr.sv
+0 isa/rv32c_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32c_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32c_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32c_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32c_instr.sv
+0 isa/rv32dc_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32dc_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32dc_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32dc_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32dc_instr.sv
+0 isa/rv32d_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32d_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32d_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32d_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32d_instr.sv
+0 isa/rv32fc_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32fc_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32fc_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32fc_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32fc_instr.sv
+0 isa/rv32f_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32f_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32f_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32f_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32f_instr.sv
+0 isa/rv32i_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32i_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32i_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32i_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32i_instr.sv
+0 isa/rv32b_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32b_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32b_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32b_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32b_instr.sv
+0 isa/rv32zba_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32zba_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32zba_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32zba_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32zba_instr.sv
+0 isa/rv32zbb_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32zbb_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32zbb_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32zbb_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32zbb_instr.sv
+0 isa/rv32zbc_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32zbc_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32zbc_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32zbc_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32zbc_instr.sv
+0 isa/rv32zbs_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32zbs_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32zbs_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32zbs_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32zbs_instr.sv
+0 isa/rv32m_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32m_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32m_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32m_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32m_instr.sv
+0 isa/rv64a_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv64a_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv64a_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv64a_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv64a_instr.sv
+0 isa/rv64b_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv64b_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv64b_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv64b_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv64b_instr.sv
+0 isa/rv64zba_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv64zba_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv64zba_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv64zba_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv64zba_instr.sv
+0 isa/rv64zbb_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv64zbb_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv64zbb_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv64zbb_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv64zbb_instr.sv
+0 isa/rv64c_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv64c_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv64c_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv64c_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv64c_instr.sv
+0 isa/rv64d_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv64d_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv64d_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv64d_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv64d_instr.sv
+0 isa/rv64f_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv64f_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv64f_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv64f_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv64f_instr.sv
+0 isa/rv64i_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv64i_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv64i_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv64i_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv64i_instr.sv
+0 isa/rv64m_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv64m_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv64m_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv64m_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv64m_instr.sv
+0 isa/rv128c_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv128c_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv128c_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv128c_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv128c_instr.sv
+0 isa/rv32v_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/rv32v_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/rv32v_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/rv32v_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/rv32v_instr.sv
+0 isa/custom/riscv_custom_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/custom/riscv_custom_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/custom/riscv_custom_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/custom/riscv_custom_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/custom/riscv_custom_instr.sv
+0 isa/custom/rv32x_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/custom/rv32x_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/custom/rv32x_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/custom/rv32x_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/custom/rv32x_instr.sv
+0 isa/custom/rv64x_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/isa/custom/rv64x_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/isa/custom/rv64x_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/isa/custom/rv64x_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/isa/custom/rv64x_instr.sv
+0 riscv_pseudo_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_pseudo_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_pseudo_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_pseudo_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_pseudo_instr.sv
+0 riscv_illegal_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_illegal_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_illegal_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_illegal_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_illegal_instr.sv
+0 riscv_reg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_reg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_reg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_reg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_reg.sv
+0 riscv_privil_reg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_privil_reg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_privil_reg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_privil_reg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_privil_reg.sv
+0 riscv_page_table_entry.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_page_table_entry.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_page_table_entry.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_page_table_entry.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_page_table_entry.sv
+0 riscv_page_table_exception_cfg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_page_table_exception_cfg.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_page_table_exception_cfg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_page_table_exception_cfg.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_page_table_exception_cfg.sv
+0 riscv_page_table.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_page_table.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_page_table.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_page_table.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_page_table.sv
+0 riscv_page_table_list.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_page_table_list.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_page_table_list.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_page_table_list.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_page_table_list.sv
+0 riscv_privileged_common_seq.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_privileged_common_seq.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_privileged_common_seq.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_privileged_common_seq.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_privileged_common_seq.sv
+0 riscv_callstack_gen.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_callstack_gen.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_callstack_gen.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_callstack_gen.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_callstack_gen.sv
+0 riscv_data_page_gen.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_data_page_gen.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_data_page_gen.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_data_page_gen.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_data_page_gen.sv
+0 riscv_instr_stream.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_instr_stream.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_instr_stream.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_instr_stream.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_instr_stream.sv
+0 riscv_loop_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_loop_instr.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_loop_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_loop_instr.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_loop_instr.sv
+0 riscv_directed_instr_lib.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_directed_instr_lib.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_directed_instr_lib.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_directed_instr_lib.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_directed_instr_lib.sv
+0 riscv_load_store_instr_lib.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_load_store_instr_lib.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_load_store_instr_lib.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_load_store_instr_lib.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_load_store_instr_lib.sv
+0 riscv_amo_instr_lib.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_amo_instr_lib.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_amo_instr_lib.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_amo_instr_lib.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_amo_instr_lib.sv
+0 riscv_instr_sequence.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_instr_sequence.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_instr_sequence.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_instr_sequence.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_instr_sequence.sv
+0 riscv_asm_program_gen.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_asm_program_gen.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_asm_program_gen.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_asm_program_gen.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_asm_program_gen.sv
+0 riscv_debug_rom_gen.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_debug_rom_gen.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_debug_rom_gen.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_debug_rom_gen.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_debug_rom_gen.sv
+0 riscv_instr_cover_group.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_instr_cover_group.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_instr_cover_group.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_instr_cover_group.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_instr_cover_group.sv
+0 user_extension.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/user_extension.svh
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/user_extension.svh
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/user_extension.svh
+0 riscv_instr_base_test.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_instr_base_test.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_instr_base_test.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_instr_base_test.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_instr_base_test.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_instr_base_test.sv
+0 riscv_instr_test_lib.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_instr_test_lib.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_instr_test_lib.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_instr_test_lib.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_instr_test_lib.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_instr_test_lib.sv
+0 riscv_instr_cov_test.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/systemverilog/riscv_instr_cov_test.sv
+0 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/riscv_instr_cov_test.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_instr_cov_test.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/riscv_instr_cov_test.sv
+0 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_instr_cov_test.sv
+42
++define+UVM_REGEX_NO_DPI
++incdir+/home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i
++incdir+/home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension
++incdir+/opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2
++incdir+/opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/
++vcs+lic+wait
+-Mamsrun=
+-Masflags=
+-Mcc=gcc
+-Mcfl= -pipe -DVCSMX -DUVM_DPI_DO_TYPE_CHECK -fPIC --std=c99 -fno-extended-identifiers -O -I/opt/CIC/Synopsys/vcs/cur/include
+-Mcplusplus=g++
+-Mcrt0=
+-Mcrtn=
+-Mcsrc=/opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dpi/uvm_dpi.cc
+-Mdir=/home/hsiang/Desktop/OOO/OOO/sim/prog_gen/vcs_simv.csrc
+-Mexternalobj=
+-Mldflags= -Wl,--no-as-needed -rdynamic
+-Mobjects=/opt/CIC/Synopsys/vcs/cur/linux64/lib/vpdlogstub.o /opt/CIC/Synopsys/vcs/cur/linux64/lib/libvirsim.so /opt/CIC/Synopsys/vcs/cur/linux64/lib/liberrorinf.so /opt/CIC/Synopsys/vcs/cur/linux64/lib/libsnpsmalloc.so /opt/CIC/Synopsys/vcs/cur/linux64/lib/libvfs.so
+-Mout=/home/hsiang/Desktop/OOO/OOO/sim/prog_gen/vcs_simv
+-Msaverestoreobj=/opt/CIC/Synopsys/vcs/cur/linux64/lib/vcs_save_restore_new.o
+-Msyslibs=-ldl
+-Mvcsaceobjs=
+-Mxcflags= -pipe -DVCSMX -DUVM_DPI_DO_TYPE_CHECK -fPIC -I/opt/CIC/Synopsys/vcs/cur/include
+-Mxllcflags=
+-P
+-f /home/hsiang/Desktop/OOO/OOO/riscv-dv/files.f
+-full64
+-gen_obj
+-l
+-lca
+-ntb_opts
+-o /home/hsiang/Desktop/OOO/OOO/sim/prog_gen/vcs_simv
+-picarchive
+-sverilog
+-timescale=1ns/10ps
+/opt/CIC/Synopsys/vcs/cur/linux64/bin/vcs1
+/home/hsiang/Desktop/OOO/OOO/sim/prog_gen/compile.log
+/opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/uvm_pkg.sv
+uvm-1.2
+/home/hsiang/Desktop/OOO/OOO/sim/prog_gen/vcs_simv
+/home/hsiang/Desktop/OOO/OOO/riscv-dv/files.f
+/opt/CIC/Synopsys/vcs/cur/linux64/lib/vcsdstub.tab
+59
+__ETC_PROFILE_NIX_SOURCED=1
+XDG_SESSION_TYPE=tty
+XDG_SESSION_ID=2492
+XDG_SESSION_CLASS=user
+XDG_RUNTIME_DIR=/run/user/1000
+XDG_DATA_DIRS=/usr/share/gnome:/usr/local/share:/usr/share:/home/hsiang/.nix-profile/share:/nix/var/nix/profiles/default/share:/var/lib/snapd/desktop
+VSCODE_PYTHON_AUTOACTIVATE_GUARD=1
+VSCODE_IPC_HOOK_CLI=/run/user/1000/vscode-ipc-2416bd20-11e0-48f4-b2fa-d2877448a708.sock
+VSCODE_GIT_IPC_HANDLE=/run/user/1000/vscode-git-a71b9a7f7c.sock
+VSCODE_GIT_ASKPASS_NODE=/home/hsiang/.vscode-server/cli/servers/Stable-bf9252a2fb45be6893dd8870c0bf37e2e1766d61/server/node
+VSCODE_GIT_ASKPASS_MAIN=/home/hsiang/.vscode-server/cli/servers/Stable-bf9252a2fb45be6893dd8870c0bf37e2e1766d61/server/extensions/git/dist/askpass-main.js
+VSCODE_GIT_ASKPASS_EXTRA_ARGS=
+VMR_MODE_FLAG=64
+VERDI_HOME=/opt/CIC/Synopsys/verdi/2023.03-sp2
+VCS_UVM_HOME=/opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2
+VCS_PATHMAP_PRELOAD_DONE=1
+VCS_MX_HOME_INTERNAL=1
+VCS_MODE_FLAG=64
+VCS_LOG_FILE=/home/hsiang/Desktop/OOO/OOO/sim/prog_gen/compile.log
+VCS_LCAMSG_PRINT_OFF=1
+VCS_HOME=/opt/CIC/Synopsys/vcs/cur
+VCS_EXEC_DONE=1
+VCS_DEPTH=0
+VCS_ARG_ADDED_FOR_TMP=1
+VCS_ARCH=linux64
+UNAME=/bin/uname
+TOOL_HOME=/opt/CIC/Synopsys/vcs/cur/linux64
+TERM_PROGRAM_VERSION=1.106.3
+TERM_PROGRAM=vscode
+SSL_CERT_FILE=/usr/lib/ssl/cert.pem
+SSL_CERT_DIR=/usr/lib/ssl/certs
+SSH_CONNECTION=192.168.164.253 59359 192.168.164.93 22
+SSH_CLIENT=192.168.164.253 59359 22
+SPIKE_PATH=/opt/riscv/bin/
+SNPS_VCS_PYTHON3=/opt/CIC/Synopsys/vcs/cur/linux64/bin/Python-3.6.1/bin/python3
+SNPS_VCS_CLANG_PATH=/opt/CIC/Synopsys/vcs/cur/linux64/clang
+SNPS_INTERNAL_VCS_LINUX_OS=ubuntu
+SCRNAME=vcs
+SCRIPT_NAME=vcs
+RISCV_OBJCOPY=/opt/riscv/bin/riscv64-unknown-elf-objcopy
+RISCV_GCC=/opt/riscv/bin/riscv64-unknown-elf-gcc
+RISCV_DV_ROOT=/home/hsiang/Desktop/OOO/OOO/riscv-dv
+RISCV=/opt/riscv
+OVA_UUM=0
+NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+NIX_PROFILES=/nix/var/nix/profiles/default /home/hsiang/.nix-profile
+MFLAGS=
+MAKE_TERMOUT=/dev/pts/0
+MAKE_TERMERR=/dev/pts/0
+MAKELEVEL=1
+MAKEFLAGS=
+LESSOPEN=| /usr/bin/lesspipe %s
+LESSCLOSE=/usr/bin/lesspipe %s %s
+LC_ALL=C
+GIT_ASKPASS=/home/hsiang/.vscode-server/cli/servers/Stable-bf9252a2fb45be6893dd8870c0bf37e2e1766d61/server/extensions/git/dist/askpass.sh
+FNP_IP_ENV=1
+DEBUGINFOD_URLS=https://debuginfod.ubuntu.com 
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+COLORTERM=truecolor
+0
+0
+221
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/test/riscv_instr_cov_test.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/test/riscv_instr_test_lib.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/test/riscv_instr_base_test.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/user_extension/user_extension.svh
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_instr_cover_group.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_debug_rom_gen.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_asm_program_gen.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_instr_sequence.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_amo_instr_lib.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_load_store_instr_lib.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_directed_instr_lib.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_loop_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_instr_stream.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_data_page_gen.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_callstack_gen.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_privileged_common_seq.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_page_table_list.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_page_table.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_page_table_exception_cfg.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_page_table_entry.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_privil_reg.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_reg.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_illegal_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_pseudo_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/custom/rv64x_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/custom/rv32x_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/custom/riscv_custom_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32v_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv128c_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv64m_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv64i_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv64f_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv64d_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv64c_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv64zbb_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv64zba_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv64b_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv64a_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32m_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32zbs_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32zbc_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32zbb_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32zba_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32b_instr.sv
+1765160143 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32i_instr.sv
+1765003397 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32f_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32fc_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32d_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32dc_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32c_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/rv32a_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_compressed_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_vector_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_floating_point_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_csr_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_b_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_zbs_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_zbc_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_zbb_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_zba_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_amo_instr.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_instr_cov.svh
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/riscv_instr.sv
+1765114164 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_instr_gen_config.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_pmp_cfg.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_vector_cfg.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/target/rv32i/riscv_core_setting.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/isa/custom/riscv_custom_instr_enum.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_defines.svh
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/dv_defines.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/vcs/vcs_uvm_alt.sv
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/snps_uvm_reg_bank.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/sequences/uvm_reg_mem_hdl_paths_seq.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/sequences/uvm_reg_mem_built_in_seq.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/sequences/uvm_reg_mem_shared_access_seq.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/sequences/uvm_reg_access_seq.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/sequences/uvm_mem_access_seq.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/sequences/uvm_mem_walk_seq.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/sequences/uvm_reg_bit_bash_seq.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/sequences/uvm_reg_hw_reset_seq.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_block.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_map.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_mem.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_vreg.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_mem_mam.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_file.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_fifo.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_indirect.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_vreg_field.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_field.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_backdoor.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_cbs.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_sequence.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_predictor.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_adapter.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_item.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/reg/uvm_reg_model.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2_sockets.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2_sockets_base.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2_exports.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2_ports.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2_imps.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2_ifs.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2_generic_payload.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2_time.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2_defines.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm2/uvm_tlm2.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_sequence_builtin.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_sequence_library.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_sequence.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_sequence_base.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_push_sequencer.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_sequencer.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_sequencer_param_base.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_sequencer_analysis_fifo.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_sequencer_base.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_sequence_item.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/seq/uvm_seq.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_test.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_env.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_agent.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_scoreboard.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_push_driver.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_driver.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_monitor.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_subscriber.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_random_stimulus.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_algorithmic_comparator.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_in_order_comparator.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_policies.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_pair.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/comps/uvm_comps.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_sqr_connections.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_tlm_req_rsp.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_tlm_fifos.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_tlm_fifo_base.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_analysis_port.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_exports.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_ports.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_imps.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_port_base.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_sqr_ifs.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_tlm_ifs.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_tlm.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dap/uvm_set_before_get_dap.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dap/uvm_get_to_lock_dap.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dap/uvm_simple_lock_dap.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dap/uvm_set_get_dap_base.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dap/uvm_dap.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_traversal.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_cmdline_processor.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_globals.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_heartbeat.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_objection.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_root.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_component.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_runtime_phases.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_common_phases.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_task_phase.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_topdown_phase.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_bottomup_phase.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_domain.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_phase.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_transaction.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_report_object.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_report_handler.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_report_server.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_report_catcher.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_report_message.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_callback.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_barrier.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_event.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_event_callback.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_recorder.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_tr_stream.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_tr_database.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_links.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_packer.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_comparer.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_printer.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_config_db.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_resource_db.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_resource_specializations.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_resource.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_spell_chkr.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_registry.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_factory.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_queue.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_pool.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_object.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_misc.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_object_globals.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_version.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_coreservice.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/base/uvm_base.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dpi/uvm_regex.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dpi/uvm_svcmd_dpi.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dpi/uvm_hdl.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dpi/uvm_dpi.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_deprecated_defines.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_reg_defines.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_callback_defines.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_sequence_defines.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/tlm1/uvm_tlm_imps.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_tlm_defines.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_printer_defines.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_object_defines.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_phase_defines.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_message_defines.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/snps_macros.svp
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_global_defines.svh
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/macros/uvm_version_defines.svh
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/uvm_macros.svh
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/test/riscv_instr_gen_tb_top.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/test/riscv_instr_test_pkg.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_instr_pkg.sv
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/src/riscv_signature_pkg.sv
+1693023925 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/uvm_pkg.sv
+1693040877 /opt/CIC/Synopsys/vcs/cur/linux64/lib/vcsdstub.tab
+1764937927 /home/hsiang/Desktop/OOO/OOO/riscv-dv/files.f
+6
+1693023924 /opt/CIC/Synopsys/vcs/cur/etc/uvm-1.2/dpi/uvm_dpi.cc
+1693043612 /opt/CIC/Synopsys/vcs/cur/linux64/lib/vpdlogstub.o
+1693043931 /opt/CIC/Synopsys/vcs/cur/linux64/lib/libvirsim.so
+1693042805 /opt/CIC/Synopsys/vcs/cur/linux64/lib/liberrorinf.so
+1693042720 /opt/CIC/Synopsys/vcs/cur/linux64/lib/libsnpsmalloc.so
+1693042802 /opt/CIC/Synopsys/vcs/cur/linux64/lib/libvfs.so
+1765163307 /home/hsiang/Desktop/OOO/OOO/sim/prog_gen/vcs_simv.daidir
+-1 partitionlib
