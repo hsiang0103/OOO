@@ -270,6 +270,9 @@ synthesize: | $(bld_dir) $(syn_dir)
 	cd $(bld_dir); \
 	dc_shell -no_home_init -f ../script/synthesis.tcl | tee syn_compile.log
 
+konata: | $(bld_dir)
+	./tools/konata/konata --no-sandbox ./build/kanata.log &
+
 coverage: $(bld_dir)
 	./sim/run_coverage.sh;
 
