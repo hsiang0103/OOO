@@ -46,7 +46,7 @@ rtl0: | $(bld_dir)
 	+notimingcheck; \
 	cd $(root_dir); \
 	echo "Comparing Trace Logs..."; \
-	python3 compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog0/commit.log
+	python3 sim/compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog0/commit.log
 
 rtl1: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
@@ -60,6 +60,7 @@ rtl1: | $(bld_dir)
 	+define+prog1$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog1 \
 	+notimingcheck
+	python3 sim/compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog1/commit.log
 
 rtl2: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
@@ -73,6 +74,7 @@ rtl2: | $(bld_dir)
 	+define+prog2$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog2 \
 	+notimingcheck
+	python3 sim/compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog2/commit.log
 
 rtl3: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
@@ -86,6 +88,7 @@ rtl3: | $(bld_dir)
 	+define+prog3$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog3 \
 	+notimingcheck
+	python3 sim/compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog3/commit.log
 
 rtl4: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
@@ -99,6 +102,7 @@ rtl4: | $(bld_dir)
 	+define+prog4$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog4 \
 	+notimingcheck
+	python3 sim/compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog4/commit.log
 
 rtl5: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
@@ -112,6 +116,7 @@ rtl5: | $(bld_dir)
 	+define+prog5$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog5 \
 	+notimingcheck
+	python3 sim/compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog5/commit.log
 
 rtl6: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
@@ -125,6 +130,7 @@ rtl6: | $(bld_dir)
 	+define+prog3$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog6 \
 	+notimingcheck
+	python3 sim/compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog6/commit.log
 
 rtl_gen: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \

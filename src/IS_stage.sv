@@ -153,7 +153,7 @@ module IS_stage (
                         iq[i].P_rs2_valid   <= (iq[i].P_rs2 == WB_rd)? 1'b1 : iq[i].P_rs2_valid;
                     end
                 end
-                else if (DC_valid && dispatch_ptr == i) begin
+                else if (DC_valid && IS_ready && dispatch_ptr == i) begin
                     iq[i].valid       <= 1'b1;
                     iq[i].pc          <= IS_in_pc;
                     iq[i].inst        <= IS_in_inst;

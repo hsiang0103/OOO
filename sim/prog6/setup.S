@@ -1,8 +1,18 @@
+.data           
+.align 6       
+.global tohost  
+tohost: .dword 0
+.global fromhost    
+fromhost: .dword 0
+
 # Define constants
 .section .text
 .align 2
 .globl _start
 _start:
+ li t0, 0x00006000  
+ csrs mstatus, t0 
+
  li x1, 0
  li x2, 0
  li x3, 0
@@ -74,6 +84,9 @@ SystemInit:
 
 SystemExit:
   /* End simulation */
+  li t0, 1
+  la t1, tohost
+  sw t0, 0(t1) 
   la t0, _sim_end
   li t1, -1
   sw t1, 0(t0)
