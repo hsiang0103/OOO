@@ -288,6 +288,7 @@ NORMAL=\033[0m
 clean:
 	rm -rf $(bld_dir); \
 	rm -rf $(sim_dir)/prog*/result*.txt; \
+	rm -rf ucli.key; \
 	make -C $(sim_dir)/prog0/ clean; \
 	make -C $(sim_dir)/prog1/ clean; \
 	make -C $(sim_dir)/prog2/ clean; \
