@@ -9,10 +9,10 @@ module ALU (
     input   logic           [31:0]  pc,
     // control
     input   logic                   alu_i_valid,
-    input   logic           [2:0]   alu_i_rob_idx,
+    input   logic           [$clog2(`ROB_LEN)-1:0]   alu_i_rob_idx,
     input   logic           [6:0]   alu_i_rd,
     output  logic                   alu_o_valid,
-    output  logic           [2:0]   alu_o_rob_idx,
+    output  logic           [$clog2(`ROB_LEN)-1:0]   alu_o_rob_idx,
     output  logic           [6:0]   alu_o_rd,
     output  logic           [31:0]  alu_o_data,
     // jump

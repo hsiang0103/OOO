@@ -17,6 +17,7 @@
 // 	Version:		1.0	    								   		//
 //////////////////////////////////////////////////////////////////////
 `include "../include/define.svh"
+`include "../include/config.svh"
 `include "SRAM_wrapper.sv"
 `include "CPU.sv"
 

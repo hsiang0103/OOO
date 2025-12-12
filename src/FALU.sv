@@ -6,10 +6,10 @@ module FALU (
     input   logic [31:0]    operand2,
 
     input   logic           falu_i_valid,
-    input   logic [2:0]     falu_i_rob_idx,
+    input   logic [$clog2(`ROB_LEN)-1:0]     falu_i_rob_idx,
     input   logic [6:0]     falu_i_rd,
     output  logic           falu_o_valid,
-    output  logic [2:0]     falu_o_rob_idx,
+    output  logic [$clog2(`ROB_LEN)-1:0]     falu_o_rob_idx,
     output  logic [6:0]     falu_o_rd,
     output  logic [31:0]    falu_o_data
 );

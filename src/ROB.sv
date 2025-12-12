@@ -8,20 +8,20 @@ module ROB (
     input   logic [6:0]     DC_P_rd_new,
     input   logic [6:0]     DC_P_rd_old,
     input   logic [5:0]     DC_A_rd,
-    output  logic [2:0]     DC_rob_idx,
+    output  logic [$clog2(`ROB_LEN)-1:0] DC_rob_idx,
     output  logic           ROB_ready,
     // Issue/Register Read
     input   logic           writeback_free,
     input   logic           RR_valid,
-    input   logic [2:0]     RR_rob_idx,
+    input   logic [$clog2(`ROB_LEN)-1:0] RR_rob_idx,
     // Write Back
     input   logic           WB_valid,
     input   logic [31:0]    WB_data,
-    input   logic [2:0]     WB_rob_idx,
+    input   logic [$clog2(`ROB_LEN)-1:0] WB_rob_idx,
     // mispredict
     input   logic           mispredict,
-    input   logic [2:0]     mis_rob_idx,
-    output  logic [7:0]     flush_mask,
+    input   logic [$clog2(`ROB_LEN)-1:0] mis_rob_idx,
+    output  logic [`ROB_LEN-1:0] flush_mask,
     // Commit
     output  logic           commit_wb_en,
     output  logic [6:0]     commit_P_rd_old,
@@ -46,7 +46,7 @@ module ROB (
     output logic [6:0]      rollback_P_rd_new_1,
     // konata
     output  logic           commit,
-    output  logic [2:0]     commit_rob_idx
+    output  logic [$clog2(`ROB_LEN)-1:0] commit_rob_idx
 );
 
     typedef struct packed{
@@ -68,24 +68,24 @@ module ROB (
 
     state_t cs, ns;
 
-    ROB_entry ROB [0:7];
-    logic [2:0]     ROB_h, ROB_t;
-    logic [2:0]     ROB_t_sub_1;
-    logic [2:0]     ROB_t_sub_2;
-    logic [2:0]     ROB_t_add_1;
-    logic [2:0]     ROB_h_add_1;
+    ROB_entry ROB [0:`ROB_LEN-1];
+    logic [$clog2(`ROB_LEN)-1:0] ROB_h, ROB_t;
+    logic [$clog2(`ROB_LEN)-1:0] ROB_t_sub_1;
+    logic [$clog2(`ROB_LEN)-1:0] ROB_t_sub_2;
+    logic [$clog2(`ROB_LEN)-1:0] ROB_t_add_1;
+    logic [$clog2(`ROB_LEN)-1:0] ROB_h_add_1;
     
 
-    logic [2:0]     mis_rob_idx_r;
-    logic [7:0]     flush_mask_r;
-    logic [2:0]     miss;
-    logic [2:0]     target_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0] mis_rob_idx_r;
+    logic [`ROB_LEN-1:0] flush_mask_r;
+    logic [$clog2(`ROB_LEN)-1:0] miss;
+    logic [$clog2(`ROB_LEN)-1:0] target_rob_idx;
     
 
-    assign ROB_t_sub_1      = (ROB_t == 3'd0) ? 3'd7 : ROB_t - 3'd1;
-    assign ROB_t_add_1      = (ROB_t == 3'd7) ? 3'd0 : ROB_t + 3'd1;
-    assign ROB_h_add_1      = (ROB_h == 3'd7) ? 3'd0 : ROB_h + 3'd1;
-    assign ROB_t_sub_2      = (ROB_t <= 3'd1) ? ROB_t + 3'd6 : ROB_t - 3'd2;
+    assign ROB_t_sub_1      = (ROB_t == '0) ? `ROB_LEN-1 : ROB_t - 1;
+    assign ROB_t_add_1      = (ROB_t == `ROB_LEN-1) ? '0 : ROB_t + 1;
+    assign ROB_h_add_1      = (ROB_h == `ROB_LEN-1) ? '0 : ROB_h + 1;
+    assign ROB_t_sub_2      = (ROB_t <= 1) ? ROB_t + `ROB_LEN-2 : ROB_t - 2;
     assign DC_rob_idx       = ROB_t;
     assign ROB_ready        = !((ROB_t == ROB_h) && ROB[ROB_h].dispatched);
 
@@ -104,7 +104,7 @@ module ROB (
 
     // flush mask generation
     always_comb begin
-        for (int i = 0; i < 8; i++) begin
+        for (int i = 0; i < `ROB_LEN; i++) begin
             if(mispredict) begin
                 if(ROB_h <= mis_rob_idx) begin
                     flush_mask[i] = !((i >= ROB_h) && (i <= mis_rob_idx));
@@ -126,13 +126,13 @@ module ROB (
     always_ff @(posedge clk) begin
         if (rst) begin
             cs              <= normal;
-            mis_rob_idx_r   <= 3'd0;
-            flush_mask_r    <= 8'b0;
+            mis_rob_idx_r   <= '0;
+            flush_mask_r    <= '0;
         end
         else begin
             cs              <= ns;
             mis_rob_idx_r   <= (mispredict)? mis_rob_idx : mis_rob_idx_r;
-            flush_mask_r    <= (mispredict)? flush_mask : (stall)? flush_mask_r : 8'b0;
+            flush_mask_r    <= (mispredict)? flush_mask : (stall)? flush_mask_r : '0;
         end
     end
 
@@ -149,9 +149,9 @@ module ROB (
     assign stall                = (cs != normal);
 
     assign miss                 = (mispredict && !flush_mask_r[mis_rob_idx]) ? mis_rob_idx : mis_rob_idx_r;
-    assign target_rob_idx       = miss + 3'd1;
+    assign target_rob_idx       = miss + 1;
 
-    logic [2:0] next_rob_t;
+    logic [$clog2(`ROB_LEN)-1:0] next_rob_t;
     assign next_rob_t = (rollback_en_1) ? ROB_t_sub_1 : ROB_t;
 
     always_comb begin
@@ -169,8 +169,8 @@ module ROB (
     // ROB pointers
     always_ff @(posedge clk) begin
         if(rst) begin
-            ROB_h           <= 3'd0;
-            ROB_t           <= 3'd0;
+            ROB_h           <= '0;
+            ROB_t           <= '0;
         end
         else begin
             unique case (cs)
@@ -204,12 +204,12 @@ module ROB (
     // ROB entries management
     always_ff @(posedge clk) begin
         if(rst) begin
-            for (int i = 0; i < 8; i = i + 1) begin : init_ROB
+            for (int i = 0; i < `ROB_LEN; i = i + 1) begin : init_ROB
                 ROB[i] <= '{default:0};
             end
         end
         else begin
-            for(int i = 0; i < 8; i = i + 1) begin : ROB_operations
+            for(int i = 0; i < `ROB_LEN; i = i + 1) begin : ROB_operations
                 // rollback
                 if (cs == recover && (
                     (rollback_en_0 && i == ROB_t) || 

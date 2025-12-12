@@ -8,7 +8,7 @@ module konata(
     input logic        DC_ready,
     input logic [31:0] IF_out_pc,
     input logic [31:0] IF_out_inst,
-    input logic [2:0]  ROB_tail,
+    input logic [$clog2(`ROB_LEN)-1:0]  ROB_tail,
     // IS stage signals
     input logic        DC_valid,
     input logic        IS_ready,
@@ -16,22 +16,22 @@ module konata(
     // RR stage signals
     input logic        IS_valid,
     input logic        RR_ready,
-    input logic [2:0]  IS_out_rob_idx,
+    input logic [$clog2(`ROB_LEN)-1:0]  IS_out_rob_idx,
     // EX stage signals
     input logic        RR_valid,
     input logic        EX_ready,
-    input logic [2:0]  RR_out_rob_idx,
+    input logic [$clog2(`ROB_LEN)-1:0]  RR_out_rob_idx,
     input logic [31:0] RR_out_pc,
     // WB stage signals
     input logic        EX_valid,
-    input logic [2:0]  EX_out_rob_idx,
+    input logic [$clog2(`ROB_LEN)-1:0]  EX_out_rob_idx,
     // Commit signals
     input logic        commit,
-    input logic [2:0]  commit_rob_idx,
+    input logic [$clog2(`ROB_LEN)-1:0]  commit_rob_idx,
     // Flush signals
     input logic        mispredict,
     input logic [31:0] jb_pc,
-    input logic [7:0]  flush_mask,
+    input logic [`ROB_LEN-1:0]  flush_mask,
     input logic        DC_mispredict
 );
 
@@ -46,10 +46,10 @@ module konata(
     logic [31:0] retire_id;
     logic [15:0] IF_pc_r;
 
-    logic [2:0]  wb_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0]  wb_rob_idx;
     logic        wb_valid_r;
 
-    logic [2:0]  cm_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0]  cm_rob_idx;
     logic        cm_valid_r;
     
     // Instruction tracking structure
@@ -58,7 +58,7 @@ module konata(
         logic [31:0] id;           // Instruction ID in file
         logic [31:0] pc;
         logic [31:0] inst;
-        logic [2:0]  rob_idx;
+        logic [$clog2(`ROB_LEN)-1:0]  rob_idx;
         
         // Stage tracking
         logic        if_started;

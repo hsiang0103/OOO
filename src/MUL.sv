@@ -6,10 +6,10 @@ module MUL (
     input   logic [31:0]    rs2_data,
 
     input   logic           mul_i_valid,
-    input   logic [2:0]     mul_i_rob_idx,
+    input   logic [$clog2(`ROB_LEN)-1:0]     mul_i_rob_idx,
     input   logic [6:0]     mul_i_rd,
     output  logic           mul_o_valid,
-    output  logic [2:0]     mul_o_rob_idx,
+    output  logic [$clog2(`ROB_LEN)-1:0]     mul_o_rob_idx,
     output  logic [6:0]     mul_o_rd,
     output  logic [31:0]    mul_o_data,
     output  logic           mul_idle

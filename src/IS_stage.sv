@@ -12,9 +12,9 @@ module IS_stage (
     input   logic [6:0]     IS_in_rs2,
     input   logic [6:0]     IS_in_rd,
     input   logic [2:0]     IS_in_fu_sel,
-    input   logic [2:0]     IS_in_rob_idx,
-    input   logic [2:0]     IS_in_LQ_tail,
-    input   logic [2:0]     IS_in_SQ_tail,
+    input   logic [$clog2(`ROB_LEN)-1:0]     IS_in_rob_idx,
+    input   logic [$clog2(`LQ_LEN):0] IS_in_LQ_tail,
+    input   logic [$clog2(`SQ_LEN):0] IS_in_SQ_tail,
     input   logic           IS_in_jump,
     input   logic           DC_valid,
     // rename 
@@ -23,7 +23,7 @@ module IS_stage (
     // IS stage
     output  logic           IS_valid,
     output  logic           IS_ready,
-    output  logic [2:0]     IS_out_rob_idx,
+    output  logic [$clog2(`ROB_LEN)-1:0]     IS_out_rob_idx,
     // EX stage
     output  logic [31:0]    RR_out_pc,
     output  logic [31:0]    RR_out_inst, 
@@ -34,9 +34,9 @@ module IS_stage (
     output  logic [2:0]     RR_out_f3,
     output  logic [6:0]     RR_out_f7,
     output  logic [2:0]     RR_out_fu_sel,
-    output  logic [2:0]     RR_out_ld_idx,
-    output  logic [2:0]     RR_out_st_idx,
-    output  logic [2:0]     RR_out_rob_idx, 
+    output  logic [$clog2(`LQ_LEN):0] RR_out_ld_idx,
+    output  logic [$clog2(`SQ_LEN):0] RR_out_st_idx,
+    output  logic [$clog2(`ROB_LEN)-1:0]     RR_out_rob_idx, 
     output  logic [6:0]     RR_out_rd,
     output  logic           RR_out_jump,
     output  logic           RR_ready,
@@ -54,7 +54,7 @@ module IS_stage (
     // mispredict
     input   logic           mispredict,
     input   logic           stall,
-    input   logic [7:0]     flush_mask
+    input   logic [`ROB_LEN-1:0]     flush_mask
 );
     typedef struct packed {
         logic [31:0]    pc;
@@ -68,48 +68,52 @@ module IS_stage (
         logic           P_rs1_valid;
         logic           P_rs2_valid;
         logic [6:0]     P_rd;
-        logic [2:0]     ld_idx;
-        logic [2:0]     st_idx;
+        logic [$clog2(`LQ_LEN):0] ld_idx;
+        logic [$clog2(`SQ_LEN):0] st_idx;
         logic [2:0]     fu_sel;
-        logic [2:0]     rob_idx;
+        logic [$clog2(`ROB_LEN)-1:0]     rob_idx;
         logic           valid;
         logic           jump;
     } IS_data_t;
 
-    IS_data_t iq [0:3];
-    logic [1:0] dispatch_ptr;
-    logic [1:0] issue_ptr;
-    logic [3:0] rs1_valid, rs2_valid;
+    IS_data_t iq [0:`IQ_LEN-1];
+    logic [$clog2(`IQ_LEN)-1:0] dispatch_ptr;
+    logic [$clog2(`IQ_LEN)-1:0] issue_ptr;
+    logic [`IQ_LEN-1:0] rs1_valid, rs2_valid;
 
-    logic [3:0] age [0:3];
+    logic [`IQ_LEN-1:0] age [0:`IQ_LEN-1];
 
-    assign IS_ready = !(iq[0].valid && iq[1].valid && iq[2].valid && iq[3].valid);
+    logic [`IQ_LEN-1:0] iq_valid;
+    always_comb begin
+        for (int i = 0; i < `IQ_LEN; i++) iq_valid[i] = iq[i].valid;
+    end
+    assign IS_ready = !(&iq_valid);
 
-    logic [3:0] req_vec;   
-    logic [3:0] grant_vec; 
+    logic [`IQ_LEN-1:0] req_vec;   
+    logic [`IQ_LEN-1:0] grant_vec; 
 
     always_comb begin
-        priority case(1'b1)
-            !iq[0].valid: dispatch_ptr = 2'd0;
-            !iq[1].valid: dispatch_ptr = 2'd1;
-            !iq[2].valid: dispatch_ptr = 2'd2;
-            !iq[3].valid: dispatch_ptr = 2'd3;
-            default:      dispatch_ptr = 2'd0;
-        endcase
+        dispatch_ptr = '0;
+        for (int i = 0; i < `IQ_LEN; i++) begin
+            if (!iq[i].valid) begin
+                dispatch_ptr = i[$clog2(`IQ_LEN)-1:0];
+                break;
+            end
+        end
 
-        for(int i = 0; i < 4; i = i + 1) begin
+        for(int i = 0; i < `IQ_LEN; i = i + 1) begin
             rs1_valid[i] = iq[i].P_rs1_valid || (iq[i].P_rs1 == WB_rd && WB_valid) || (iq[i].P_rs1 == EX_in_rd && EX_in_valid);
             rs2_valid[i] = iq[i].P_rs2_valid || (iq[i].P_rs2 == WB_rd && WB_valid) || (iq[i].P_rs2 == EX_in_rd && EX_in_valid);
         end
 
-        for (int i = 0; i < 4; i++) begin
+        for (int i = 0; i < `IQ_LEN; i++) begin
             req_vec[i] = iq[i].valid && rs1_valid[i] && rs2_valid[i] && EX_ready[iq[i].fu_sel];
         end
 
         grant_vec = req_vec; 
         
-        for (int i = 0; i < 4; i++) begin
-            for (int j = 0; j < 4; j++) begin
+        for (int i = 0; i < `IQ_LEN; i++) begin
+            for (int j = 0; j < `IQ_LEN; j++) begin
                 if (i != j) begin
                     if (req_vec[j] && age[j][i]) begin
                         grant_vec[i] = 1'b0;
@@ -120,13 +124,13 @@ module IS_stage (
 
         IS_valid = |grant_vec; 
         
-        case (1'b1)
-            grant_vec[0]: issue_ptr = 2'd0;
-            grant_vec[1]: issue_ptr = 2'd1;
-            grant_vec[2]: issue_ptr = 2'd2;
-            grant_vec[3]: issue_ptr = 2'd3;
-            default:      issue_ptr = 2'd0;
-        endcase
+        issue_ptr = '0;
+        for (int i = 0; i < `IQ_LEN; i++) begin
+            if (grant_vec[i]) begin
+                issue_ptr = i[$clog2(`IQ_LEN)-1:0];
+                break;
+            end
+        end
     end
 
     // =================
@@ -134,13 +138,13 @@ module IS_stage (
     // =================
     always_ff @(posedge clk) begin
         if (rst) begin
-            for (int i = 0; i < 4; i = i + 1) begin
-                age[i] <= 3'b000;
+            for (int i = 0; i < `IQ_LEN; i = i + 1) begin
+                age[i] <= '0;
             end
         end
         else begin
             if (DC_valid && !iq[dispatch_ptr].valid) begin
-                for (int i = 0; i < 4; i++) begin
+                for (int i = 0; i < `IQ_LEN; i++) begin
                     if (iq[i].valid) begin
                         age[i][dispatch_ptr] <= 1'b1;
                     end
@@ -156,12 +160,12 @@ module IS_stage (
     // ======================
     always_ff @(posedge clk) begin
         if(rst) begin
-            for (int i = 0; i < 4; i = i + 1) begin : initialize_iq
+            for (int i = 0; i < `IQ_LEN; i = i + 1) begin : initialize_iq
                 iq[i]   <= '0;
             end
         end
         else begin
-            for(int i = 0; i < 4; i = i + 1) begin : update_iq
+            for(int i = 0; i < `IQ_LEN; i = i + 1) begin : update_iq
                 // mispredict
                 if(mispredict && flush_mask[iq[i].rob_idx]) begin
                     iq[i]   <= '0;
@@ -237,9 +241,9 @@ module IS_stage (
         logic [31:0]    rs1_data;
         logic [31:0]    rs2_data;
         logic [6:0]     P_rd;
-        logic [2:0]     rob_idx;
-        logic [2:0]     ld_idx;
-        logic [2:0]     st_idx;
+        logic [$clog2(`ROB_LEN)-1:0]     rob_idx;
+        logic [$clog2(`LQ_LEN):0] ld_idx;
+        logic [$clog2(`SQ_LEN):0] st_idx;
         logic [2:0]     fu_sel;
         logic           jump;
     } data_t ;

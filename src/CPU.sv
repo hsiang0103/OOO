@@ -52,9 +52,9 @@ module CPU (
     logic [6:0]  DC_out_P_rs2;
     logic [6:0]  DC_out_P_rd;
     logic [2:0]  DC_out_fu_sel;
-    logic [2:0]  DC_out_rob_idx;
-    logic [2:0]  DC_out_LQ_tail;
-    logic [2:0]  DC_out_SQ_tail;
+    logic [$clog2(`ROB_LEN)-1:0]  DC_out_rob_idx;
+    logic [$clog2(`LQ_LEN):0]  DC_out_LQ_tail;
+    logic [$clog2(`SQ_LEN):0]  DC_out_SQ_tail;
     logic        DC_out_jump;
     logic        DC_valid;
     logic        dispatch_ready;
@@ -63,7 +63,7 @@ module CPU (
     // IS stage output (RR = Register Read)
     logic        IS_valid;
     logic        RR_ready;
-    logic [2:0]  IS_out_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0]  IS_out_rob_idx;
     logic [31:0] RR_out_pc;
     logic [31:0] RR_out_inst;
     logic [31:0] RR_out_imm;
@@ -73,9 +73,9 @@ module CPU (
     logic [2:0]  RR_out_f3;
     logic [6:0]  RR_out_f7;
     logic [2:0]  RR_out_fu_sel;
-    logic [2:0]  RR_out_ld_idx;
-    logic [2:0]  RR_out_st_idx;
-    logic [2:0]  RR_out_rob_idx;
+    logic [$clog2(`LQ_LEN):0]  RR_out_ld_idx;
+    logic [$clog2(`SQ_LEN):0]  RR_out_st_idx;
+    logic [$clog2(`ROB_LEN)-1:0]  RR_out_rob_idx;
     logic [6:0]  RR_out_rd;
     logic        RR_out_jump;
     logic        RR_valid;
@@ -99,17 +99,17 @@ module CPU (
     logic [6:0]  DC_P_rd_old;
     logic [6:0]  DC_P_rd_new;
     logic [2:0]  DC_fu_sel;
-    logic [2:0]  DC_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0]  DC_rob_idx;
 
     // EX forwarding 
     logic [31:0] EX_out_data;
-    logic [2:0]  EX_out_rob_idx; 
+    logic [$clog2(`ROB_LEN)-1:0]  EX_out_rob_idx; 
     logic        EX_out_valid;
     logic [6:0]  EX_out_rd;
 
     // Write back wires
     logic [31:0] WB_out_data;
-    logic [2:0]  WB_out_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0]  WB_out_rob_idx;
     logic        WB_out_valid;
     logic [6:0]  WB_out_rd;
     logic        writeback_free;
@@ -117,34 +117,34 @@ module CPU (
     // Mispredict/flush wires
     logic [31:0] jb_pc;
     logic        mispredict;
-    logic [2:0]  mis_rob_idx;
-    logic [7:0]  flush_mask;
+    logic [$clog2(`ROB_LEN)-1:0]  mis_rob_idx;
+    logic [`ROB_LEN-1:0]  flush_mask;
     logic        stall;
     logic        recovery;
     
     // LSU wires
     logic        ld_i_valid;
     logic        st_i_valid;
-    logic [2:0]  lsu_i_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0]  lsu_i_rob_idx;
     logic [31:0] lsu_i_rs1_data;
     logic [31:0] lsu_i_rs2_data;
     logic [31:0] lsu_i_imm;
     logic        ld_o_valid;
-    logic [2:0]  ld_o_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0]  ld_o_rob_idx;
     logic [6:0]  ld_o_rd;
     logic [31:0] ld_o_data;
-    logic [2:0]  LQ_tail;
-    logic [2:0]  SQ_tail;
-    logic [2:0]  EX_ld_idx;
-    logic [2:0]  EX_st_idx;
+    logic [$clog2(`LQ_LEN):0]  LQ_tail;
+    logic [$clog2(`SQ_LEN):0]  SQ_tail;
+    logic [$clog2(`LQ_LEN):0]  EX_ld_idx;
+    logic [$clog2(`SQ_LEN):0]  EX_st_idx;
     logic        ld_ready;
     logic        st_ready;
     logic        ld_commit;
     logic        st_commit;
     logic [31:0] st_addr;
     logic [31:0] st_data;
-    logic [2:0]  mis_ld_idx;
-    logic [2:0]  mis_st_idx;
+    logic [$clog2(`LQ_LEN):0]  mis_ld_idx;
+    logic [$clog2(`SQ_LEN):0]  mis_st_idx;
     
     // Commit wires
     logic        commit_wb_en;
@@ -155,7 +155,7 @@ module CPU (
     logic [31:0] commit_pc;
     logic [31:0] commit_inst;
     logic        commit;
-    logic [2:0]  commit_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0]  commit_rob_idx;
 
     // BPU 
     logic        is_jb;

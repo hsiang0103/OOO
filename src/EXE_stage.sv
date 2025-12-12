@@ -12,17 +12,17 @@ module EXE_stage(
     input   logic [4:0]     EXE_in_op,    
     input   logic [2:0]     EXE_in_f3,
     input   logic [6:0]     EXE_in_f7,
-    input   logic [2:0]     EXE_in_rob_idx,
+    input   logic [$clog2(`ROB_LEN)-1:0]     EXE_in_rob_idx,
     input   logic           EXE_in_jump,
     // LSU 
     output  logic           ld_i_valid,
     output  logic           st_i_valid,
-    output  logic [2:0]     lsu_i_rob_idx,
+    output  logic [$clog2(`ROB_LEN)-1:0]     lsu_i_rob_idx,
     output  logic [31:0]    lsu_i_rs1_data,
     output  logic [31:0]    lsu_i_rs2_data,
     output  logic [31:0]    lsu_i_imm,
     input   logic           ld_o_valid,
-    input   logic [2:0]     ld_o_rob_idx,
+    input   logic [$clog2(`ROB_LEN)-1:0]     ld_o_rob_idx,
     input   logic [6:0]     ld_o_rd,
     input   logic [31:0]    ld_o_data,
     // mispredict
@@ -32,15 +32,15 @@ module EXE_stage(
     output  logic           is_jb,
     output  logic [31:0]    jb_pc,  
     output  logic           mispredict,  
-    output  logic [2:0]     mis_rob_idx,
+    output  logic [$clog2(`ROB_LEN)-1:0]     mis_rob_idx,
     // forwarding
     output  logic [31:0]    EX_out_data,
-    output  logic [2:0]     EX_out_rob_idx, 
+    output  logic [$clog2(`ROB_LEN)-1:0]     EX_out_rob_idx, 
     output  logic           EX_out_valid,
     output  logic [6:0]     EX_out_rd,
     // write back
     output  logic [31:0]    WB_out_data,
-    output  logic [2:0]     WB_out_rob_idx, 
+    output  logic [$clog2(`ROB_LEN)-1:0]     WB_out_rob_idx, 
     output  logic           WB_out_valid,
     output  logic [6:0]     WB_out_rd,
     // Handshake signals
@@ -50,7 +50,7 @@ module EXE_stage(
 
     typedef struct packed{
         logic [31:0] data;
-        logic [2:0]  rob_idx;
+        logic [$clog2(`ROB_LEN)-1:0]  rob_idx;
         logic [6:0]  rd;
     } data_t;
 
@@ -287,7 +287,7 @@ module EXE_stage(
     // =======================================================
     logic [31:0]    EX_o_data;
     logic           EX_o_valid;
-    logic [2:0]     EX_o_rob_idx;
+    logic [$clog2(`ROB_LEN)-1:0]     EX_o_rob_idx;
     logic [6:0]     EX_o_rd;
 
     always_comb begin
