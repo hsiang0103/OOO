@@ -81,47 +81,74 @@ module IS_stage (
     logic [1:0] issue_ptr;
     logic [3:0] rs1_valid, rs2_valid;
 
+    logic [3:0] age [0:3];
+
     assign IS_ready = !(iq[0].valid && iq[1].valid && iq[2].valid && iq[3].valid);
 
-    // Bad issue strategy
-    // TODO: use age matric to implement oldest first issue
+    logic [3:0] req_vec;   
+    logic [3:0] grant_vec; 
+
     always_comb begin
-        // find free entry
         priority case(1'b1)
-            iq[0].valid == 1'b0: dispatch_ptr = 2'd0;
-            iq[1].valid == 1'b0: dispatch_ptr = 2'd1;
-            iq[2].valid == 1'b0: dispatch_ptr = 2'd2;
-            iq[3].valid == 1'b0: dispatch_ptr = 2'd3;
-            default:             dispatch_ptr = 2'd0;
+            !iq[0].valid: dispatch_ptr = 2'd0;
+            !iq[1].valid: dispatch_ptr = 2'd1;
+            !iq[2].valid: dispatch_ptr = 2'd2;
+            !iq[3].valid: dispatch_ptr = 2'd3;
+            default:      dispatch_ptr = 2'd0;
         endcase
-        // check rs1/rs2 ready
-        for(int i = 0; i < 4; i = i + 1) begin : rs_ready_check
+
+        for(int i = 0; i < 4; i = i + 1) begin
             rs1_valid[i] = iq[i].P_rs1_valid || (iq[i].P_rs1 == WB_rd && WB_valid) || (iq[i].P_rs1 == EX_in_rd && EX_in_valid);
             rs2_valid[i] = iq[i].P_rs2_valid || (iq[i].P_rs2 == WB_rd && WB_valid) || (iq[i].P_rs2 == EX_in_rd && EX_in_valid);
         end
-        // find ready entry
-        priority case(1'b1)
-            iq[0].valid && rs1_valid[0] && rs2_valid[0] && EX_ready[iq[0].fu_sel]: begin
-                issue_ptr = 2'd0;
-                IS_valid  = 1'b1;   
+
+        for (int i = 0; i < 4; i++) begin
+            req_vec[i] = iq[i].valid && rs1_valid[i] && rs2_valid[i] && EX_ready[iq[i].fu_sel];
+        end
+
+        grant_vec = req_vec; 
+        
+        for (int i = 0; i < 4; i++) begin
+            for (int j = 0; j < 4; j++) begin
+                if (i != j) begin
+                    if (req_vec[j] && age[j][i]) begin
+                        grant_vec[i] = 1'b0;
+                    end
+                end
             end
-            iq[1].valid && rs1_valid[1] && rs2_valid[1] && EX_ready[iq[1].fu_sel]: begin
-                issue_ptr = 2'd1;
-                IS_valid  = 1'b1;   
-            end
-            iq[2].valid && rs1_valid[2] && rs2_valid[2] && EX_ready[iq[2].fu_sel]: begin
-                issue_ptr = 2'd2;
-                IS_valid  = 1'b1;   
-            end
-            iq[3].valid && rs1_valid[3] && rs2_valid[3] && EX_ready[iq[3].fu_sel]: begin
-                issue_ptr = 2'd3;
-                IS_valid  = 1'b1;   
-            end 
-            default: begin
-                issue_ptr = 2'd0;
-                IS_valid  = 1'b0;   
-            end
+        end
+
+        IS_valid = |grant_vec; 
+        
+        case (1'b1)
+            grant_vec[0]: issue_ptr = 2'd0;
+            grant_vec[1]: issue_ptr = 2'd1;
+            grant_vec[2]: issue_ptr = 2'd2;
+            grant_vec[3]: issue_ptr = 2'd3;
+            default:      issue_ptr = 2'd0;
         endcase
+    end
+
+    // =================
+    // Age Matrix Update
+    // =================
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            for (int i = 0; i < 4; i = i + 1) begin
+                age[i] <= 3'b000;
+            end
+        end
+        else begin
+            if (DC_valid && !iq[dispatch_ptr].valid) begin
+                for (int i = 0; i < 4; i++) begin
+                    if (iq[i].valid) begin
+                        age[i][dispatch_ptr] <= 1'b1;
+                    end
+
+                    age[dispatch_ptr][i] <= 1'b0;
+                end
+            end
+        end
     end
 
     // ======================
