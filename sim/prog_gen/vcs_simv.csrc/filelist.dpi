@@ -1,6 +1,0 @@
-DPI_STUB_OBJS_OBJ0=./../vcs_simv.daidir/vc_hdrs.o
-DPI_STUB_OBJS_SRC0=./../vcs_simv.daidir/vc_hdrs.c
-DPI_STUB_OBJS += $(DPI_STUB_OBJS_OBJ0)
-$(DPI_STUB_OBJS_OBJ0): $(DPI_STUB_OBJS_SRC0)
-	@$(CC) -I/opt/CIC/Synopsys/vcs/cur/include  -pipe -DVCSMX -DUVM_DPI_DO_TYPE_CHECK -fPIC --std=c99 -fno-extended-identifiers    -I/opt/CIC/Synopsys/vcs/cur/include  -fPIC -c -o $(DPI_STUB_OBJS_OBJ0) $(DPI_STUB_OBJS_SRC0)
-	@strip -g $(DPI_STUB_OBJS_OBJ0)

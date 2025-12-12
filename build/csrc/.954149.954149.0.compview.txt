@@ -1,7 +1,0 @@
-Command exited with non-zero status 255
-{"vcs1":{"timestamp_begin":1761547508.725209074, "rt":1.02, "ut":0.16, "st":0.09}}
-{"SNPS_VCS_INTERNAL_ROOT_START_TIME": 1761547507.072972492}
-{"VCS_COMP_START_TIME": 1761547507.072972492}
-{"VCS_COMP_END_TIME": 1761547509.951037502}
-{"VCS_USER_OPTIONS": "-R -sverilog /homes/nfs/HsuHsiang/AVSD/OOO/./sim/top_tb.sv -debug_access+all -full64 +incdir+/homes/nfs/HsuHsiang/AVSD/OOO/./src+/homes/nfs/HsuHsiang/AVSD/OOO/./src/AXI+/homes/nfs/HsuHsiang/AVSD/OOO/./include+/homes/nfs/HsuHsiang/AVSD/OOO/./sim +define+prog0+FSDB_ALL +prog_path=/homes/nfs/HsuHsiang/AVSD/OOO/./sim/prog0 +rdcycle=1 +notimingcheck"}
-{"vcs1": {"peak_mem": 266436}}

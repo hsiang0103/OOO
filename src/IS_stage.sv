@@ -13,8 +13,8 @@ module IS_stage (
     input   logic [6:0]     IS_in_rd,
     input   logic [2:0]     IS_in_fu_sel,
     input   logic [2:0]     IS_in_rob_idx,
-    input   logic [1:0]     IS_in_LQ_tail,
-    input   logic [1:0]     IS_in_SQ_tail,
+    input   logic [2:0]     IS_in_LQ_tail,
+    input   logic [2:0]     IS_in_SQ_tail,
     input   logic           IS_in_jump,
     input   logic           DC_valid,
     // rename 
@@ -34,8 +34,8 @@ module IS_stage (
     output  logic [2:0]     RR_out_f3,
     output  logic [6:0]     RR_out_f7,
     output  logic [2:0]     RR_out_fu_sel,
-    output  logic [1:0]     RR_out_ld_idx,
-    output  logic [1:0]     RR_out_st_idx,
+    output  logic [2:0]     RR_out_ld_idx,
+    output  logic [2:0]     RR_out_st_idx,
     output  logic [2:0]     RR_out_rob_idx, 
     output  logic [6:0]     RR_out_rd,
     output  logic           RR_out_jump,
@@ -68,8 +68,8 @@ module IS_stage (
         logic           P_rs1_valid;
         logic           P_rs2_valid;
         logic [6:0]     P_rd;
-        logic [1:0]     ld_idx;
-        logic [1:0]     st_idx;
+        logic [2:0]     ld_idx;
+        logic [2:0]     st_idx;
         logic [2:0]     fu_sel;
         logic [2:0]     rob_idx;
         logic           valid;
@@ -211,8 +211,8 @@ module IS_stage (
         logic [31:0]    rs2_data;
         logic [6:0]     P_rd;
         logic [2:0]     rob_idx;
-        logic [1:0]     ld_idx;
-        logic [1:0]     st_idx;
+        logic [2:0]     ld_idx;
+        logic [2:0]     st_idx;
         logic [2:0]     fu_sel;
         logic           jump;
     } data_t ;

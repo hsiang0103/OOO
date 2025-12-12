@@ -5,6 +5,7 @@ inc_dir := ./include
 sim_dir := ./sim
 bld_dir := ./build
 riscv_dv_dir := ./riscv-dv
+COV_NAME ?= coverage
 FSDB_DEF :=
 ifeq ($(FSDB),1)
 FSDB_DEF := +FSDB
@@ -26,6 +27,7 @@ TA_run:
   
 # RTL simulation
 rtl_all: rtl0 rtl1 rtl2 rtl3 rtl4 rtl5 rtl6
+test: clean gen_prog rtl_gen
 
 rtl0: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
@@ -134,7 +136,9 @@ rtl_gen: | $(bld_dir)
 	+define+prog_gen$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog_gen \
 	+rdcycle=1 \
-	+notimingcheck; \
+	+notimingcheck \
+	-cm line+cond+fsm+tgl \
+    -cm_dir $(root_dir)/sim/coverage_db/$(COV_NAME).vdb; \
 	cd $(root_dir); \
 	echo "Comparing Trace Logs..."; \
 	python3 compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog_gen/commit.log

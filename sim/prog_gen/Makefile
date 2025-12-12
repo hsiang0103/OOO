@@ -27,7 +27,6 @@ all: patch build_elf build_log build_hex run_spike
 fix_main: 
 	
 patch:
-	sed -i -E 's/\.rept[[:space:]]+[0-9]+/.rept 2000/g' main.S
 	sed -i 's/\becall\b/j SystemExit/g' main.S
 
 build_elf: $(OBJ) | $(LDFILE)
@@ -54,4 +53,4 @@ run_spike: $(ELF_NAME).elf
 
 clean:
 	rm -rf $(ELF_NAME) *.log $(ELF_NAME)*.hex *.o *.elf golden.log commit.log asm_test/ spike_sim/ vcs_simv.daidir/ vcs_simv vc_hdrs.h seed.yaml vcs_simv.csrc/ compile.log
-	# rm -rf main.S
+	rm -rf main.S

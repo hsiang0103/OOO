@@ -53,8 +53,8 @@ module CPU (
     logic [6:0]  DC_out_P_rd;
     logic [2:0]  DC_out_fu_sel;
     logic [2:0]  DC_out_rob_idx;
-    logic [1:0]  DC_out_LQ_tail;
-    logic [1:0]  DC_out_SQ_tail;
+    logic [2:0]  DC_out_LQ_tail;
+    logic [2:0]  DC_out_SQ_tail;
     logic        DC_out_jump;
     logic        DC_valid;
     logic        dispatch_ready;
@@ -73,8 +73,8 @@ module CPU (
     logic [2:0]  RR_out_f3;
     logic [6:0]  RR_out_f7;
     logic [2:0]  RR_out_fu_sel;
-    logic [1:0]  RR_out_ld_idx;
-    logic [1:0]  RR_out_st_idx;
+    logic [2:0]  RR_out_ld_idx;
+    logic [2:0]  RR_out_st_idx;
     logic [2:0]  RR_out_rob_idx;
     logic [6:0]  RR_out_rd;
     logic        RR_out_jump;
@@ -133,18 +133,18 @@ module CPU (
     logic [2:0]  ld_o_rob_idx;
     logic [6:0]  ld_o_rd;
     logic [31:0] ld_o_data;
-    logic [1:0]  LQ_tail;
-    logic [1:0]  SQ_tail;
-    logic [1:0]  EX_ld_idx;
-    logic [1:0]  EX_st_idx;
+    logic [2:0]  LQ_tail;
+    logic [2:0]  SQ_tail;
+    logic [2:0]  EX_ld_idx;
+    logic [2:0]  EX_st_idx;
     logic        ld_ready;
     logic        st_ready;
     logic        ld_commit;
     logic        st_commit;
     logic [31:0] st_addr;
     logic [31:0] st_data;
-    logic [1:0]  mis_ld_idx;
-    logic [1:0]  mis_st_idx;
+    logic [2:0]  mis_ld_idx;
+    logic [2:0]  mis_st_idx;
     
     // Commit wires
     logic        commit_wb_en;

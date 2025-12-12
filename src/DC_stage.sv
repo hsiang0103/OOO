@@ -38,8 +38,8 @@ module DC_stage(
     output  logic [6:0]     DC_out_P_rs2,
     output  logic [6:0]     DC_out_P_rd,
     output  logic [2:0]     DC_out_fu_sel,
-    output  logic [1:0]     DC_out_LQ_tail,
-    output  logic [1:0]     DC_out_SQ_tail,
+    output  logic [2:0]     DC_out_LQ_tail,
+    output  logic [2:0]     DC_out_SQ_tail,
     output  logic [2:0]     DC_out_rob_idx, 
     output  logic           DC_out_jump,
     output  logic           DC_valid,
@@ -50,8 +50,8 @@ module DC_stage(
     output  logic           DC_mispredict,
     output  logic [31:0]    DC_redirect_pc,
     // LSU
-    input   logic [1:0]     LQ_tail,
-    input   logic [1:0]     SQ_tail,
+    input   logic [2:0]     LQ_tail,
+    input   logic [2:0]     SQ_tail,
     input   logic           ld_ready,
     input   logic           st_ready 
 );
@@ -150,8 +150,8 @@ module DC_stage(
         logic [6:0]     P_rs2;
         logic [6:0]     P_rd;
         logic [2:0]     rob_idx;
-        logic [1:0]     LQ_tail;
-        logic [1:0]     SQ_tail;
+        logic [2:0]     LQ_tail;
+        logic [2:0]     SQ_tail;
         logic [2:0]     fu_sel;
         logic           jump;
     } data_t;

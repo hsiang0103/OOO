@@ -17,8 +17,8 @@ module LSU (
     input   logic           ld_i_valid,
     input   logic           st_i_valid,
     input   logic [2:0]     lsu_i_rob_idx,
-    input   logic [1:0]     EX_ld_idx,
-    input   logic [1:0]     EX_st_idx,
+    input   logic [2:0]     EX_ld_idx,
+    input   logic [2:0]     EX_st_idx,
     output  logic           ld_o_valid,
     output  logic [2:0]     ld_o_rob_idx,
     output  logic [6:0]     ld_o_rd,
@@ -31,8 +31,8 @@ module LSU (
     // mispredict
     input   logic           mispredict,
     input   logic [7:0]     flush_mask,
-    input   logic [1:0]     mis_ld_idx,
-    input   logic [1:0]     mis_st_idx,
+    input   logic [2:0]     mis_ld_idx,
+    input   logic [2:0]     mis_st_idx,
     // DM interface
     input   logic [31:0]    DM_rd_data,
     output  logic           DM_r_en,
@@ -40,8 +40,8 @@ module LSU (
     output  logic [31:0]    DM_addr,
     output  logic [31:0]    DM_w_data,
     // ROB
-    output  logic [1:0]     LQ_tail,
-    output  logic [1:0]     SQ_tail
+    output  logic [2:0]     LQ_tail,
+    output  logic [2:0]     SQ_tail
 );
     typedef struct packed {
         logic [31:0]    addr;
@@ -54,7 +54,7 @@ module LSU (
 
     typedef struct packed {
         logic [31:0]    addr;
-        logic [1:0]     SQ_t;
+        logic [2:0]     SQ_t;
         logic [6:0]     rd;
         logic [2:0]     rob_idx;
         logic [2:0]     f3;
@@ -65,18 +65,18 @@ module LSU (
 
     SQ_entry SQ [0:3];
     LQ_entry LQ [0:3];
-    logic [1:0] SQ_h, SQ_t;
-    logic [1:0] LQ_h, LQ_t;
+    logic [2:0] SQ_h, SQ_t;
+    logic [2:0] LQ_h, LQ_t;
     logic DC_ld, DC_st;
      
-    assign ld_ready         = !(LQ_t == LQ_h && LQ[LQ_h].valid); // LQ not full
-    assign st_ready         = !(SQ_t == SQ_h && SQ[SQ_h].valid); // SQ not full
+    assign ld_ready         = !(LQ_t[1:0] == LQ_h[1:0] && LQ_t[2] != LQ_h[2]); // LQ not full
+    assign st_ready         = !(SQ_t[1:0] == SQ_h[1:0] && SQ_t[2] != SQ_h[2]); // SQ not full
     assign DC_ld            = DC_fu_sel == 6 && decode_valid; 
     assign DC_st            = DC_fu_sel == 7 && decode_valid; 
     assign LQ_tail          = LQ_t;
     assign SQ_tail          = SQ_t;
-    assign st_addr          = SQ[SQ_h].addr;
-    assign st_data          = SQ[SQ_h].data;
+    assign st_addr          = SQ[SQ_h[1:0]].addr;
+    assign st_data          = SQ[SQ_h[1:0]].data;
 
     // ================
     // load select
@@ -87,23 +87,25 @@ module LSU (
     logic [1:0] LQ_order    [0:3];
     logic [1:0] load_request_idx;
     logic       load_request_valid;
+    logic       same_phase;
 
     always_comb begin
         // check younger store in SQ
         for(int i = 0; i < 4; i = i + 1) begin
+            same_phase = (SQ_h[2] == LQ[i].SQ_t[2]);
             for(int j = 0; j < 4; j = j + 1) begin
                 if(LQ[i].valid) begin
-                    if(LQ[i].SQ_t >= SQ_h) begin
-                        age_mask[i][j] = (j < LQ[i].SQ_t) && (j >= SQ_h);
+                    if (same_phase) begin
+                        age_mask[i][j] = (j >= SQ_h[1:0]) && (j < LQ[i].SQ_t[1:0]);
                     end
                     else begin
-                        age_mask[i][j] = (j < LQ[i].SQ_t) || (j >= SQ_h);
+                        age_mask[i][j] = (j >= SQ_h[1:0]) || (j < LQ[i].SQ_t[1:0]);
                     end
                 end
                 else begin
                     age_mask[i][j] = 0;
                 end
-                sq_addr_cmp[i][j] = SQ[j].valid && (!SQ[j].issued || SQ[j].addr == LQ[i].addr);
+                sq_addr_cmp[i][j] = SQ[j].valid && (!SQ[j].issued || SQ[j].addr[31:2] == LQ[i].addr[31:2]);
             end
             LQ_order[i]     = (LQ_h + i) & 2'b11;
             // can request if no younger store with different address
@@ -174,12 +176,12 @@ module LSU (
     // DM interface
     // ================
     assign DM_r_en          = !st_commit;   // read when store not commit
-    assign DM_addr          = !st_commit? LQ[load_request_idx].addr : SQ[SQ_h].addr;
+    assign DM_addr          = !st_commit? LQ[load_request_idx].addr : SQ[SQ_h[1:0]].addr;
 
     always_comb begin
-        case (SQ[SQ_h].f3)
+        case (SQ[SQ_h[1:0]].f3)
             `SB: begin
-                case (SQ[SQ_h].addr[1:0])
+                case (SQ[SQ_h[1:0]].addr[1:0])
                     2'b00:   DM_w_en = 32'hFFFFFF00;
                     2'b01:   DM_w_en = 32'hFFFF00FF;
                     2'b10:   DM_w_en = 32'hFF00FFFF;
@@ -187,7 +189,7 @@ module LSU (
                 endcase
             end
             `SH:begin
-                case (SQ[SQ_h].addr[1:0])
+                case (SQ[SQ_h[1:0]].addr[1:0])
                     2'b00:    DM_w_en = 32'hFFFF0000;
                     // 2'b01:    DM_w_en = 32'hFF0000FF;
                     2'b10:    DM_w_en = 32'h0000FFFF;
@@ -199,23 +201,22 @@ module LSU (
     end
 
     always_comb begin
-        case (SQ[SQ_h].f3)
+        case (SQ[SQ_h[1:0]].f3)
             `SB: begin
-                case (SQ[SQ_h].addr[1:0])
-                    2'b00:   DM_w_data = {24'b0, SQ[SQ_h].data[7:0]};
-                    2'b01:   DM_w_data = {16'b0, SQ[SQ_h].data[7:0], 8'b0};
-                    2'b10:   DM_w_data = {8'b0, SQ[SQ_h].data[7:0], 16'b0};
-                    2'b11:   DM_w_data = {SQ[SQ_h].data[7:0], 24'b0};
+                case (SQ[SQ_h[1:0]].addr[1:0])
+                    2'b00:   DM_w_data = {24'b0, SQ[SQ_h[1:0]].data[7:0]};
+                    2'b01:   DM_w_data = {16'b0, SQ[SQ_h[1:0]].data[7:0], 8'b0};
+                    2'b10:   DM_w_data = {8'b0, SQ[SQ_h[1:0]].data[7:0], 16'b0};
+                    2'b11:   DM_w_data = {SQ[SQ_h[1:0]].data[7:0], 24'b0};
                 endcase
             end
             `SH:begin
-                case (SQ[SQ_h].addr[1:0])
-                    2'b00:    DM_w_data = {16'b0, SQ[SQ_h].data[15:0]};
-                    // 2'b01:    DM_w_data = {8'b0, SQ[SQ_h].data[15:0], 8'b0};
-                    2'b10:    DM_w_data = {SQ[SQ_h].data[15:0], 16'b0};
+                case (SQ[SQ_h[1:0]].addr[1:0])
+                    2'b00:    DM_w_data = {16'b0, SQ[SQ_h[1:0]].data[15:0]};
+                    2'b10:    DM_w_data = {SQ[SQ_h[1:0]].data[15:0], 16'b0};
                 endcase
             end
-            `SW:             DM_w_data = SQ[SQ_h].data;
+            `SW:             DM_w_data = SQ[SQ_h[1:0]].data;
             default:         DM_w_data = 32'h0;
         endcase
     end
@@ -227,8 +228,8 @@ module LSU (
     // LQ pointers
     always_ff @(posedge clk) begin
         if(rst) begin
-            LQ_h <= 2'b0;
-            LQ_t <= 2'b0;
+            LQ_h <= 3'b0;
+            LQ_t <= 3'b0;
         end
         else begin
             // mispredict
@@ -264,14 +265,14 @@ module LSU (
                 else begin
                     unique case (1'b1)
                         // dispatch
-                        DC_ld && ld_ready && i == LQ_t: begin
+                        DC_ld && ld_ready && i == LQ_t[1:0]: begin
                             LQ[i].SQ_t      <= SQ_t;
                             LQ[i].valid     <= 1'b1;
                             LQ[i].rd        <= DC_rd;
                             LQ[i].rob_idx   <= DC_rob_idx;
                         end
                         // execute
-                        ld_i_valid && i == EX_ld_idx: begin
+                        ld_i_valid && i == EX_ld_idx[1:0]: begin
                             LQ[i].issued    <= 1'b1;
                             LQ[i].f3        <= funct3;
                             LQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
@@ -281,7 +282,7 @@ module LSU (
                             LQ[i].done  <= 1'b1;
                         end
                         // commit
-                        ld_commit && i == LQ_h: begin
+                        ld_commit && i == LQ_h[1:0]: begin
                             LQ[i]       <= '0;
                         end 
                         default: LQ[i]  <= LQ[i];
@@ -298,8 +299,8 @@ module LSU (
     // SQ pointers  
     always_ff @(posedge clk) begin
         if(rst) begin
-            SQ_h <= 2'b0;
-            SQ_t <= 2'b0;
+            SQ_h <= 3'b0;
+            SQ_t <= 3'b0;
         end
         else begin
             // mispredict
@@ -334,19 +335,19 @@ module LSU (
                 else begin
                     unique case (1'b1)
                         // dispatch
-                        DC_st && st_ready && i == SQ_t: begin
+                        DC_st && st_ready && i == SQ_t[1:0]: begin
                             SQ[i].valid     <= 1'b1;
                             SQ[i].rob_idx   <= DC_rob_idx;
                         end
                         // issue
-                        st_i_valid && i == EX_st_idx: begin
+                        st_i_valid && i == EX_st_idx[1:0]: begin
                             SQ[i].issued    <= 1'b1;
                             SQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
                             SQ[i].data      <= lsu_i_rs2_data;
                             SQ[i].f3        <= funct3;
                         end
                         // commit
-                        st_commit && i == SQ_h: begin
+                        st_commit && i == SQ_h[1:0]: begin
                             SQ[i]       <= '0;
                         end 
                         default: SQ[i]  <= SQ[i];
