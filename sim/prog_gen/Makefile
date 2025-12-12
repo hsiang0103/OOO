@@ -5,7 +5,7 @@ export RISCV_GCC ?= $(CROSS_PREFIX)gcc
 export RISCV_OBJDUMP ?= $(CROSS_PREFIX)objdump -xsd
 export RISCV_OBJCOPY ?= $(CROSS_PREFIX)objcopy
 
-RISCV_DV_ROOT ?= $(CURDIR)/../../riscv-dv
+RISCV_DV_ROOT ?= $(CURDIR)/../../tools/riscv-dv
 
 LDFILE := link.ld
 CFLAGS := -march=rv32imf -mabi=ilp32 -I$(RISCV_DV_ROOT)/user_extension -I$(RISCV_DV_ROOT)/test/riscv_test_lib/asm

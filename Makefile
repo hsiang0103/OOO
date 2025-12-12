@@ -4,8 +4,10 @@ syn_dir := ./syn
 inc_dir := ./include
 sim_dir := ./sim
 bld_dir := ./build
-riscv_dv_dir := ./riscv-dv
+riscv_dv_dir := ./tools/riscv-dv
+CUSTOM_TARGET_DIR := ./sim/custom_target
 COV_NAME ?= coverage
+CM_DIR := ./coverage
 FSDB_DEF :=
 ifeq ($(FSDB),1)
 FSDB_DEF := +FSDB
@@ -27,7 +29,7 @@ TA_run:
   
 # RTL simulation
 rtl_all: rtl0 rtl1 rtl2 rtl3 rtl4 rtl5 rtl6
-test: clean gen_prog rtl_gen
+test: clean gen rtl_gen
 
 rtl0: | $(bld_dir)
 	@if [ $$(echo $(CYCLE) '>' 20.0 | bc -l) -eq 1 ]; then \
@@ -138,14 +140,19 @@ rtl_gen: | $(bld_dir)
 	+rdcycle=1 \
 	+notimingcheck \
 	-cm line+cond+fsm+tgl \
-    -cm_dir $(root_dir)/sim/coverage_db/$(COV_NAME).vdb; \
+    -cm_dir $(CM_DIR)/$(COV_NAME).vdb; \
 	cd $(root_dir); \
 	echo "Comparing Trace Logs..."; \
-	python3 compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog_gen/commit.log
+	python3 sim/compare_log.py $(bld_dir)/rtl_commit.log $(sim_dir)/prog_gen/commit.log
 
-gen_prog:
-	cd $(riscv_dv_dir); \
-	python3 run.py --target rv32i --testlist hardware_config.yaml -o $(root_dir)/$(sim_dir)/prog_gen
+gen:
+	python3 tools/riscv-dv/run.py \
+		--custom_target $(CUSTOM_TARGET_DIR) \
+		--target rv32i \
+		--testlist sim/custom_target/config.yaml \
+		--isa rv32im_zicsr \
+		--mabi ilp32 \
+		-o $(root_dir)/$(sim_dir)/prog_gen;
 	mv $(root_dir)/$(sim_dir)/prog_gen/asm_test/main_0.S $(root_dir)/$(sim_dir)/prog_gen/main.S
 
 # Post-Synthesis simulation
@@ -263,79 +270,18 @@ synthesize: | $(bld_dir) $(syn_dir)
 	cd $(bld_dir); \
 	dc_shell -no_home_init -f ../script/synthesis.tcl | tee syn_compile.log
 
+coverage: $(bld_dir)
+	./sim/run_coverage.sh;
+
+cov: | $(bld_dir) 
+	cd $(bld_dir); \
+	verdi -cov -covdir coverage/merged.vdb
+
 
 # Check file structure
 BLUE=\033[1;34m
 RED=\033[1;31m
 NORMAL=\033[0m
-
-check: clean
-	@if [ -f StudentID ]; then \
-		STUDENTID=$$(grep -v '^$$' StudentID); \
-		if [ -z "$$STUDENTID" ]; then \
-			echo -e "$(RED)Student ID number is not provided$(NORMAL)"; \
-			exit 1; \
-		else \
-			ID_LEN=$$(expr length $$STUDENTID); \
-			if [ $$ID_LEN -eq 9 ]; then \
-				if [[ $$STUDENTID =~ ^[A-Z][A-Z0-9][0-9]+$$ ]]; then \
-					echo -e "$(BLUE)Student ID number pass$(NORMAL)"; \
-				else \
-					echo -e "$(RED)Student ID number should be one capital letter and 8 numbers (or 2 capital letters and 7 numbers)$(NORMAL)"; \
-					exit 1; \
-				fi \
-			else \
-				echo -e "$(RED)Student ID number length isn't 9$(NORMAL)"; \
-				exit 1; \
-			fi \
-		fi \
-	else \
-		echo -e "$(RED)StudentID file is not found$(NORMAL)"; \
-		exit 1; \
-	fi; \
-	if [ -f StudentID2 ]; then \
-		STUDENTID2=$$(grep -v '^$$' StudentID2); \
-		if [ -z "$$STUDENTID2" ]; then \
-			echo -e "$(RED)Second student ID number is not provided$(NORMAL)"; \
-			exit 1; \
-		else \
-			ID2_LEN=$$(expr length $$STUDENTID2); \
-			if [ $$ID2_LEN -eq 9 ]; then \
-				if [[ $$STUDENTID2 =~ ^[A-Z][A-Z0-9][0-9]+$$ ]]; then \
-					echo -e "$(BLUE)Second student ID number pass$(NORMAL)"; \
-				else \
-					echo -e "$(RED)Second student ID number should be one capital letter and 8 numbers (or 2 capital letters and 7 numbers)$(NORMAL)"; \
-					exit 1; \
-				fi \
-			else \
-				echo -e "$(RED)Second student ID number length isn't 9$(NORMAL)"; \
-				exit 1; \
-			fi \
-		fi \
-	fi; \
-	if [ $$(ls -1 *.docx 2>/dev/null | wc -l) -eq 0 ]; then \
-		echo -e "$(RED)Report file is not found$(NORMAL)"; \
-		exit 1; \
-	elif [ $$(ls -1 *.docx 2>/dev/null | wc -l) -gt 1 ]; then \
-		echo -e "$(RED)More than one docx file is found, please delete redundant file(s)$(NORMAL)"; \
-		exit 1; \
-	elif [ ! -f $${STUDENTID}.docx ]; then \
-		echo -e "$(RED)Report file name should be $$STUDENTID.docx$(NORMAL)"; \
-		exit 1; \
-	else \
-		echo -e "$(BLUE)Report file name pass$(NORMAL)"; \
-	fi; \
-	if [ $$(basename $(PWD)) != $$STUDENTID ]; then \
-		echo -e "$(RED)Main folder name should be \"$$STUDENTID\"$(NORMAL)"; \
-		exit 1; \
-	else \
-		echo -e "$(BLUE)Main folder name pass$(NORMAL)"; \
-	fi
-
-tar: check
-	STUDENTID=$$(basename $(PWD)); \
-	cd ..; \
-	tar cvf $$STUDENTID.tar $$STUDENTID
 
 .PHONY: clean
 

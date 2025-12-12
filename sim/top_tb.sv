@@ -81,14 +81,7 @@ module top_tb;
         $display("DM[%4d] = %h, pass", `TEST_START + i, `mem_word(`TEST_START + i));
       end
     end
-	//`ifdef RDCYCLE
-	if (rdcycle == "1") begin
-	  
-	  $display("your total cycle is %f ",`mem_word(`TEST_START + num));
-	  $display("your total cycle is %f ",`mem_word(`TEST_START + num+1));
-	  
-	end
-	
+
 	//`endif
     result(err, num);
     $finish;
