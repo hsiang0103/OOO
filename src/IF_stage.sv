@@ -7,8 +7,6 @@ module IF_stage(
         // From IM
         input   logic [31:0]    IM_r_data,
         // From IS stage
-        input   logic           DC_mispredict,
-        input   logic [31:0]    DC_redirect_pc,
         input   logic           mispredict,
         input   logic           stall,
         // From EXE stage
@@ -30,7 +28,7 @@ module IF_stage(
     logic [31:0] IF_DC_pc;
     logic        IF_DC_jump;
 
-    assign IM_r_addr = mispredict ? jb_pc : (DC_mispredict)? DC_redirect_pc : pc;
+    assign IM_r_addr = mispredict ? jb_pc : pc;
 
     // PC register
     always_ff @(posedge clk) begin

@@ -46,9 +46,6 @@ module DC_stage(
     // mispredict
     input   logic           mispredict,
     input   logic           stall,
-    // early branch
-    output  logic           DC_mispredict,
-    output  logic [31:0]    DC_redirect_pc,
     // LSU
     input   logic [$clog2(`LQ_LEN):0] LQ_tail,
     input   logic [$clog2(`SQ_LEN):0] SQ_tail,

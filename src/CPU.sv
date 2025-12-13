@@ -171,10 +171,6 @@ module CPU (
     logic [5:0]  rollback_A_rd_1;
     logic [6:0]  rollback_P_rd_old_1;
     logic [6:0]  rollback_P_rd_new_1;
-
-    // early branch
-    logic        DC_mispredict;
-    logic [31:0] DC_redirect_pc;
     
     // Handshake signals
     logic        DC_ready;
@@ -194,8 +190,6 @@ module CPU (
         // From IM
         .IM_r_data(IM_r_data),
         // From IS stage
-        .DC_mispredict(DC_mispredict),
-        .DC_redirect_pc(DC_redirect_pc),
         .mispredict(mispredict),
         .stall(stall),
         // From EXE stage
@@ -255,9 +249,6 @@ module CPU (
         // mispredict
         .mispredict(mispredict),
         .stall(stall),
-        // early branch
-        .DC_mispredict(DC_mispredict),
-        .DC_redirect_pc(DC_redirect_pc),
         // LSU
         .LQ_tail(LQ_tail),
         .SQ_tail(SQ_tail),
@@ -528,10 +519,7 @@ module CPU (
         .is_jb(is_jb),
         .jb_pc(jb_pc),
         .jump_out(next_jump),
-        .next_pc(next_pc),
-        // early branch
-        .DC_mispredict(DC_mispredict),
-        .DC_redirect_pc(DC_redirect_pc)
+        .next_pc(next_pc)
     );
 
     // synopsys translate_off
@@ -559,9 +547,7 @@ module CPU (
         .commit(commit),
         .commit_rob_idx(commit_rob_idx),
         .mispredict(mispredict),
-        .flush_mask(flush_mask),
-        .jb_pc(jb_pc),
-        .DC_mispredict(DC_mispredict)
+        .flush_mask(flush_mask)
     );
     
     commit_tracker ct1(
