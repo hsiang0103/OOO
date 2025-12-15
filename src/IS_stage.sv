@@ -96,7 +96,7 @@ module IS_stage (
         dispatch_ptr = '0;
         for (int i = 0; i < `IQ_LEN; i++) begin
             if (!iq[i].valid) begin
-                dispatch_ptr = i[$clog2(`IQ_LEN)-1:0];
+                dispatch_ptr = i;
                 break;
             end
         end

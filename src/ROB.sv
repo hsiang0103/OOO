@@ -156,7 +156,7 @@ module ROB (
 
     always_comb begin
         case (cs)
-            normal:     ns = (mispredict) ? recover : normal;
+            normal:     ns = (mispredict && next_rob_t != target_rob_idx) ? recover : normal;
             recover:    ns = (next_rob_t == target_rob_idx) ? normal : recover;
             default:    ns = normal;
         endcase
@@ -175,7 +175,7 @@ module ROB (
         else begin
             unique case (cs)
                 normal: begin
-                    if (mispredict) begin
+                    if (ns == recover) begin
                         ROB_t <= ROB_t_sub_1;
                     end
                     else if (DC_valid) begin

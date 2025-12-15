@@ -125,7 +125,6 @@ module DC_stage(
     assign DC_P_rd_new      = P_rd_new;
     assign DC_P_rd_old      = P_rd_old;
 
-    assign dispatch_valid   = IF_valid && rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall;
 
     // early branch 
     // assign DC_mispredict    = (DC_op == `JAL) && (!DC_in_jump) && IF_valid; 
@@ -183,10 +182,18 @@ module DC_stage(
             else if(dispatch_valid)begin
                 o_data      <= i_data;
             end
-            else begin
-                o_data      <= o_data;
+
+            if(valid_r) begin
+                if(mispredict) begin
+                    valid_r <= 1'b0;
+                end
+                else begin
+                    valid_r <= (DC_valid)? dispatch_valid : valid_r;
+                end
             end
-            valid_r <= IF_valid && !mispredict && !stall;
+            else begin
+                valid_r <= IF_valid && !mispredict && !stall;
+            end
         end
     end    
 
@@ -206,6 +213,10 @@ module DC_stage(
     assign DC_out_SQ_tail  = o_data.SQ_tail;
     assign DC_out_jump     = o_data.jump   ;
     // all downstream ready
-    assign DC_ready        = rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall; 
-    assign DC_valid        = valid_r && rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall;
+    logic downstream_ready;
+    assign downstream_ready = rob_ready && st_valid && ld_valid && IS_ready;
+    assign DC_ready         =             downstream_ready && !mispredict && !stall; 
+    assign DC_valid         = valid_r  && downstream_ready && !mispredict && !stall;
+    assign dispatch_valid   = IF_valid && downstream_ready && !mispredict && !stall;
+
 endmodule

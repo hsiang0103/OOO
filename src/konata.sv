@@ -2,7 +2,8 @@ module konata(
     input logic clk,
     input logic rst,
     // IF stage signals
-    input logic [31:0] IM_r_addr,
+    input logic [31:0] fetch_addr,
+    input logic        fetch_request,
     // DC stage signals
     input logic        IF_valid,
     input logic        DC_ready,
@@ -73,7 +74,7 @@ module konata(
     } insn_track_t;
 
     // ROB tracking array (16 entries)
-    insn_track_t insn_tracker [0:15];
+    insn_track_t insn_tracker [0:63];
 
     logic [15:0] next_IS;
     
@@ -198,7 +199,7 @@ module konata(
             // Stage 8: Retire (Only in konata) 
             // ========================================
             if(commit) begin
-                for (int i = 0; i < 16; i++) begin
+                for (int i = 0; i < 64; i++) begin
                     if (insn_tracker[i].valid && insn_tracker[i].wb_started && 
                         insn_tracker[i].rob_idx == commit_rob_idx &&
                         !insn_tracker[i].retired) begin
@@ -210,7 +211,7 @@ module konata(
             // ========================================
             // Stage 7: Commit 
             // ========================================
-            for (int i = 0; i < 16; i++) begin
+            for (int i = 0; i < 64; i++) begin
                 if (insn_tracker[i].valid && insn_tracker[i].wb_started &&
                     !insn_tracker[i].cm_started) begin
                     // S command: Start CM stage
@@ -222,7 +223,7 @@ module konata(
             // ========================================
             // Stage 6: Write Back 
             // ========================================
-            for (int i = 0; i < 16; i++) begin
+            for (int i = 0; i < 64; i++) begin
                 if (insn_tracker[i].valid && insn_tracker[i].rob_idx == EX_out_rob_idx &&
                     insn_tracker[i].ex_started &&
                     !insn_tracker[i].wb_started && EX_valid) begin
@@ -237,7 +238,7 @@ module konata(
             // Stage 5: Execute
             // ========================================
             if (RR_valid && EX_ready) begin
-                for (int i = 0; i < 16; i++) begin
+                for (int i = 0; i < 64; i++) begin
                     if (insn_tracker[i].valid && insn_tracker[i].rr_started &&
                         !insn_tracker[i].ex_started && 
                         (insn_tracker[i].inst[6:2] == `S_TYPE || 
@@ -266,7 +267,7 @@ module konata(
             // Stage 4: Register Read
             // ========================================
             if (IS_valid && RR_ready) begin
-                for (int i = 0; i < 16; i++) begin
+                for (int i = 0; i < 64; i++) begin
                     if (insn_tracker[i].valid && IS_valid && RR_ready &&
                         insn_tracker[i].is_started && 
                         !insn_tracker[i].rr_started &&
@@ -282,8 +283,8 @@ module konata(
             // ========================================
             // Stage 3: Issue
             // ========================================
-            if (DC_valid && IS_ready) begin
-                for (int i = 0; i < 16; i++) begin
+            if (DC_valid) begin
+                for (int i = 0; i < 64; i++) begin
                     if(insn_tracker[i].valid && insn_tracker[i].dc_started && 
                     !insn_tracker[i].is_started &&
                     insn_tracker[i].pc == DC_out_pc) begin
@@ -299,7 +300,7 @@ module konata(
             // Stage 2: Decode 
             // ========================================
             if (IF_valid && DC_ready) begin
-                for (int i = 0; i < 16; i++) begin
+                for (int i = 0; i < 64; i++) begin
                     if (insn_tracker[i].valid && 
                         insn_tracker[i].if_started && 
                         !insn_tracker[i].dc_started &&
@@ -382,8 +383,8 @@ module konata(
             // Stage 1: Instruction Fetch
             // ========================================
             // Find free slot in tracker
-            if(IM_r_addr != IF_pc_r) begin
-                for (int i = 0; i < 16; i++) begin
+            if(fetch_request) begin
+                for (int i = 0; i < 64; i++) begin
                     if (insn_tracker[i].valid == 0) begin
                         // I command: Start new instruction
                         $fwrite(fd, "I\t%0d\t%0d\t0\n", insn_id, insn_id);
@@ -392,7 +393,7 @@ module konata(
                         // Initialize tracker entry
                         insn_tracker[i].valid       <= 1'b1;
                         insn_tracker[i].id          <= insn_id;
-                        insn_tracker[i].pc          <= IM_r_addr;
+                        insn_tracker[i].pc          <= fetch_addr;
                         insn_tracker[i].if_started  <= 1'b1;
                         insn_id++;
 
@@ -400,13 +401,13 @@ module konata(
                     end
                 end
             end
-            IF_pc_r     <= IM_r_addr;
+            IF_pc_r     <= fetch_addr;
 
             // ========================================
             // Handle mispredict flushes
             // ========================================    
             if(mispredict) begin
-                for(int i = 0; i < 16; i++) begin
+                for(int i = 0; i < 64; i++) begin
                     if (insn_tracker[i].valid && insn_tracker[i].dc_started && !insn_tracker[i].retired &&
                         flush_mask[insn_tracker[i].rob_idx]) begin
                         insn_tracker[i].retired <= 1'b1;
@@ -430,7 +431,7 @@ module konata(
             // ========================================
             // Retired 
             // ========================================
-            for (int i = 0; i < 16; i++) begin
+            for (int i = 0; i < 64; i++) begin
                 if (insn_tracker[i].valid && insn_tracker[i].retired) begin
                     // R command: 
                     $fwrite(fd, "R\t%0d\t0\t%d\n", insn_tracker[i].id, insn_tracker[i].flushed);

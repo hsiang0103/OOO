@@ -1,9 +1,10 @@
 module BPU (
     input   logic clk,
     input   logic rst,
-    // From IF stage
-    input   logic [31:0] IM_addr,
-    input   logic DC_ready,
+    // IF stage
+    input   logic        fetch_req_valid,
+    input   logic        fetch_req_ready,
+    input   logic [31:0] fetch_addr,
     // From EX stage
     input   logic RR_valid,
     input   logic EX_ready, // alu ready
@@ -27,32 +28,24 @@ module BPU (
     logic [28:0] pc_tag, RR_out_pc_tag; 
     logic [31:0] pc_add_4;
 
-    
-
     always_comb begin
-        pc_add_4        = IM_addr + 32'd4;
-        pc_index        = IM_addr[2];
-        pc_tag          = IM_addr[31:3];
+        pc_add_4        = fetch_addr + 32'd4;
+        pc_index        = fetch_addr[2];
+        pc_tag          = fetch_addr[31:3];
         RR_out_pc_index = RR_out_pc[2];
         RR_out_pc_tag   = RR_out_pc[31:3];
 
+        
         if(mispredict) begin
-            next_pc     = jb_pc + 32'd4;
+            next_pc     = jb_pc;
             jump_out    = 1'b0;
         end
-        else if(DC_ready) begin
-            if((BTB_valid[pc_index] && (BTB_tag[pc_index] == pc_tag))) begin
-                next_pc     = BTB_target[pc_index];
-                // next_pc     = pc_add_4;
-                jump_out    = BTB_target[pc_index] != pc_add_4;
-            end
-            else begin
-                next_pc     = pc_add_4;
-                jump_out    = 1'b0;
-            end
+        else if((BTB_valid[pc_index] && (BTB_tag[pc_index] == pc_tag))) begin
+            next_pc     = BTB_target[pc_index];
+            jump_out    = BTB_target[pc_index] != pc_add_4;
         end
         else begin
-            next_pc     = IM_addr;
+            next_pc     = pc_add_4;
             jump_out    = 1'b0;
         end
     end

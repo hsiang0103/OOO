@@ -26,9 +26,11 @@ module top(
     input rst
 );
 
-logic [31:0] IM_r_data;
-logic [31:0] IM_r_addr;
-logic        IM_ready;
+logic [31:0]    fetch_data;
+logic           fetch_data_valid;
+logic           fetch_req_ready;
+logic [31:0]    fetch_addr;
+logic           fetch_req_valid;
 
 logic [31:0] DM_rd_data;
 logic        DM_c_en;
@@ -41,9 +43,11 @@ CPU CPU(
     .clk(clk),
     .rst(rst),
     // IM
-    .IM_r_data(IM_r_data),
-    .IM_r_addr(IM_r_addr),
-    .IM_ready(IM_ready),
+    .fetch_data(fetch_data),
+    .fetch_data_valid(fetch_data_valid),
+    .fetch_req_ready(fetch_req_ready),
+    .fetch_addr(fetch_addr),
+    .fetch_req_valid(fetch_req_valid),
     // DM
     .DM_rd_data(DM_rd_data),
     .DM_c_en(1'b0),
@@ -53,15 +57,26 @@ CPU CPU(
     .DM_w_data(DM_w_data)
 );
 
+always_ff @(posedge clk) begin
+    if (rst) begin
+        fetch_req_ready     <= 1'b0;
+        fetch_data_valid    <= 1'b0;
+    end
+    else begin
+        fetch_req_ready     <= fetch_req_valid;
+        fetch_data_valid    <= fetch_req_ready && fetch_req_valid;
+    end
+end
+
 SRAM_wrapper IM1(
     .CLK(clk),
     .RST(rst),
     .CEB(1'b0),
     .WEB(1'b1), 
     .BWEB(32'hFFFFFFFF),
-    .A(IM_r_addr[15:2]),
+    .A(fetch_addr[15:2]),
     .DI(32'b0), 
-    .DO(IM_r_data)
+    .DO(fetch_data)
 );
 
 SRAM_wrapper DM1(

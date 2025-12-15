@@ -20,9 +20,11 @@ module CPU (
     input logic clk,
     input logic rst,
     // IM 
-    input  logic [31:0] IM_r_data,
-    output logic [31:0] IM_r_addr,
-    output logic        IM_ready,
+    input  logic [31:0] fetch_data,
+    input  logic        fetch_data_valid,
+    input  logic        fetch_req_ready,
+    output logic [31:0] fetch_addr,
+    output logic        fetch_req_valid,
     // DM
     input  logic [31:0] DM_rd_data,
     output logic        DM_c_en,
@@ -187,22 +189,20 @@ module CPU (
         // BPU
         .next_pc(next_pc),
         .next_jump(next_jump),
-        // From IM
-        .IM_r_data(IM_r_data),
-        // From IS stage
-        .mispredict(mispredict),
-        .stall(stall),
-        // From EXE stage
+        // IM
+        .fetch_data(fetch_data),
+        .fetch_data_valid(fetch_data_valid),
+        .fetch_req_ready(fetch_req_ready),   
+        .fetch_addr(fetch_addr),
+        .fetch_req_valid(fetch_req_valid),
+        // EXE stage
         .jb_pc(jb_pc),
-        // To IM
-        .IM_r_addr(IM_r_addr),
-        .IM_ready(IM_ready),
+        .mispredict(mispredict),
         // To DC stage
+        .IF_valid(IF_valid),
         .IF_out_pc(IF_out_pc),
         .IF_out_inst(IF_out_inst),
-        .IF_out_jump(IF_out_jump),
-        // Handshake signals
-        .IF_valid(IF_valid),
+        .IF_out_jump(IF_out_jump),        
         .DC_ready(DC_ready)
     );
 
@@ -510,8 +510,7 @@ module CPU (
     BPU BPU (
         .clk(clk),
         .rst(rst),
-        .IM_addr(IM_r_addr),
-        .DC_ready(DC_ready),
+        .fetch_addr(fetch_addr),
         .RR_valid(RR_valid),
         .EX_ready(EX_ready[0]),
         .RR_out_pc(RR_out_pc),
@@ -519,14 +518,17 @@ module CPU (
         .is_jb(is_jb),
         .jb_pc(jb_pc),
         .jump_out(next_jump),
-        .next_pc(next_pc)
+        .next_pc(next_pc),
+        .fetch_req_valid(fetch_req_valid),
+        .fetch_req_ready(fetch_req_ready)
     );
 
     // synopsys translate_off
     konata k1(
         .clk(clk),
         .rst(rst),
-        .IM_r_addr(IM_r_addr),
+        .fetch_request(fetch_req_valid && fetch_req_ready),
+        .fetch_addr(fetch_addr),
         .IF_valid(IF_valid),
         .DC_ready(DC_ready),
         .IF_out_pc(IF_out_pc),

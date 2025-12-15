@@ -179,6 +179,7 @@ module EXE_stage(
     //                       DIV/REM/[2]           
     // =======================================================
     assign EX_ready[2]  = 1'b0;
+    assign o_valid[2]   = 1'b0;
     // TODO: DIV/REM implementation
 
     // =======================================================
@@ -232,12 +233,14 @@ module EXE_stage(
     //                        FMUL[4]           
     // =======================================================
     assign EX_ready[4]  = 1'b0;
+    assign o_valid[4]   = 1'b0;
     // TODO: FMUL implementation
 
     // =======================================================
     //                        FDIV[5]           
     // =======================================================
     assign EX_ready[5]  = 1'b0;
+    assign o_valid[5]   = 1'b0;
     // TODO: FDIV implementation
 
     // =======================================================
@@ -282,6 +285,7 @@ module EXE_stage(
     assign EX_ready[7]  = 1'b1; // store always ready
     assign o_data[6]    = lsu_bypass ? lsu_o_data : lsu_data_rg;
     assign o_valid[6]   = lsu_bypass ? lsu_o_valid : 1'b1;
+    assign o_valid[7]   = 1'b0; // store has no output
     // =======================================================
     //                      OUTPUT MUX           
     // =======================================================
@@ -292,19 +296,19 @@ module EXE_stage(
 
     always_comb begin
         priority case(1'b1)
-            o_valid[1]: begin
-                out_sel         = 8'b0000_0010;
-                EX_o_data       = o_data[1].data;
-                EX_o_valid      = o_valid[1];
-                EX_o_rob_idx    = o_data[1].rob_idx;
-                EX_o_rd         = o_data[1].rd;
-            end
             o_valid[6]: begin
                 out_sel         = 8'b0100_0000;
                 EX_o_data       = o_data[6].data;
                 EX_o_valid      = o_valid[6];
                 EX_o_rob_idx    = o_data[6].rob_idx;
                 EX_o_rd         = o_data[6].rd;
+            end
+            o_valid[1]: begin
+                out_sel         = 8'b0000_0010;
+                EX_o_data       = o_data[1].data;
+                EX_o_valid      = o_valid[1];
+                EX_o_rob_idx    = o_data[1].rob_idx;
+                EX_o_rd         = o_data[1].rd;
             end
             o_valid[0]: begin
                 out_sel         = 8'b0000_0001;
