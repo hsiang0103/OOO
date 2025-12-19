@@ -34,11 +34,16 @@ module LSU (
     input   logic [$clog2(`LQ_LEN):0] mis_ld_idx,
     input   logic [$clog2(`SQ_LEN):0] mis_st_idx,
     // DM interface
-    input   logic [31:0]    DM_rd_data,
-    output  logic           DM_r_en,
-    output  logic [31:0]    DM_w_en,
-    output  logic [31:0]    DM_addr,
-    output  logic [31:0]    DM_w_data,
+    output  logic [31:0]    ld_st_req_addr,
+    input   logic           store_data_valid,
+    output  logic [3:0]     store_strb,
+    output  logic [31:0]    store_data,
+    output  logic           store_req_valid,
+    input   logic           store_req_ready,
+    input   logic           load_data_valid,
+    input   logic [31:0]    load_data,
+    output  logic           load_req_valid,
+    input   logic           load_req_ready,
     // ROB
     output  logic [$clog2(`LQ_LEN):0] LQ_tail,
     output  logic [$clog2(`SQ_LEN):0] SQ_tail
@@ -50,6 +55,7 @@ module LSU (
         logic [2:0]     f3;
         logic           valid;
         logic           issued;
+        logic           committed;
     } SQ_entry;
 
     typedef struct packed {
@@ -68,15 +74,25 @@ module LSU (
     logic [$clog2(`SQ_LEN):0] SQ_h, SQ_t;
     logic [$clog2(`LQ_LEN):0] LQ_h, LQ_t;
     logic DC_ld, DC_st;
-     
+
+    logic [$clog2(`SQ_LEN):0] commit_cnt;
+    logic store_handshake;
+    logic load_handshake;
+    logic [$clog2(`SQ_LEN):0] st_commit_idx;
+
+    logic ld_inflight;           
+    logic [$clog2(`LQ_LEN)-1:0] ld_inflight_idx;
+    
     assign ld_ready         = !(LQ_t[$clog2(`LQ_LEN)-1:0] == LQ_h[$clog2(`LQ_LEN)-1:0] && LQ_t[$clog2(`LQ_LEN)] != LQ_h[$clog2(`LQ_LEN)]); // LQ not full
     assign st_ready         = !(SQ_t[$clog2(`SQ_LEN)-1:0] == SQ_h[$clog2(`SQ_LEN)-1:0] && SQ_t[$clog2(`SQ_LEN)] != SQ_h[$clog2(`SQ_LEN)]); // SQ not full
     assign DC_ld            = DC_fu_sel == 6 && decode_valid; 
     assign DC_st            = DC_fu_sel == 7 && decode_valid; 
     assign LQ_tail          = LQ_t;
     assign SQ_tail          = SQ_t;
-    assign st_addr          = SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr;
-    assign st_data          = SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data;
+
+    assign st_commit_idx    = (SQ_h[$clog2(`SQ_LEN)-1:0] + commit_cnt) & (`SQ_LEN-1);
+    assign st_addr          = SQ[st_commit_idx].addr;
+    // assign st_data          = SQ[st_commit_idx].data;
 
     // ================
     // load select
@@ -123,104 +139,136 @@ module LSU (
         // TODO : forwarding logic
     end
 
-    // ================
-    // load output
-    // ================
-    logic       load_done;
-    logic [$clog2(`LQ_LEN)-1:0] load_request_idx_r;
-    always_ff @(posedge clk) begin
-        if(rst) begin
-            load_done           <= 1'b0;
-            load_request_idx_r  <= '0;
-        end
-        else begin
-            load_done           <= load_request_valid && !st_commit;
-            load_request_idx_r  <= load_request_idx;
-        end    
-    end
-
     logic [1:0]  addr_offset;
     logic [7:0]  target_byte;
     logic [15:0] target_half;
 
-    assign addr_offset   = LQ[load_request_idx_r].addr[1:0];
+    assign addr_offset   = LQ[ld_inflight_idx].addr[1:0];
 
-    assign ld_o_rob_idx  = LQ[load_request_idx_r].rob_idx;
-    assign ld_o_rd       = LQ[load_request_idx_r].rd;
-    assign ld_o_valid    = load_done;
+    assign ld_o_rob_idx  = LQ[ld_inflight_idx].rob_idx;
+    assign ld_o_rd       = LQ[ld_inflight_idx].rd;
 
     always_comb begin
         case (addr_offset)
-            2'b00: target_byte = DM_rd_data[7:0];
-            2'b01: target_byte = DM_rd_data[15:8];
-            2'b10: target_byte = DM_rd_data[23:16];
-            2'b11: target_byte = DM_rd_data[31:24];
+            2'b00: target_byte = load_data[7:0];
+            2'b01: target_byte = load_data[15:8];
+            2'b10: target_byte = load_data[23:16];
+            2'b11: target_byte = load_data[31:24];
         endcase
 
         case (addr_offset[1])
-            1'b0: target_half = DM_rd_data[15:0];
-            1'b1: target_half = DM_rd_data[31:16];
+            1'b0: target_half = load_data[15:0];
+            1'b1: target_half = load_data[31:16];
         endcase
 
-        case (LQ[load_request_idx_r].f3)
+        case (LQ[ld_inflight_idx].f3)
             `LB:     ld_o_data = {{24{target_byte[7]}}, target_byte}; 
             `LBU:    ld_o_data = {24'b0, target_byte};                
             `LH:     ld_o_data = {{16{target_half[15]}}, target_half};
             `LHU:    ld_o_data = {16'b0, target_half};                
-            `LW:     ld_o_data = DM_rd_data; 
-            default: ld_o_data = DM_rd_data;
-        endcase
-    end
-
-    // ================
-    // DM interface
-    // ================
-    assign DM_r_en          = !st_commit;   // read when store not commit
-    assign DM_addr          = !st_commit? LQ[load_request_idx].addr : SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr;
-
-    always_comb begin
-        case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].f3)
-            `SB: begin
-                case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr[1:0])
-                    2'b00:   DM_w_en = 32'hFFFFFF00;
-                    2'b01:   DM_w_en = 32'hFFFF00FF;
-                    2'b10:   DM_w_en = 32'hFF00FFFF;
-                    2'b11:   DM_w_en = 32'h00FFFFFF;
-                endcase
-            end
-            `SH:begin
-                case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr[1:0])
-                    2'b00:    DM_w_en = 32'hFFFF0000;
-                    // 2'b01:    DM_w_en = 32'hFF0000FF;
-                    2'b10:    DM_w_en = 32'h0000FFFF;
-                endcase
-            end
-            `SW:             DM_w_en = 32'h00000000;
-            default:         DM_w_en = 32'hFFFFFFFF;
+            default: ld_o_data = load_data;
         endcase
     end
 
     always_comb begin
-        case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].f3)
+        unique case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].f3)
             `SB: begin
                 case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr[1:0])
-                    2'b00:   DM_w_data = {24'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0]};
-                    2'b01:   DM_w_data = {16'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0], 8'b0};
-                    2'b10:   DM_w_data = {8'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0], 16'b0};
-                    2'b11:   DM_w_data = {SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0], 24'b0};
+                    2'b00:  store_strb = 4'b1110;
+                    2'b01:  store_strb = 4'b1101;
+                    2'b10:  store_strb = 4'b1011;
+                    2'b11:  store_strb = 4'b0111;
                 endcase
             end
             `SH:begin
                 case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr[1:0])
-                    2'b00:    DM_w_data = {16'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[15:0]};
-                    2'b10:    DM_w_data = {SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[15:0], 16'b0};
+                    2'b00:  store_strb = 4'b1100;
+                    2'b10:  store_strb = 4'b0011;
                 endcase
             end
-            `SW:             DM_w_data = SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data;
-            default:         DM_w_data = 32'h0;
+            `SW:            store_strb = 4'b0000;
+            default:        store_strb = 4'b1111;
         endcase
     end
 
+    always_comb begin
+        unique case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].f3)
+            `SB: begin
+                case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr[1:0])
+                    2'b00:  store_data = {24'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0]};
+                    2'b01:  store_data = {16'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0], 8'b0};
+                    2'b10:  store_data = {8'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0], 16'b0};
+                    2'b11:  store_data = {SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0], 24'b0};
+                endcase
+            end
+            `SH:begin
+                case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr[1:0])
+                    2'b00:  store_data = {16'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[15:0]};
+                    2'b10:  store_data = {SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[15:0], 16'b0};
+                endcase
+            end
+            default:        store_data = SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data;
+        endcase
+    end
+
+    always_comb begin
+        unique case (SQ[st_commit_idx].f3)
+            `SB: begin
+                case (SQ[st_commit_idx].addr[1:0])
+                    2'b00:  st_data = {24'b0, SQ[st_commit_idx].data[7:0]};
+                    2'b01:  st_data = {16'b0, SQ[st_commit_idx].data[7:0], 8'b0};
+                    2'b10:  st_data = {8'b0, SQ[st_commit_idx].data[7:0], 16'b0};
+                    2'b11:  st_data = {SQ[st_commit_idx].data[7:0], 24'b0};
+                endcase
+            end
+            `SH:begin
+                case (SQ[st_commit_idx].addr[1:0])
+                    2'b00:  st_data = {16'b0, SQ[st_commit_idx].data[15:0]};
+                    2'b10:  st_data = {SQ[st_commit_idx].data[15:0], 16'b0};
+                endcase
+            end
+            default:        st_data = SQ[st_commit_idx].data;
+        endcase
+    end
+
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            commit_cnt <= '0;
+        end 
+        else begin
+            commit_cnt <= commit_cnt + st_commit - store_handshake;
+        end
+    end
+
+    assign store_req_valid = (commit_cnt > 0);
+    assign store_handshake = store_req_valid && store_req_ready;
+    assign load_handshake  = load_req_valid && load_req_ready;
+    assign load_req_valid = load_request_valid && !store_req_valid && !ld_inflight;
+
+    assign ld_st_req_addr = store_req_valid ? SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr : LQ[load_request_idx].addr;
+
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            ld_inflight         <= 1'b0;
+            ld_inflight_idx     <= '0;
+        end else begin
+            if (load_handshake) begin
+                ld_inflight     <= 1'b1;
+                ld_inflight_idx <= load_request_idx;
+            end 
+            else if (load_data_valid) begin
+                ld_inflight <= 1'b0;
+            end
+        end
+    end
+
+    // ================
+    // Load Output Generation
+    // ================
+    
+
+    
+    assign ld_o_valid = load_data_valid;
     // ================
     // LQ management
     // ================
@@ -278,7 +326,8 @@ module LSU (
                             LQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
                         end
                         // issue load request
-                        load_request_valid && i == load_request_idx && !st_commit: begin
+                        
+                        load_handshake && i == load_request_idx && !st_commit: begin
                             LQ[i].done  <= 1'b1;
                         end
                         // commit
@@ -311,12 +360,9 @@ module LSU (
             else if(DC_st && st_ready) begin
                 SQ_t <= SQ_t + 1;
             end
-            else begin
-                SQ_t <= SQ_t;
-            end
 
             // commit
-            SQ_h <= SQ_h + st_commit;
+            SQ_h <= SQ_h + store_handshake;
         end
     end
 
@@ -329,7 +375,7 @@ module LSU (
         end
         else begin
             for(int i = 0; i < `SQ_LEN; i = i + 1) begin : SQ_operation
-                if(mispredict && flush_mask[SQ[i].rob_idx]) begin
+                if(mispredict && flush_mask[SQ[i].rob_idx] && !SQ[i].committed) begin
                     SQ[i]       <= '0;
                 end
                 else begin
@@ -347,7 +393,10 @@ module LSU (
                             SQ[i].f3        <= funct3;
                         end
                         // commit
-                        st_commit && i == SQ_h[$clog2(`SQ_LEN)-1:0]: begin
+                        st_commit && i == (SQ_h[$clog2(`SQ_LEN)-1:0] + commit_cnt): begin
+                            SQ[i].committed <= 1'b1;
+                        end
+                        store_handshake && i == SQ_h[$clog2(`SQ_LEN)-1:0]: begin
                             SQ[i]       <= '0;
                         end 
                         default: SQ[i]  <= SQ[i];

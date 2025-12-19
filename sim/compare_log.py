@@ -27,54 +27,60 @@ def compare_files(rtl_file, gold_file):
     print(f"Comparing {YELLOW}{rtl_file}{RESET} vs {YELLOW}{gold_file}{RESET} ...")
     
     with open(rtl_file, 'r') as f_rtl, open(gold_file, 'r') as f_gold:
-        # 讀取並過濾所有有效行
-        # 這裡我們一次讀完，因為檔案通常不會大到記憶體爆掉，處理起來比較簡單
         rtl_lines = [clean_line(l) for l in f_rtl.readlines()]
         gold_lines = [clean_line(l) for l in f_gold.readlines()]
         
-        # 過濾掉 None (空行或標頭)
+        # 過濾掉 None
         rtl_lines = [l for l in rtl_lines if l is not None]
         gold_lines = [l for l in gold_lines if l is not None]
 
-        # 1. 檢查基本長度
-        # 如果 RTL 比 Golden 短，那一定是錯的 (沒跑完)
+
+
+        # 2. 逐行比對
+        for i, (r, g) in enumerate(zip(rtl_lines, gold_lines)):
+            
+            # --- 修改重點開始 ---
+            # RTL 的 list (r) 最後一個元素是 cycle count，Golden (g) 沒有
+            # 使用 slice [:-1] 來忽略 RTL 的最後一個元素
+            # 假設 r 的格式是: [PC, (Inst), Type, Addr, Data, CYCLE]
+            
+            # 防呆：如果 RTL 行長度比 Golden 大，我們才切掉最後一個
+            # 這樣如果 RTL 沒印 Cycle 也不會報錯切到資料
+            r_to_compare = r[:-1] if len(r) > len(g) else r
+
+            if r_to_compare != g:
+                print(f"{RED}[FAIL] Mismatch at line {i+1}{RESET}")
+                print(f"Golden: {g}")
+                print(f"RTL   : {r}") # 印出原始含有 Cycle 的 RTL，方便除錯
+                print(f"CMP   : {r_to_compare} (Cycle ignored)")
+                sys.exit(1)
+            # --- 修改重點結束 ---
+            
+                # 1. 檢查基本長度
         if len(rtl_lines) < len(gold_lines):
             print(f"{RED}[FAIL] RTL log stopped earlier than Golden log.{RESET}")
             print(f"RTL lines: {len(rtl_lines)}, Golden lines: {len(gold_lines)}")
             sys.exit(1)
 
-        # 2. 逐行比對 (只比對 Golden 有的部分)
-        for i, (r, g) in enumerate(zip(rtl_lines, gold_lines)):
-            if r != g:
-                print(f"{RED}[FAIL] Mismatch at line {i+1}{RESET}")
-                print(f"Golden: {g}")
-                print(f"RTL   : {r}")
-                sys.exit(1)
-
-        # 3. 處理 RTL 多出來的尾巴 (Handling Trailing Instructions)
-        # 這是你遇到問題的關鍵修正
+        # 3. 處理 RTL 多出來的尾巴
         if len(rtl_lines) > len(gold_lines):
             extra_lines = rtl_lines[len(gold_lines):]
             print(f"{YELLOW}[INFO] RTL has {len(extra_lines)} extra lines. Analyzing...{RESET}")
             
-            # 我們要檢查這些多出來的行是否是 "SystemExit" 相關的指令
-            # 通常是寫入 tohost 之後的指令，或者是寫入 _sim_end 的指令
-            # 這裡做一個寬鬆的檢查：只要不是大量的運算錯誤，我們允許結尾有 10 行以內的誤差
             if len(extra_lines) > 10:
-                print(f"{RED}[FAIL] RTL has too many extra lines ({len(extra_lines)}). Something is wrong.{RESET}")
+                print(f"{RED}[FAIL] RTL has too many extra lines ({len(extra_lines)}).{RESET}")
                 print(f"First extra line: {extra_lines[0]}")
                 sys.exit(1)
             else:
-                # 這裡可以選擇印出來讓你知道它忽略了什麼
                 for l in extra_lines:
-                    print(f"  Ignoring extra RTL commit: {l}")
-                print(f"{YELLOW}[WARN] Ignored {len(extra_lines)} trailing instructions (assumed simulation exit sequence).{RESET}")
+                    # 印出忽略的內容時，也可以順便把 Cycle 切掉讓版面好看一點，或者保留皆可
+                    print(f"  Ignoring extra RTL commit: {l}") 
+                print(f"{YELLOW}[WARN] Ignored {len(extra_lines)} trailing instructions.{RESET}")
 
     print(f"{GREEN}[PASS] Verification Successful! Logs match.{RESET}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        # 預設檔名
         rtl_log = "rtl_commit.log"
         gold_log = "commit.log"
     else:

@@ -17,21 +17,25 @@
 // synopsys translate_on
 
 module CPU (
-    input logic clk,
-    input logic rst,
+    input   logic           clk,
+    input   logic           rst,
     // IM 
-    input  logic [31:0] fetch_data,
-    input  logic        fetch_data_valid,
-    input  logic        fetch_req_ready,
-    output logic [31:0] fetch_addr,
-    output logic        fetch_req_valid,
+    input   logic [31:0]    fetch_data,
+    input   logic           fetch_data_valid,
+    input   logic           fetch_req_ready,
+    output  logic [31:0]    fetch_addr,
+    output  logic           fetch_req_valid,
     // DM
-    input  logic [31:0] DM_rd_data,
-    output logic        DM_c_en,
-    output logic        DM_r_en,
-    output logic [31:0] DM_w_en,
-    output logic [31:0] DM_addr,
-    output logic [31:0] DM_w_data
+    output  logic [31:0]    ld_st_req_addr,
+    input   logic           store_data_valid,
+    output  logic [31:0]    store_strb,
+    output  logic [31:0]    store_data,
+    output  logic           store_req_valid,
+    input   logic           store_req_ready,
+    input   logic           load_data_valid,
+    input   logic [31:0]    load_data,
+    output  logic           load_req_valid,
+    input   logic           load_req_ready
 );
     // =========================
     // === Wire Instiantiate ===
@@ -406,12 +410,17 @@ module CPU (
         .flush_mask(flush_mask),
         .mis_ld_idx(RR_out_ld_idx),
         .mis_st_idx(RR_out_st_idx),
-        // DM interface
-        .DM_rd_data(DM_rd_data),
-        .DM_r_en(DM_r_en),     
-        .DM_w_en(DM_w_en),
-        .DM_addr(DM_addr),
-        .DM_w_data(DM_w_data),
+        // load/store interface
+        .ld_st_req_addr(ld_st_req_addr),
+        .store_data_valid(store_data_valid),
+        .store_strb(store_strb),
+        .store_data(store_data),
+        .store_req_valid(store_req_valid),
+        .store_req_ready(store_req_ready),
+        .load_data_valid(load_data_valid),
+        .load_data(load_data),
+        .load_req_valid(load_req_valid),
+        .load_req_ready(load_req_ready),
         // ROB
         .LQ_tail(LQ_tail),
         .SQ_tail(SQ_tail)
@@ -562,7 +571,7 @@ module CPU (
         .commit_data(commit_data),
         .st_commit(st_commit),
         .st_addr(st_addr),
-        .st_data(DM_w_data)
+        .st_data(st_data)
     );
     // synopsys translate_on
 endmodule

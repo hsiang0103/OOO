@@ -1,11 +1,29 @@
+//////////////////////////////////////////////////////////////////////
+//          ██╗       ██████╗   ██╗  ██╗    ██████╗            		//
+//          ██║       ██╔══█║   ██║  ██║    ██╔══█║            		//
+//          ██║       ██████║   ███████║    ██████║            		//
+//          ██║       ██╔═══╝   ██╔══██║    ██╔═══╝            		//
+//          ███████╗  ██║  	    ██║  ██║    ██║  	           		//
+//          ╚══════╝  ╚═╝  	    ╚═╝  ╚═╝    ╚═╝  	           		//
+//                                                             		//
+// 	2024 Advanced VLSI System Design, advisor: Lih-Yih, Chiou		//
+//                                                             		//
+//////////////////////////////////////////////////////////////////////
+//                                                             		//
+// 	Autor: 			TZUNG-JIN, TSAI (Leo)				  	   		//
+//	Filename:		top_tb.sv		                            	//
+//	Description:	testbench for yop module	 					//
+// 	Date:			2024/09/28								   		//
+// 	Version:		1.0	    								   		//
+//////////////////////////////////////////////////////////////////////
 `timescale 1ns/10ps
-`define CYCLE  1.0 // Cycle time
-`define MAX 200000 // Max cycle number
+`define CYCLE 1.0 // Cycle time
+`define MAX 100000 // Max cycle number
 `ifdef SYN
 `include "top_syn.v"
 `timescale 1ns/10ps
-`include "/opt/CIC/Cell_Libraries/ADFP/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v"
-`include "/SRAM/SRAM_rtl.sv"
+// `include "/usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v"
+`include "/SRAM/TS1N16ADFPCLLLVTA512X45M4SWSHOD.sv"
 `else
 `include "top.sv"
 `include "/SRAM/SRAM_rtl.sv"
@@ -15,7 +33,7 @@
   {TOP.DM1.i_SRAM.MEMORY[addr >> 5][(addr&6'b011111)]}
 `define SIM_END 'h3fff
 `define SIM_END_CODE -32'd1
-`define TEST_START 'h2000
+`define TEST_START 'h0000
 module top_tb;
 
   logic clk;
@@ -28,11 +46,11 @@ module top_tb;
   string prog_path;
   string rdcycle;
   always #(`CYCLE/2) clk = ~clk;
-  logic [7:0] Memory_byte0[16383:0];
-  logic [7:0] Memory_byte1[16383:0];
-  logic [7:0] Memory_byte2[16383:0];
-  logic [7:0] Memory_byte3[16383:0];
-  logic [31:0] Memory_word[16383:0];
+  logic [7:0] Memory_byte0[32767:0];
+  logic [7:0] Memory_byte1[32767:0];
+  logic [7:0] Memory_byte2[32767:0];
+  logic [7:0] Memory_byte3[32767:0];
+  logic [31:0] Memory_word[32767:0];
   top TOP(
     .clk(clk),
     .rst(rst)
@@ -41,20 +59,22 @@ module top_tb;
   initial
   begin
     $value$plusargs("prog_path=%s", prog_path);
-	$value$plusargs("rdcycle=%s", rdcycle);
+	  $value$plusargs("rdcycle=%s", rdcycle);
     clk = 0; rst = 1;
     #(`CYCLE) rst = 0;
-	$readmemh({prog_path, "/main0.hex"}, Memory_byte0);
+	  $readmemh({prog_path, "/main0.hex"}, Memory_byte0);
     $readmemh({prog_path, "/main1.hex"}, Memory_byte1); 
     $readmemh({prog_path, "/main2.hex"}, Memory_byte2);
     $readmemh({prog_path, "/main3.hex"}, Memory_byte3); 
-    for(a = 0;a < 16384;a = a + 1) begin
+    for(a = 0;a < 32768;a = a + 1) begin
 		Memory_word[a] = {Memory_byte3[a], Memory_byte2[a], Memory_byte1[a], Memory_byte0[a]};
 		//$display("Memory_word[%d] = %h",   a,Memory_word[a]);
 	end
 	for(b = 0;b < 16384;b = b + 1) begin
+		// TOP.IM1.i_SRAM.MEMORY[b/32][b%32] = Memory_word[b];
+		// TOP.DM1.i_SRAM.MEMORY[b/32][b%32] = Memory_word[b];
 		TOP.IM1.i_SRAM.MEMORY[b/32][b%32] = Memory_word[b];
-		TOP.DM1.i_SRAM.MEMORY[b/32][b%32] = Memory_word[b];
+		TOP.DM1.i_SRAM.MEMORY[b/32][b%32] = Memory_word[b + 16384];
 	end
     num = 0;
     gf = $fopen({prog_path, "/golden.hex"}, "r");
@@ -81,7 +101,14 @@ module top_tb;
         $display("DM[%4d] = %h, pass", `TEST_START + i, `mem_word(`TEST_START + i));
       end
     end
-
+	//`ifdef RDCYCLE
+	if (rdcycle == "1") begin
+	  
+	  $display("your total cycle is %f ",`mem_word(`TEST_START + num));
+	  $display("your total cycle is %f ",`mem_word(`TEST_START + num+1));
+	  
+	end
+	
 	//`endif
     result(err, num);
     $finish;

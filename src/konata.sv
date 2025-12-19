@@ -44,7 +44,6 @@ module konata(
     // Instruction ID counter  
     logic [31:0] insn_id;
     logic [31:0] retire_id;
-    logic [15:0] IF_pc_r;
 
     logic [$clog2(`ROB_LEN)-1:0]  wb_rob_idx;
     logic        wb_valid_r;
@@ -75,8 +74,6 @@ module konata(
 
     // ROB tracking array (16 entries)
     insn_track_t insn_tracker [0:63];
-
-    logic [15:0] next_IS;
     
     // Helper function to decode opcode name
     function string decode_opcode(input logic [4:0] op, input logic [2:0] f3, input logic [6:0] f7);
@@ -185,9 +182,7 @@ module konata(
         if(rst) begin 
             insn_id     <= 0;
             retire_id   <= 0;
-            IF_pc_r     <= 16'hFFFF;
-            next_IS     <= 16'b0;
-            for (int i = 0; i < 16; i++) begin
+            for (int i = 0; i < 64; i++) begin
                 insn_tracker[i] <= 'b0;
             end
         end
@@ -401,7 +396,6 @@ module konata(
                     end
                 end
             end
-            IF_pc_r     <= fetch_addr;
 
             // ========================================
             // Handle mispredict flushes
@@ -421,7 +415,7 @@ module konata(
                     end
                     if (insn_tracker[i].valid && 
                         insn_tracker[i].if_started &&
-                        !insn_tracker[i].dc_started && insn_tracker[i].id < insn_id - 1) begin
+                        !insn_tracker[i].dc_started && insn_tracker[i].id < insn_id) begin
                         insn_tracker[i].retired <= 1'b1;
                         insn_tracker[i].flushed <= 1'b1;
                     end

@@ -42,7 +42,7 @@ build_hex: $(ELF_NAME).elf
 	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 3 $(ELF_NAME)3.hex
 
 run_spike: $(ELF_NAME).elf
-	spike --isa=rv32imf -m0x2000:0xE000 --log-commits -l $< > golden.log 2>&1
+	spike --isa=rv32imf -m0x2000:0x1E000 --log-commits -l $< > golden.log 2>&1
 	python3 gen_commit_log.py golden.log
 
 %.o: %.S
