@@ -71,7 +71,7 @@ module LSU (
 
     SQ_entry SQ [0:`SQ_LEN-1];
     LQ_entry LQ [0:`LQ_LEN-1];
-    logic [$clog2(`SQ_LEN):0] SQ_h, SQ_t;
+    logic [$clog2(`SQ_LEN):0] SQ_h, SQ_t, SQ_ptr;
     logic [$clog2(`LQ_LEN):0] LQ_h, LQ_t;
     logic DC_ld, DC_st;
 
@@ -245,7 +245,7 @@ module LSU (
     assign load_handshake  = load_req_valid && load_req_ready;
     assign load_req_valid = load_request_valid && !store_req_valid && !ld_inflight;
 
-    assign ld_st_req_addr = store_req_valid ? SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr : LQ[load_request_idx].addr;
+    assign ld_st_req_addr = store_handshake ? SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr : LQ[load_request_idx].addr;
 
     always_ff @(posedge clk) begin
         if (rst) begin
@@ -348,8 +348,9 @@ module LSU (
     // SQ pointers  
     always_ff @(posedge clk) begin
         if(rst) begin
-            SQ_h <= '0;
-            SQ_t <= '0;
+            SQ_ptr  <= '0;
+            SQ_h    <= '0;
+            SQ_t    <= '0;
         end
         else begin
             // mispredict
@@ -362,7 +363,8 @@ module LSU (
             end
 
             // commit
-            SQ_h <= SQ_h + store_handshake;
+            SQ_h    <= SQ_h + store_handshake;
+            SQ_ptr  <= SQ_ptr + st_commit;
         end
     end
 
@@ -393,7 +395,7 @@ module LSU (
                             SQ[i].f3        <= funct3;
                         end
                         // commit
-                        st_commit && i == (SQ_h[$clog2(`SQ_LEN)-1:0] + commit_cnt): begin
+                        st_commit && i == (SQ_ptr[$clog2(`SQ_LEN)-1:0]): begin
                             SQ[i].committed <= 1'b1;
                         end
                         store_handshake && i == SQ_h[$clog2(`SQ_LEN)-1:0]: begin

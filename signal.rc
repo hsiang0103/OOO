@@ -1,0 +1,116 @@
+Magic 271485
+Revision Verdi_U-2023.03-SP2
+
+; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
+viewPort 1920 23 1920 1009 169 65
+
+; File list:
+; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
+openDirFile -d / "" "/home/hsiang/Desktop/OOO/build/top.fsdb"
+
+; file time scale:
+; fileTimeScale ### s|ms|us|ns|ps
+
+; signal spacing:
+signalSpacing 5
+
+; windowTimeUnit is used for zoom, cursor & marker
+; waveform viewport range
+zoom 1771077.752582 1773606.647162
+cursor 1771950.000000
+marker 0.000000
+
+; user define markers
+; userMarker time_pos marker_name color linestyle
+; visible top row signal index
+top 0
+; marker line index
+markerPos 38
+
+; event list
+; addEvent event_name event_expression
+; curEvent event_name
+
+
+
+COMPLEX_EVENT_BEGIN
+
+
+COMPLEX_EVENT_END
+
+
+
+; toolbar current search type
+; curSTATUS search_type
+curSTATUS ByChange
+
+
+addGroup "G1"
+activeDirFile "" "/home/hsiang/Desktop/OOO/build/top.fsdb"
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU_wrapper/cpu/IF/IF_out_inst[31:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope IF_out_pc[31:0]
+addGroup "G2"
+addSignal -h 15 -UNSIGNED -UDEC /top_tb/TOP/CPU_wrapper/cpu/ct1/cycle_count[63:0]
+addGroup "G3"
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU_wrapper/cpu/LSU/ld_st_req_addr[31:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope load_data[31:0]
+addSignal -h 15 -holdScope load_data_valid
+addSignal -h 15 -holdScope load_handshake
+addGroup "G4"
+addSignal -h 15 -UNSIGNED -BIN /top_tb/TOP/CPU_wrapper/cpu/LSU/store_strb[3:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope store_data[31:0]
+addSignal -h 15 -holdScope store_data_valid
+addSignal -h 15 -holdScope store_handshake
+addGroup "G5"
+addSignal -expanded -h 15 /top_tb/TOP/CPU_wrapper/cpu/LSU/SQ[0:15]
+addSignal -h 15 -holdScope SQ[0]
+addSignal -h 15 -holdScope SQ[1]
+addSignal -h 15 -holdScope SQ[2]
+addSignal -h 15 -holdScope SQ[3]
+addSignal -h 15 -holdScope SQ[4]
+addSignal -h 15 -holdScope SQ[5]
+addSignal -h 15 -holdScope SQ[6]
+addSignal -h 15 -holdScope SQ[7]
+addSignal -h 15 -holdScope SQ[8]
+addSignal -h 15 -holdScope SQ[9]
+addSignal -h 15 -holdScope SQ[10]
+addSignal -h 15 -holdScope SQ[11]
+addSignal -h 15 -holdScope SQ[12]
+addSignal -h 15 -holdScope SQ[13]
+addSignal -h 15 -holdScope SQ[14]
+addSignal -h 15 -holdScope SQ[15]
+addGroup "G6"
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU_wrapper/cpu/LSU/commit_cnt[4:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope st_commit_idx[4:0]
+addGroup "G7"
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU_wrapper/cpu/LSU/SQ_h[4:0]
+addSignal -h 15 -UNSIGNED -HEX -holdScope SQ_t[4:0]
+addGroup "G8"
+
+; getSignalForm Scope Hierarchy Status
+; active file of getSignalForm
+activeDirFile "" "/home/hsiang/Desktop/OOO/build/top.fsdb"
+
+GETSIGNALFORM_SCOPE_HIERARCHY_BEGIN
+getSignalForm close
+
+"/top_tb"
+"/top_tb/TOP"
+"/top_tb/TOP/CPU_wrapper"
+"/top_tb/TOP/CPU_wrapper/cpu"
+"/top_tb/TOP/CPU_wrapper/cpu/IF"
+"/top_tb/TOP/CPU_wrapper/cpu/LSU"
+
+SCOPE_LIST_BEGIN
+"/top_tb"
+"/top_tb/TOP/CPU_wrapper/cpu"
+"/top_tb/TOP/CPU_wrapper/cpu/ct1"
+"/top_tb/TOP/CPU_wrapper/cpu/IF"
+"/top_tb/TOP"
+"/top_tb/TOP/CPU_wrapper"
+"/top_tb/TOP/CPU_wrapper/cpu/LSU"
+SCOPE_LIST_END
+
+GETSIGNALFORM_SCOPE_HIERARCHY_END
+
+
