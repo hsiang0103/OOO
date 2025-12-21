@@ -336,7 +336,7 @@ module IS_stage (
     assign o_data           = bypass_rg ? temp_data  : data_rg ;   
 
     assign RR_valid         = bypass_rg ? temp_valid : 1'b1    ;       
-    assign RR_ready         = bypass_rg && EX_ready[bypass_fu_sel];
+    assign RR_ready         = bypass_rg ? (!temp_valid || EX_ready[bypass_fu_sel]) : (EX_ready[bypass_fu_sel]);
     assign RR_out_pc        = o_data.pc        ;
     assign RR_out_inst      = o_data.inst      ;
     assign RR_out_imm       = o_data.imm       ;
