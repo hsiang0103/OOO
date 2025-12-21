@@ -60,6 +60,7 @@ module DC_stage(
     logic           f_rs1, f_rs2, f_rd;
     logic           use_rd;
     logic           st_valid, ld_valid;
+    logic downstream_ready;
     
     // ================
     // Decode
@@ -85,7 +86,14 @@ module DC_stage(
     // 7: store   
     always_comb begin
         case (DC_op)
-            `R_TYPE : DC_fu_sel = {2'b0, DC_f7[0]}; // M extension
+            `R_TYPE : begin
+                if (DC_f7 == 7'b0000001) begin
+                    DC_fu_sel = (DC_f3[2]? 3'd2 : 3'd1); // div/rem or mul
+                end 
+                else begin
+                    DC_fu_sel = 3'd0; // alu
+                end
+            end
             `F_TYPE : DC_fu_sel = 3'd3;
             `LOAD   : DC_fu_sel = 3'd6;
             `FLOAD  : DC_fu_sel = 3'd6;
@@ -192,7 +200,7 @@ module DC_stage(
                 end
             end
             else begin
-                valid_r <= IF_valid && !mispredict && !stall;
+                valid_r <= IF_valid && !mispredict && !stall && DC_ready;
             end
         end
     end    
@@ -213,7 +221,7 @@ module DC_stage(
     assign DC_out_SQ_tail  = o_data.SQ_tail;
     assign DC_out_jump     = o_data.jump   ;
     // all downstream ready
-    logic downstream_ready;
+    
     assign downstream_ready = rob_ready && st_valid && ld_valid && IS_ready;
     assign DC_ready         =             downstream_ready && !mispredict && !stall; 
     assign DC_valid         = valid_r  && downstream_ready && !mispredict && !stall;

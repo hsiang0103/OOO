@@ -154,7 +154,7 @@ rtl_gen: | $(bld_dir)
 gen:
 	python3 tools/riscv-dv/run.py \
 		--custom_target $(CUSTOM_TARGET_DIR) \
-		--target rv32i \
+		--target rv32im \
 		--testlist sim/custom_target/config.yaml \
 		--isa rv32im_zicsr \
 		--mabi ilp32 \

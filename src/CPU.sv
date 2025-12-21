@@ -7,6 +7,8 @@
 `include "ALU.sv"
 `include "FALU.sv"
 `include "MUL.sv"
+`include "DIV.sv"
+`include "div_func.sv"
 `include "CSR.sv"
 `include "Rename.sv"
 `include "ROB.sv"
@@ -356,6 +358,7 @@ module CPU (
         .DC_in_jump(IF_out_jump),
         .IF_valid(IF_valid),
         .DC_ready(DC_ready),
+        .flush_mask(flush_mask),
         .is_jb(is_jb),
         .jb_pc(jb_pc),  
         .mispredict(mispredict), 

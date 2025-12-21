@@ -208,9 +208,6 @@ module IS_stage (
                                          (IS_in_rs2 == WB_rd && WB_valid) || 
                                          (IS_in_rs2 == EX_in_rd && EX_in_valid);
                 end
-                else begin
-                    iq[i]   <= iq[i];
-                end
             end
         end
     end

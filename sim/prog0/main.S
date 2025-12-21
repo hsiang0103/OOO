@@ -208,6 +208,33 @@ mulhsu:
   mulhsu t0, t0, t1    # t0 = 0xF2A93E0C, t0 * t1 = 0xF2A93E0C_CF4A0000
   sw t0, 0(s0)
   addi s0, s0, 4
+div:
+  # Case 1: 一般正數除法 (20 / 6 = 3)
+  li t0, 0x00000014     # 20
+  li t1, 0x00000006     # 6
+  div t0, t0, t1        # t0 = 0x00000003
+  sw t0, 0(s0)          # 存入最後一個結果 (Div By Zero)
+  addi s0, s0, 4
+  # Case 2: 負數除以正數 (-20 / 6 = -3)
+  li t1, 0x00000006     # 6
+  li t2, 0xFFFFFFEC     # -20
+  div t0, t2, t1        # t0 = 0xFFFFFFFD (-3)
+  sw t0, 0(s0)          # 存入最後一個結果 (Div By Zero)
+  addi s0, s0, 4
+  # Case 3: RISC-V Signed Overflow (-2^31 / -1 = -2^31)
+  # 這是唯一會溢位的情況，Spec 規定不產生異常，結果保留 -2^31
+  li t1, 0xFFFFFFFF     # -1
+  li t2, 0x80000000     # -2147483648
+  div t0, t2, t1        # t0 = 0x80000000
+  sw t0, 0(s0)          # 存入最後一個結果 (Div By Zero)
+  addi s0, s0, 4
+  # Case 4: 除以零 (Signed)
+  # Spec 規定: 結果為 -1 (全 1)
+  li t1, 0x00000000     # 0
+  li t2, 0x00000100     # 256
+  div t0, t2, t1        # t0 = 0xFFFFFFFF (-1)
+  sw t0, 0(s0)          # 存入最後一個結果 (Div By Zero)
+  addi s0, s0, 4
 load:
   la t1, lw_data1
   lw t0, 0(t1)

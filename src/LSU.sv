@@ -326,8 +326,7 @@ module LSU (
                             LQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
                         end
                         // issue load request
-                        
-                        load_handshake && i == load_request_idx && !st_commit: begin
+                        load_handshake && i == load_request_idx: begin
                             LQ[i].done  <= 1'b1;
                         end
                         // commit

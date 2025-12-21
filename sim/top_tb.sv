@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////
 `timescale 1ns/10ps
 `define CYCLE 1.0 // Cycle time
-`define MAX 100000 // Max cycle number
+`define MAX 200000 // Max cycle number
 `ifdef SYN
 `include "top_syn.v"
 `timescale 1ns/10ps

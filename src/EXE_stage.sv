@@ -29,6 +29,7 @@ module EXE_stage(
     input   logic           DC_in_jump,
     input   logic           IF_valid,
     input   logic           DC_ready,
+    input   logic [`ROB_LEN-1:0] flush_mask,
     output  logic           is_jb,
     output  logic [31:0]    jb_pc,  
     output  logic           mispredict,  
@@ -134,7 +135,7 @@ module EXE_stage(
     data_t mul_data_rg;
     logic mul_o_valid;
     logic mul_bypass;
-    logic mul_idle;
+    logic mul_o_ready;
 
     MUL mul(
         .clk            (clk),
@@ -142,7 +143,9 @@ module EXE_stage(
         .funct3         (EXE_in_f3),
         .rs1_data       (EXE_in_rs1_data),
         .rs2_data       (EXE_in_rs2_data),
-
+        // mispredict
+        .mispredict     (mispredict),
+        .flush_mask     (flush_mask),
         // control
         .mul_i_valid    (RR_valid && EXE_in_fu_sel == 3'd1),
         .mul_i_rob_idx  (EXE_in_rob_idx),
@@ -151,7 +154,7 @@ module EXE_stage(
         .mul_o_rob_idx  (mul_o_data.rob_idx),
         .mul_o_rd       (mul_o_data.rd),
         .mul_o_data     (mul_o_data.data),
-        .mul_idle       (mul_idle)
+        .mul_o_ready    (mul_o_ready)
     );
 
     always @(posedge clk) begin
@@ -172,15 +175,58 @@ module EXE_stage(
         end
     end
 
-    assign EX_ready[1]  = mul_bypass && mul_idle;
+    assign EX_ready[1]  = mul_bypass && mul_o_ready;
     assign o_data[1]    = mul_bypass ? mul_o_data : mul_data_rg;
     assign o_valid[1]   = mul_bypass ? mul_o_valid : 1'b1;
     // =======================================================
-    //                       DIV/REM/[2]           
+    //                       DIV/REM[2]           
     // =======================================================
-    assign EX_ready[2]  = 1'b0;
-    assign o_valid[2]   = 1'b0;
-    // TODO: DIV/REM implementation
+    data_t div_o_data;
+    data_t div_data_rg;
+    logic div_o_valid;
+    logic div_bypass;
+
+    DIV div(
+        .clk            (clk),
+        .rst            (rst),
+        .funct3         (EXE_in_f3),
+        .rs1_data       (EXE_in_rs1_data),
+        .rs2_data       (EXE_in_rs2_data),
+        // mispredict
+        .mispredict     (mispredict),
+        .flush_mask     (flush_mask),
+        // control
+        .div_i_valid    (RR_valid && EXE_in_fu_sel == 3'd2),
+        .div_i_rob_idx  (EXE_in_rob_idx),
+        .div_i_rd       (EXE_in_rd),
+        .div_i_ready    (EX_ready[2]),
+        .div_o_valid    (div_o_valid),
+        .div_o_rob_idx  (div_o_data.rob_idx),
+        .div_o_rd       (div_o_data.rd),
+        .div_o_data     (div_o_data.data)
+    );
+
+    always @(posedge clk) begin
+           if (rst) begin      
+            div_data_rg         <= '0;     
+            div_bypass          <= 1'b1;
+        end   
+        else begin      
+            if (div_bypass) begin         
+                if (!out_sel[2] && div_o_valid) begin
+                    div_data_rg     <= div_o_data;      
+                    div_bypass      <= 1'b0;      
+                end 
+            end 
+            else begin         
+                div_bypass  <= out_sel[2];        
+            end
+        end
+    end
+
+    assign EX_ready[2]  = div_bypass;
+    assign o_data[2]    = div_bypass ? div_o_data : div_data_rg;
+    assign o_valid[2]   = div_bypass ? div_o_valid : 1'b1;
 
     // =======================================================
     //                        FALU/[3]           
@@ -189,7 +235,6 @@ module EXE_stage(
     data_t falu_data_rg;
     logic falu_o_valid;
     logic falu_bypass;
-    logic falu_idle;
 
     FALU falu(
         .clk            (clk),
@@ -302,6 +347,13 @@ module EXE_stage(
                 EX_o_valid      = o_valid[6];
                 EX_o_rob_idx    = o_data[6].rob_idx;
                 EX_o_rd         = o_data[6].rd;
+            end
+            o_valid[2]: begin
+                out_sel         = 8'b0000_0100;
+                EX_o_data       = o_data[2].data;
+                EX_o_valid      = o_valid[2];
+                EX_o_rob_idx    = o_data[2].rob_idx;
+                EX_o_rd         = o_data[2].rd;
             end
             o_valid[1]: begin
                 out_sel         = 8'b0000_0010;
