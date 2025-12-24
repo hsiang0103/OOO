@@ -4,8 +4,10 @@ module LSU (
     // dispatch 
     input   logic [2:0]     DC_fu_sel,  
     input   logic [6:0]     DC_rd, 
+    input   logic [4:0]     DC_op,
     input   logic [$clog2(`ROB_LEN)-1:0]     DC_rob_idx,
     input   logic           decode_valid, 
+    
     output  logic           ld_ready,
     output  logic           st_ready,
     // data
@@ -85,8 +87,8 @@ module LSU (
     
     assign ld_ready         = !(LQ_t[$clog2(`LQ_LEN)-1:0] == LQ_h[$clog2(`LQ_LEN)-1:0] && LQ_t[$clog2(`LQ_LEN)] != LQ_h[$clog2(`LQ_LEN)]); // LQ not full
     assign st_ready         = !(SQ_t[$clog2(`SQ_LEN)-1:0] == SQ_h[$clog2(`SQ_LEN)-1:0] && SQ_t[$clog2(`SQ_LEN)] != SQ_h[$clog2(`SQ_LEN)]); // SQ not full
-    assign DC_ld            = DC_fu_sel == 6 && decode_valid; 
-    assign DC_st            = DC_fu_sel == 7 && decode_valid; 
+    assign DC_ld            = (DC_op == `LOAD || DC_op == `FLOAD) && decode_valid; 
+    assign DC_st            = (DC_op == `S_TYPE || DC_op == `FSTORE) && decode_valid; 
     assign LQ_tail          = LQ_t;
     assign SQ_tail          = SQ_t;
 

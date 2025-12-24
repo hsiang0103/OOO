@@ -74,62 +74,41 @@ module konata(
 
     // ROB tracking array (16 entries)
     insn_track_t insn_tracker [0:63];
-    
-    // Helper function to decode opcode name
-    function string decode_opcode(input logic [4:0] op, input logic [2:0] f3, input logic [6:0] f7);
-        case (op)
-            5'b01100: begin // R-type
-                case ({f7[5], f7[0], f3})
-                    5'b00000: return "add";
-                    5'b10000: return "sub";
-                    5'b00111: return "and";
-                    5'b00110: return "or";
-                    5'b00100: return "xor";
-                    5'b00001: return "sll";
-                    5'b00101: return "srl";
-                    5'b10101: return "sra";
-                    5'b00010: return "slt";
-                    5'b00011: return "sltu";
-                    5'b01000: return "mul";
-                    5'b01001: return "mulh";
-                    5'b01010: return "mulhsu";
-                    5'b01011: return "mulhu";
+    logic [6:0] opcode;
+    logic [4:0] rd    ;
+    logic [2:0] funct3;
+    logic [4:0] rs1   ;
+    logic [4:0] rs2   ;
+    logic [4:0] rs3   ;
+    logic [6:0] funct7;
 
-                    default: return "r-type";
-                endcase
-            end
-            5'b00100: begin // I-type ALU
-                case (f3)
-                    3'b000: return "addi";
-                    3'b111: return "andi";
-                    3'b110: return "ori";
-                    3'b100: return "xori";
-                    3'b001: return "slli";
-                    3'b101: return (f7[5]) ? "srai" : "srli";
-                    3'b010: return "slti";
-                    3'b011: return "sltiu";
-                    default: return "i-type";
-                endcase
-            end
-            5'b00000: begin // Load
-                case (f3)
-                    3'b000: return "lb";
-                    3'b001: return "lh";
-                    3'b010: return "lw";
-                    3'b100: return "lbu";
-                    3'b101: return "lhu";
-                    default: return "load";
-                endcase
-            end
-            5'b01000: begin // Store
-                case (f3)
-                    3'b000: return "sb";
-                    3'b001: return "sh";
-                    3'b010: return "sw";
-                    default: return "store";
-                endcase
-            end
-            5'b11000: begin // Branch
+    logic [31:0] imm_i, imm_s, imm_b, imm_u, imm_j, imm_csr;
+    string opname;
+
+    // =======================================================================
+    // Helper Function: Decode Opcode to String (Support RV32IMF + CSR)
+    // =======================================================================
+    function string get_instr_str(input logic [31:0] inst);
+        logic [6:0] opcode; 
+        logic [2:0] f3    ; 
+        logic [6:0] f7    ; 
+        logic [4:0] rs2   ; 
+
+        opcode = inst[6:0];
+        f3     = inst[14:12];
+        f7     = inst[31:25];
+        rs2    = inst[24:20]; // Used for some FP and System ops
+
+        case (opcode)
+            // ---------------------------
+            // RV32I Base Integer
+            // ---------------------------
+            7'b0110111: return "lui";
+            7'b0010111: return "auipc";
+            7'b1101111: return "jal";
+            7'b1100111: return "jalr";
+            
+            7'b1100011: begin // Branch
                 case (f3)
                     3'b000: return "beq";
                     3'b001: return "bne";
@@ -140,14 +119,146 @@ module konata(
                     default: return "branch";
                 endcase
             end
-            5'b11011: return "jal";
-            5'b11001: return "jalr";
-            5'b01101: return "lui";
-            5'b00101: return "auipc";
-            default:  return "unknown";
+
+            7'b0000011: begin // Load
+                case (f3)
+                    3'b000: return "lb";
+                    3'b001: return "lh";
+                    3'b010: return "lw";
+                    3'b100: return "lbu";
+                    3'b101: return "lhu";
+                    default: return "load";
+                endcase
+            end
+
+            7'b0100011: begin // Store
+                case (f3)
+                    3'b000: return "sb";
+                    3'b001: return "sh";
+                    3'b010: return "sw";
+                    default: return "store";
+                endcase
+            end
+
+            7'b0010011: begin // OP-IMM
+                case (f3)
+                    3'b000: return "addi";
+                    3'b010: return "slti";
+                    3'b011: return "sltiu";
+                    3'b100: return "xori";
+                    3'b110: return "ori";
+                    3'b111: return "andi";
+                    3'b001: return "slli";
+                    3'b101: return (f7[5]) ? "srai" : "srli";
+                    default: return "op-imm";
+                endcase
+            end
+
+            7'b0110011: begin // OP (Integar + M Extension)
+                if (f7 == 7'b0000001) begin // RV32M
+                    case (f3)
+                        3'b000: return "mul";
+                        3'b001: return "mulh";
+                        3'b010: return "mulhsu";
+                        3'b011: return "mulhu";
+                        3'b100: return "div";
+                        3'b101: return "divu";
+                        3'b110: return "rem";
+                        3'b111: return "remu";
+                        default: return "mul/div";
+                    endcase
+                end else begin // RV32I
+                    case (f3)
+                        3'b000: return (f7[5]) ? "sub" : "add";
+                        3'b001: return "sll";
+                        3'b010: return "slt";
+                        3'b011: return "sltu";
+                        3'b100: return "xor";
+                        3'b101: return (f7[5]) ? "sra" : "srl";
+                        3'b110: return "or";
+                        3'b111: return "and";
+                        default: return "op";
+                    endcase
+                end
+            end
+
+            7'b0001111: return "fence"; // Fence
+
+            // ---------------------------
+            // System / CSR
+            // ---------------------------
+            7'b1110011: begin
+                case (f3)
+                    3'b000: begin
+                        if (inst[31:20] == 12'h000) return "ecall";
+                        if (inst[31:20] == 12'h001) return "ebreak";
+                        if (inst[31:20] == 12'h302) return "mret";
+                        if (inst[31:20] == 12'h102) return "sret";
+                        if (inst[31:20] == 12'h002) return "uret";
+                        if (inst[31:20] == 12'h105) return "wfi";
+                        return "system";
+                    end
+                    3'b001: return "csrrw";
+                    3'b010: return "csrrs";
+                    3'b011: return "csrrc";
+                    3'b101: return "csrrwi";
+                    3'b110: return "csrrsi";
+                    3'b111: return "csrrci";
+                    default: return "system";
+                endcase
+            end
+
+            // ---------------------------
+            // RV32F Floating Point
+            // ---------------------------
+            7'b0000111: return "flw";
+            7'b0100111: return "fsw";
+            
+            7'b1000011: return "fmadd.s";
+            7'b1000111: return "fmsub.s";
+            7'b1001011: return "fnmsub.s";
+            7'b1001111: return "fnmadd.s";
+
+            7'b1010011: begin // OP-FP
+                case (f7)
+                    7'b0000000: return "fadd.s";
+                    7'b0000100: return "fsub.s";
+                    7'b0001000: return "fmul.s";
+                    7'b0001100: return "fdiv.s";
+                    7'b0101100: return "fsqrt.s";
+                    7'b0010000: begin
+                        case (f3)
+                            3'b000: return "fsgnj.s";
+                            3'b001: return "fsgnjn.s";
+                            3'b010: return "fsgnjx.s";
+                            default: return "fsgnj";
+                        endcase
+                    end
+                    7'b0010100: return (f3 == 0) ? "fmin.s" : "fmax.s";
+                    7'b1100000: begin // FCVT.W.S / FCVT.WU.S
+                        return (rs2 == 0) ? "fcvt.w.s" : "fcvt.wu.s";
+                    end
+                    7'b1101000: begin // FCVT.S.W / FCVT.S.WU
+                        return (rs2 == 0) ? "fcvt.s.w" : "fcvt.s.wu";
+                    end
+                    7'b1010000: begin // FCMP
+                        case (f3)
+                            3'b010: return "feq.s";
+                            3'b001: return "flt.s";
+                            3'b000: return "fle.s";
+                            default: return "fcmp";
+                        endcase
+                    end
+                    7'b1110000: return (f3 == 0) ? "fmv.x.w" : "fclass.s";
+                    7'b1111000: return "fmv.w.x"; 
+                    default: return "fop";
+                endcase
+            end
+
+            default: return "unknown";
         endcase
     endfunction
-    
+   
     // Initialize
     initial begin
         fd = $fopen("kanata.log", "w");
@@ -300,75 +411,123 @@ module konata(
                         insn_tracker[i].if_started && 
                         !insn_tracker[i].dc_started &&
                         insn_tracker[i].pc == IF_out_pc) begin
+                        
+                        // 1. Update instruction word in tracker
                         insn_tracker[i].inst = IF_out_inst;
-                        // Decode the instruction and write (example: li x0,0 /addi	sp,sp,-4)
+
+                        // 2. Decode and Log
                         begin
-                            logic [6:0] opcode;
-                            logic [4:0] rd, rs1, rs2;
-                            logic [2:0] funct3;
-                            logic [6:0] funct7;
-                            logic [31:0] imm;
-                            string opname;
-                            
-                            // Extract instruction fields
+                            // Local variables for decoding fields
                             opcode = IF_out_inst[6:0];
                             rd     = IF_out_inst[11:7];
                             funct3 = IF_out_inst[14:12];
                             rs1    = IF_out_inst[19:15];
                             rs2    = IF_out_inst[24:20];
+                            rs3    = IF_out_inst[31:27]; // For R4-type
                             funct7 = IF_out_inst[31:25];
                             
-                            // Decode opcode name
-                            opname = decode_opcode(opcode[6:2], funct3, funct7);
-                            
-                            // Format instruction string based on type
+
+                            // Calculate Immediates
+                            imm_i   = {{20{IF_out_inst[31]}}, IF_out_inst[31:20]};
+                            imm_s   = {{20{IF_out_inst[31]}}, IF_out_inst[31:25], IF_out_inst[11:7]};
+                            imm_b   = {{19{IF_out_inst[31]}}, IF_out_inst[31], IF_out_inst[7], IF_out_inst[30:25], IF_out_inst[11:8], 1'b0};
+                            imm_u   = {IF_out_inst[31:12], 12'b0};
+                            imm_j   = {{12{IF_out_inst[31]}}, IF_out_inst[19:12], IF_out_inst[20], IF_out_inst[30:21], 1'b0};
+                            imm_csr = {20'b0, IF_out_inst[31:20]}; // Zero extended for printing
+
+                            // Get Opcode String
+                            opname = get_instr_str(IF_out_inst);
+
+                            // Log Header: "L id 0 pc: hex asm_string"
                             $fwrite(fd, "L\t%0d\t0\t%-3h: %08h ", insn_tracker[i].id, IF_out_pc, IF_out_inst);
-                            case (opcode[6:2])
-                                5'b01100: begin // R-type
-                                    $fwrite(fd, "%-5s x%0d,x%0d,x%0d\n", opname, rd, rs1, rs2);
+
+                            // Format Arguments based on Opcode Type
+                            case (opcode)
+                                // --- Integer Register-Register (R-Type) ---
+                                7'b0110011: $fwrite(fd, "%-5s x%0d, x%0d, x%0d\n", opname, rd, rs1, rs2);
+                                
+                                // --- Integer Register-Immediate (I-Type) ---
+                                7'b0010011: begin
+                                    // Shift instructions use shamt (rs2), others use imm_i
+                                    if(funct3 == 3'b001 || funct3 == 3'b101) 
+                                        $fwrite(fd, "%-5s x%0d, x%0d, 0x%0h\n", opname, rd, rs1, rs2);
+                                    else
+                                        $fwrite(fd, "%-5s x%0d, x%0d, %0d\n", opname, rd, rs1, $signed(imm_i));
                                 end
-                                5'b00100: begin // I-type ALU
-                                    imm = {{20{IF_out_inst[31]}}, IF_out_inst[31:20]};
-                                    $fwrite(fd, "%-5s x%0d,x%0d,%0d\n", opname, rd, rs1, $signed(imm));
+                                
+                                // --- Loads (I-Type) ---
+                                7'b0000011: $fwrite(fd, "%-5s x%0d, %0d(x%0d)\n", opname, rd, $signed(imm_i), rs1);
+                                
+                                // --- Stores (S-Type) ---
+                                7'b0100011: $fwrite(fd, "%-5s x%0d, %0d(x%0d)\n", opname, rs2, $signed(imm_s), rs1);
+                                
+                                // --- Branch (B-Type) ---
+                                7'b1100011: $fwrite(fd, "%-5s x%0d, x%0d, %0h\n", opname, rs1, rs2, $signed(imm_b + IF_out_pc));
+                                
+                                // --- JAL (J-Type) ---
+                                7'b1101111: $fwrite(fd, "%-5s x%0d, %0h\n", opname, rd, $signed(imm_j + IF_out_pc));
+                                
+                                // --- JALR (I-Type) ---
+                                7'b1100111: $fwrite(fd, "%-5s x%0d, %0d(x%0d)\n", opname, rd, $signed(imm_i), rs1);
+                                
+                                // --- LUI, AUIPC (U-Type) ---
+                                7'b0110111, 
+                                7'b0010111: $fwrite(fd, "%-5s x%0d, 0x%0h\n", opname, rd, imm_u[31:12]);
+
+                                // --- System / CSR ---
+                                7'b1110011: begin
+                                    if (funct3 == 0) // ecall, ebreak, mret...
+                                        $fwrite(fd, "%-5s\n", opname);
+                                    else if (funct3[2] == 0) // csrrw, csrrs, csrrc (Register)
+                                        $fwrite(fd, "%-5s x%0d, 0x%03h, x%0d\n", opname, rd, imm_csr[11:0], rs1);
+                                    else // csrrwi, csrrsi, csrrci (Immediate)
+                                        $fwrite(fd, "%-5s x%0d, 0x%03h, 0x%0h\n", opname, rd, imm_csr[11:0], rs1); // rs1 here holds uimm
                                 end
-                                5'b00000: begin // Load
-                                    imm = {{20{IF_out_inst[31]}}, IF_out_inst[31:20]};
-                                    $fwrite(fd, "%-5s x%0d,%0d(x%0d)\n", opname, rd, $signed(imm), rs1);
+
+                                // --- FP Load (I-Type) ---
+                                7'b0000111: $fwrite(fd, "%-5s f%0d, %0d(x%0d)\n", opname, rd, $signed(imm_i), rs1);
+                                
+                                // --- FP Store (S-Type) ---
+                                7'b0100111: $fwrite(fd, "%-5s f%0d, %0d(x%0d)\n", opname, rs2, $signed(imm_s), rs1);
+
+                                // --- FP Comp/Move (R-Type: F-X or X-F) ---
+                                // fmv.x.w, fclass.s, fcmp (rd is Int, rs1/2 are FP)
+                                // fmv.w.x (rd is FP, rs1 is Int)
+                                
+                                // --- FP Arith (R-Type: rd, rs1, rs2 all FP) ---
+                                7'b1010011: begin
+                                    // Handle Special Cases for FMV/FCVT where src/dst types differ
+                                    if (funct7 == 7'b1110000 && funct3 == 0) // fmv.x.w
+                                        $fwrite(fd, "%-5s x%0d, f%0d\n", opname, rd, rs1);
+                                    else if (funct7 == 7'b1010000) // feq, flt, fle (compare)
+                                        $fwrite(fd, "%-5s x%0d, f%0d, f%0d\n", opname, rd, rs1, rs2);
+                                    else if (funct7 == 7'b1100000 || funct7 == 7'b1101000) // fcvt.w.s / fcvt.s.w
+                                        if (rs2 == 1) // w.s (FP to Int)
+                                            $fwrite(fd, "%-5s x%0d, f%0d\n", opname, rd, rs1);
+                                        else // s.w (Int to FP)
+                                            $fwrite(fd, "%-5s f%0d, x%0d\n", opname, rd, rs1);
+                                    else if (funct7 == 7'b1111000) // fmv.w.x
+                                        $fwrite(fd, "%-5s f%0d, x%0d\n", opname, rd, rs1);
+                                    else // Standard FP ops (fadd, fsub...)
+                                        $fwrite(fd, "%-5s f%0d, f%0d, f%0d\n", opname, rd, rs1, rs2);
                                 end
-                                5'b01000: begin // Store
-                                    imm = {{20{IF_out_inst[31]}}, IF_out_inst[31:25], IF_out_inst[11:7]};
-                                    $fwrite(fd, "%-5s x%0d,%0d(x%0d)\n", opname, rs2, $signed(imm), rs1);
-                                end
-                                5'b11000: begin // Branch
-                                    imm = {{19{IF_out_inst[31]}}, IF_out_inst[31], IF_out_inst[7], 
-                                           IF_out_inst[30:25], IF_out_inst[11:8], 1'b0};
-                                    $fwrite(fd, "%-5s x%0d,x%0d,%0h\n", opname, rs1, rs2, $signed(imm + IF_out_pc));
-                                end
-                                5'b11011: begin // JAL
-                                    imm = {{12{IF_out_inst[31]}}, IF_out_inst[19:12], IF_out_inst[20], IF_out_inst[30:21], 1'b0};
-                                    $fwrite(fd, "%-5s %0h\n", opname, $signed(imm + IF_out_pc));
-                                end
-                                5'b11001: begin // JALR
-                                    imm = {{20{IF_out_inst[31]}}, IF_out_inst[31:20]};
-                                    $fwrite(fd, "%-5s x%0d,%0d(x%0d)\n", opname, rd, $signed(imm), rs1);
-                                end
-                                5'b01101: begin // LUI
-                                    $fwrite(fd, "%-5s x%0d,0x%0h\n", opname, rd, IF_out_inst[31:12]);
-                                end
-                                5'b00101: begin // AUIPC
-                                    $fwrite(fd, "%-5s x%0d,0x%0h\n", opname, rd, IF_out_inst[31:12]);
-                                end
-                                default: begin
-                                    $fwrite(fd, "%-5s ", insn_tracker[i].id, opname);
-                                end
+
+                                // --- FP Fused Multiply-Add (R4-Type) ---
+                                7'b1000011, 
+                                7'b1000111, 
+                                7'b1001011, 
+                                7'b1001111: $fwrite(fd, "%-5s f%0d, f%0d, f%0d, f%0d\n", opname, rd, rs1, rs2, rs3);
+
+                                default: $fwrite(fd, "unknown op: %h\n", opcode);
                             endcase
-                        end
-                        // S command: Start DC stage
+                        end // End Decode Block
+
+                        // Log Konata specific stage start commands
                         $fwrite(fd, "S\t%0d\t0\tDD\n", insn_tracker[i].id);
                         insn_tracker[i].dc_started  <= 1'b1;
                         insn_tracker[i].rob_idx     <= ROB_tail;
-                        // L command: Add ROB allocation info
                         $fwrite(fd, "L\t%0d\t1\tROB[%0d]\n", insn_tracker[i].id, ROB_tail);
+                        
                         break;
                     end
                 end
@@ -446,5 +605,4 @@ module konata(
                      cycle_count, insn_id, retire_id);
         end
     end
-
 endmodule

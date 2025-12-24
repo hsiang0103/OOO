@@ -66,6 +66,23 @@
 `define FSUBS  5'b00001
 
 
+// CSR
+`define CSRRW   3'b001
+`define CSRRS   3'b010
+`define CSRRC   3'b011
+`define CSRRWI  3'b101
+`define CSRRSI  3'b110
+`define CSRRCI  3'b111
+
+// CSR addresses
+`define MSTATUS 12'h300
+`define MTVEC   12'h305
+`define MIE     12'h304
+`define MIP     12'h344
+`define MEPC    12'h341
+`define MRET    12'h302
+
+
 
 
 

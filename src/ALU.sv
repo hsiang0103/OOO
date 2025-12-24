@@ -19,6 +19,10 @@ module ALU (
     output  logic           [31:0]  alu_jb_out,
     output  logic                   jump
 );
+    // =============
+    //      ALU
+    // =============
+
     logic signed [31:0] operand1, operand2;
     logic signed [31:0] alu_out;
 
@@ -84,8 +88,8 @@ module ALU (
         end
 
         alu_o_rob_idx   = alu_i_rob_idx;
-        alu_o_valid     = alu_i_valid && opcode != `B_TYPE;
+        alu_o_valid     = alu_i_valid && opcode != `B_TYPE/* && alu_i_rd != 7'd0*/;
         alu_o_rd        = alu_i_rd;
-        alu_o_data      = alu_out;
+        alu_o_data      = /*(opcode == `CSR)? CSR_out : */alu_out;
     end
 endmodule

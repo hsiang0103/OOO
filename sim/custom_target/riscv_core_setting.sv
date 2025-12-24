@@ -96,24 +96,24 @@ parameter int NUM_HARTS = 1;
 
 // Implemented previlieged CSR list
 `ifdef DSIM
-privileged_reg_t implemented_csr[] = {
+privileged_reg_t implemented_csr[] = {}
 `else
 const privileged_reg_t implemented_csr[] = {
 `endif
     // Machine mode mode CSR
-    MVENDORID,  // Vendor ID
-    MARCHID,    // Architecture ID
-    MIMPID,     // Implementation ID
-    MHARTID,    // Hardware thread ID
+    // MVENDORID,  // Vendor ID
+    // MARCHID,    // Architecture ID
+    // MIMPID,     // Implementation ID
+    // MHARTID,    // Hardware thread ID
     MSTATUS,    // Machine status
-    MISA,       // ISA and extensions
+    // MISA,       // ISA and extensions
     MIE,        // Machine interrupt-enable register
-    MTVEC,      // Machine trap-handler base address
-    MCOUNTEREN, // Machine counter enable
-    MSCRATCH,   // Scratch register for machine trap handlers
+    // MTVEC,      // Machine trap-handler base address
+    // MCOUNTEREN, // Machine counter enable
+    // MSCRATCH,   // Scratch register for machine trap handlers
     MEPC,       // Machine exception program counter
-    MCAUSE,     // Machine trap cause
-    MTVAL,      // Machine bad address or instruction
+    // MCAUSE,     // Machine trap cause
+    // MTVAL,      // Machine bad address or instruction
     MIP         // Machine interrupt pending
 };
 

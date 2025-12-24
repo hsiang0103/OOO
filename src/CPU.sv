@@ -102,6 +102,7 @@ module CPU (
     
     // ROB wires
     logic        rob_ready;
+    logic        rob_empty;
     logic [31:0] DC_pc;
     logic [31:0] DC_inst;
     logic [6:0]  DC_P_rd_old;
@@ -131,6 +132,7 @@ module CPU (
     logic        recovery;
     
     // LSU wires
+    logic [4:0]  DC_op;
     logic        ld_i_valid;
     logic        st_i_valid;
     logic [$clog2(`ROB_LEN)-1:0]  lsu_i_rob_idx;
@@ -230,9 +232,11 @@ module CPU (
         .allocate_rd(allocate_rd),
         // ROB
         .rob_ready(rob_ready),
+        .rob_empty(rob_empty),
         .DC_rob_idx(DC_rob_idx),
         .DC_pc(DC_pc),
         .DC_inst(DC_inst),
+        .DC_op(DC_op),
         .DC_P_rd_old(DC_P_rd_old),
         .DC_P_rd_new(DC_P_rd_new),
         .DC_fu_sel(DC_fu_sel),
@@ -384,6 +388,7 @@ module CPU (
         // dispatch
         .DC_fu_sel(DC_fu_sel),
         .DC_rd(DC_P_rd_new),
+        .DC_op(DC_op),
         .DC_rob_idx(DC_rob_idx),
         .decode_valid(dispatch_valid),
         .ld_ready(ld_ready),
@@ -479,6 +484,7 @@ module CPU (
         .DC_A_rd(A_rd),
         .DC_rob_idx(DC_rob_idx),
         .ROB_ready(rob_ready),
+        .ROB_empty(rob_empty),
         // Issue/Register Read
         .RR_valid(RR_valid && EX_ready[RR_out_fu_sel]),
         .RR_rob_idx(RR_out_rob_idx),

@@ -10,6 +10,7 @@ module ROB (
     input   logic [5:0]     DC_A_rd,
     output  logic [$clog2(`ROB_LEN)-1:0] DC_rob_idx,
     output  logic           ROB_ready,
+    output  logic           ROB_empty,
     // Issue/Register Read
     input   logic           writeback_free,
     input   logic           RR_valid,
@@ -88,6 +89,7 @@ module ROB (
     assign ROB_t_sub_2      = (ROB_t <= 1) ? ROB_t + `ROB_LEN-2 : ROB_t - 2;
     assign DC_rob_idx       = ROB_t;
     assign ROB_ready        = !((ROB_t == ROB_h) && ROB[ROB_h].dispatched);
+    assign ROB_empty        = (ROB_t == ROB_h) && !ROB[ROB_h].dispatched;
 
     // commit
     assign commit_wb_en     = commit && ROB[ROB_h].P_rd_new != 7'd0;

@@ -783,24 +783,110 @@ fsub:
   fsub.s	fa5,fa4,fa5
   fsw fa5, 0(s0)
   addi s0, s0, 4
-/*rdinst:
-  rdinstreth t0
-  rdinstret  t1
-  rdinstreth t2
-  bne        t0, t2, rdinst
-  sw t0, 0(s0)
-  addi s0, s0, 4
-  sw t1, 0(s0)
-  addi s0, s0, 4
-rdcycle:
-  rdcycleh   t0
-  rdcycle    t1
-  rdcycleh   t2
-  bne        t0, t2, rdcycle
-  sw t0, 0(s0)
-  addi s0, s0, 4
-  sw t1, 0(s0)
-  addi s0, s0, 4*/
+csrrw:
+  # mstatus
+  li t0, 0x000f0008
+  csrrw x0, mstatus, t0 # mstatus = 0x8
+  csrrw t2, mstatus, x0 # mstatus = 0x0  t2 = 0x8
+  csrrw t3, mstatus, x0 # mstatus = 0x0  t3 = 0x0
+  add t1, t2, t3  
+  sw t1, 0(s0)  # t1 = 0x8 (mstatus)
+  addi s0, s0, 4 
+  # mie  
+  li t0, 0xa32
+  csrrw x0, mie, t0 # mie = 0x800
+  csrrw t2, mie, x0 # mie = 0x0       t2 = 0x800
+  csrrw t3, mie, x0 # mie = 0x0       t3 = 0x0
+  add t1, t2, t3  
+  sw t1, 0(s0)  # t1 = 0x800 (mie)
+  addi s0, s0, 4   
+  # mtvec 
+  li t0, 0x000e50f0
+  csrrw x0, mtvec, t0 # mtvec = 0x10000
+  csrrw t2, mtvec, x0 # mtvec = 0x10000  t2 = 0x10000
+  csrrw t3, mtvec, x0 # mtvec = 0x10000  t3 = 0x10000
+  add t1, t2, t3  
+  sw t1, 0(s0)  # t1 = 0x20000 (mtvec)
+  addi s0, s0, 4   
+  # mepc  
+  li t0, 0x000e50f0
+  csrrw x0, mepc, t0 # mepc = 0x000e50f0
+  csrrw t2, mepc, x0 # mepc = 0x0  t2 = 0x000e50f0
+  csrrw t3, mepc, x0 # mepc = 0x0  t3 = 0x0
+  add t1, t2, t3  
+  sw t1, 0(s0)  # t1 = 0xe50f0 (mepc)
+  addi s0, s0, 4   
+  # mip  
+  li t0, 0xfff
+  csrrw x0, mip, t0 # mip = 0x0
+  csrrw t2, mip, x0 # mip = 0x0 t2 = 0x0
+  csrrw t3, mip, x0 # mip = 0x0 t3 = 0x0
+  add t1, t2, t3  
+  sw t1, 0(s0)  # t1 = 0x0 (mip)
+  addi s0, s0, 4   
+csrrwi:
+
+  # mstatus 
+  csrrwi x0, mstatus, 0x9 # mstatus = 0x8
+  csrrw t1, mstatus, x0 # mstatus = 0x0  t1 = 0x8
+  sw t1, 0(s0)  # t1 = 0x8 (mstatus)
+  addi s0, s0, 4   
+  
+  # mtvec 
+  csrrwi x0, mtvec, 0x0 # mtvec = 0x10000
+  csrrw t1, mtvec, x0 # mtvec = 0x10000  t1 = 0x10000
+  sw t1, 0(s0)  # t1 = 0x0010000 (mtvec)
+  addi s0, s0, 4   
+  
+  # mepc  
+  csrrwi x0, mepc, 0x10 # mepc = 0x10
+  csrrw t1, mepc, x0 # mepc = 0x0  t1 = 0x10
+  sw t1, 0(s0)  # t1 = 0x10 (mepc)
+  addi s0, s0, 4   
+  
+  # mip  
+  csrrwi x0, mip, 0xf # mip = 0x0
+  csrrw t1, mip, x0 # mip = 0x0 t1 = 0x0
+  sw t1, 0(s0)  # t1 = 0x0 (mip)
+  addi s0, s0, 4     
+
+csrrs:
+  # mstatus
+  li t0, 0x000f0008
+  li t1, 0x000f0008
+  csrrw x0, mstatus, t0 # mstatus = 0x8
+  csrrs t0, mstatus, t1 # mstatus = 0x8
+  csrrw t2, mstatus, x0 # mstatus = 0x0  t2 = 0x8
+  sw t2, 0(s0)  # t2 = 0x8 (mstatus)
+  addi s0, s0, 4 
+
+ csrrsi:
+  # mstatus
+  li t0, 0x000f0008
+  csrrw x0, mstatus, t0 # mstatus = 0x8
+  csrrsi t0, mstatus, 0x9  # mstatus = 0x8
+  csrrw t2, mstatus, x0 # mstatus = 0x0  t2 = 0x8
+  sw t2, 0(s0)  # t2 = 0x8 (mstatus)
+  addi s0, s0, 4 
+  
+csrrc:
+  # mstatus
+  li t0, 0x000f1888    
+  li t1, 0x000f1880
+  csrrw x0, mstatus, t0 # mstatus = 0x1888
+  csrrc t0, mstatus, t1 # mstatus = 0x8
+  csrrw t2, mstatus, x0 # mstatus = 0x0  t2 = 0x8
+  sw t2, 0(s0)  # t2 =  0x8(mstatus)
+  addi s0, s0, 4 
+
+ csrrci:
+  # mstatus
+  li t0, 0x000f1888
+  csrrw x0, mstatus, t0 # mstatus = 0x8
+  csrrci t0, mstatus, 0x9  # mstatus = 0x8
+  csrrw t2, mstatus, x0 # mstatus = 0x0  t2 = 0x8
+  sw t2, 0(s0)  # t2 =  0x8 (mstatus)
+  addi s0, s0, 4 
 main_exit:
   /* Simulation End */
   lw s0, 0(sp)

@@ -18,9 +18,11 @@ module DC_stage(
     output  logic           allocate_rd,
     // dispatch
     input   logic           rob_ready,
+    input   logic           rob_empty,
     input   logic [$clog2(`ROB_LEN)-1:0]     DC_rob_idx,
     output  logic [31:0]    DC_pc,
     output  logic [31:0]    DC_inst,
+    output  logic [4:0]     DC_op,
     output  logic [6:0]     DC_P_rd_new,
     output  logic [6:0]     DC_P_rd_old,
     output  logic [2:0]     DC_fu_sel, 
@@ -60,46 +62,49 @@ module DC_stage(
     logic           f_rs1, f_rs2, f_rd;
     logic           use_rd;
     logic           st_valid, ld_valid;
-    logic downstream_ready;
+    logic           downstream_ready;
+    logic           is_csr;     
+    logic           csr_stall;  
+
+    assign is_csr    = (DC_op == `CSR); 
+    assign csr_stall = is_csr && !rob_empty;
     
     // ================
     // Decode
     // ================
-    assign DC_op            = DC_in_inst[6:2];
-    assign DC_f3            = DC_in_inst[14:12];
-    assign DC_f7            = DC_in_inst[31:25];
-    assign f_rs1            = (DC_op == `F_TYPE);
-    assign f_rs2            = (DC_op == `F_TYPE) || (DC_op == `FSTORE);
-    assign f_rd             = (DC_op == `F_TYPE) || (DC_op == `FLOAD);
-    assign A_rs1            = {f_rs1, DC_in_inst[19:15]};
-    assign A_rs2            = {f_rs2, DC_in_inst[24:20]};
-    assign A_rd             = {f_rd , DC_in_inst[11:7]};
+    assign DC_op    = DC_in_inst[6:2];
+    assign DC_f3    = DC_in_inst[14:12];
+    assign DC_f7    = DC_in_inst[31:25];
+    assign f_rs1    = (DC_op == `F_TYPE);
+    assign f_rs2    = (DC_op == `F_TYPE) || (DC_op == `FSTORE);
+    assign f_rd     = (DC_op == `F_TYPE) || (DC_op == `FLOAD);
+    assign A_rs1    = {f_rs1, DC_in_inst[19:15]};
+    assign A_rs2    = {f_rs2, DC_in_inst[24:20]};
+    assign A_rd     = {f_rd , DC_in_inst[11:7]};
 
     // FU selection
-    // 0: alu/csr 
+    // 0: alu 
     // 1: mul     
     // 2: div/rem 
     // 3: falu    
     // 4: fmul    
     // 5: fdiv    
-    // 6: load    
-    // 7: store   
+    // 6: load/store    
+    // 7: csr   
     always_comb begin
+        DC_fu_sel = 3'd0; // alu
         case (DC_op)
             `R_TYPE : begin
                 if (DC_f7 == 7'b0000001) begin
                     DC_fu_sel = (DC_f3[2]? 3'd2 : 3'd1); // div/rem or mul
                 end 
-                else begin
-                    DC_fu_sel = 3'd0; // alu
-                end
             end
             `F_TYPE : DC_fu_sel = 3'd3;
             `LOAD   : DC_fu_sel = 3'd6;
             `FLOAD  : DC_fu_sel = 3'd6;
-            `S_TYPE : DC_fu_sel = 3'd7;
-            `FSTORE : DC_fu_sel = 3'd7;
-            default : DC_fu_sel = 3'd0;
+            `S_TYPE : DC_fu_sel = 3'd6;
+            `FSTORE : DC_fu_sel = 3'd6;
+            `CSR    : DC_fu_sel = 3'd7;
         endcase
     end
 
@@ -132,12 +137,6 @@ module DC_stage(
     assign DC_inst          = DC_in_inst;
     assign DC_P_rd_new      = P_rd_new;
     assign DC_P_rd_old      = P_rd_old;
-
-
-    // early branch 
-    // assign DC_mispredict    = (DC_op == `JAL) && (!DC_in_jump) && IF_valid; 
-    // assign DC_redirect_pc   = DC_pc + DC_imm;
-    assign DC_mispredict    = 1'b0; 
 
     // ================
     // Pipeline Register
@@ -222,9 +221,9 @@ module DC_stage(
     assign DC_out_jump     = o_data.jump   ;
     // all downstream ready
     
-    assign downstream_ready = rob_ready && st_valid && ld_valid && IS_ready;
+    assign downstream_ready = rob_ready && st_valid && ld_valid && IS_ready && !csr_stall;
     assign DC_ready         =             downstream_ready && !mispredict && !stall; 
-    assign DC_valid         = valid_r  && downstream_ready && !mispredict && !stall;
+    assign DC_valid         = valid_r  && rob_ready && st_valid && ld_valid && IS_ready && !mispredict && !stall;
     assign dispatch_valid   = IF_valid && downstream_ready && !mispredict && !stall;
 
 endmodule

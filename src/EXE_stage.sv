@@ -289,15 +289,15 @@ module EXE_stage(
     // TODO: FDIV implementation
 
     // =======================================================
-    //                   LOAD/STORE[6]/[7]           
+    //                      LOAD/STORE[6]       
     // =======================================================
     data_t lsu_o_data;
     data_t lsu_data_rg;
     logic lsu_o_valid;
     logic lsu_bypass;
 
-    assign ld_i_valid           = RR_valid && (EXE_in_fu_sel == 3'd6);
-    assign st_i_valid           = RR_valid && (EXE_in_fu_sel == 3'd7);
+    assign ld_i_valid           = RR_valid && (EXE_in_fu_sel == 3'd6) && (EXE_in_op == `LOAD || EXE_in_op == `FLOAD);
+    assign st_i_valid           = RR_valid && (EXE_in_fu_sel == 3'd6) && (EXE_in_op == `S_TYPE || EXE_in_op == `FSTORE);
     assign lsu_i_rob_idx        = EXE_in_rob_idx;
     assign lsu_i_rs1_data       = EXE_in_rs1_data;
     assign lsu_i_rs2_data       = EXE_in_rs2_data;
@@ -327,10 +327,59 @@ module EXE_stage(
     end
 
     assign EX_ready[6]  = lsu_bypass;
-    assign EX_ready[7]  = 1'b1; // store always ready
     assign o_data[6]    = lsu_bypass ? lsu_o_data : lsu_data_rg;
     assign o_valid[6]   = lsu_bypass ? lsu_o_valid : 1'b1;
-    assign o_valid[7]   = 1'b0; // store has no output
+    // =======================================================
+    //                        CSR[7]       
+    // =======================================================
+    data_t csr_o_data;
+    data_t csr_data_rg;
+    logic csr_o_valid;
+    logic csr_bypass;
+    logic jump;
+
+    CSR csr(
+        .clk            (clk),
+        .rst            (rst),
+        .funct3         (EXE_in_f3),
+        .uimm           (EXE_in_inst[19:15]),
+        .imm            (EXE_in_imm),
+        .rs1_data       (EXE_in_rs1_data),
+        .WDT_interrupt  (1'b0),
+        .DMA_interrupt  (1'b0),
+        // control
+        .commit_valid   (1'b0),
+        .csr_i_valid    (RR_valid && EXE_in_fu_sel == 3'd7),
+        .csr_i_rob_idx  (EXE_in_rob_idx),
+        .csr_i_rd       (EXE_in_rd),
+        .csr_o_valid    (csr_o_valid),
+        .csr_o_rob_idx  (csr_o_data.rob_idx),
+        .csr_o_rd       (csr_o_data.rd),
+        .csr_o_data     (csr_o_data.data)
+    );
+
+    always @(posedge clk) begin
+        if (rst) begin      
+            csr_data_rg         <= '0;     
+            csr_bypass          <= 1'b1;
+        end   
+        else begin      
+            if (csr_bypass) begin         
+                if (!out_sel[7] && csr_o_valid) begin
+                    csr_data_rg     <= csr_o_data;      
+                    csr_bypass      <= 1'b0;      
+                end 
+            end 
+            else begin         
+                csr_bypass  <= out_sel[7];        
+            end
+        end
+    end
+
+    assign EX_ready[7]  = csr_bypass;
+    assign o_data[7]    = csr_bypass ? csr_o_data : csr_data_rg;
+    assign o_valid[7]   = csr_bypass ? csr_o_valid : 1'b1;
+
     // =======================================================
     //                      OUTPUT MUX           
     // =======================================================
@@ -361,6 +410,13 @@ module EXE_stage(
                 EX_o_valid      = o_valid[1];
                 EX_o_rob_idx    = o_data[1].rob_idx;
                 EX_o_rd         = o_data[1].rd;
+            end
+            o_valid[7]: begin
+                out_sel         = 8'b1000_0000;
+                EX_o_data       = o_data[7].data;
+                EX_o_valid      = o_valid[7];
+                EX_o_rob_idx    = o_data[7].rob_idx;
+                EX_o_rd         = o_data[7].rd;
             end
             o_valid[0]: begin
                 out_sel         = 8'b0000_0001;
