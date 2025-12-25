@@ -8,6 +8,9 @@ riscv_dv_dir := ./tools/riscv-dv
 CUSTOM_TARGET_DIR := ./sim/custom_target
 COV_NAME ?= coverage
 CM_DIR := ./coverage
+BOOT_ADDR ?= 8192
+UVM_ADDR ?= 65536
+
 FSDB_DEF :=
 ifeq ($(FSDB),1)
 FSDB_DEF := +FSDB
@@ -41,6 +44,7 @@ rtl0: | $(bld_dir)
 	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog0$(FSDB_DEF) \
+	+define+RESET_ADDR=$(BOOT_ADDR) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog0 \
 	+rdcycle=1 \
 	+notimingcheck; \

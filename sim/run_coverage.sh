@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TOTAL_LOOPS=30
+TOTAL_LOOPS=300
 # 建立存放 coverage 的目錄
 mkdir -p ../build/coverage
 

@@ -20,7 +20,7 @@
       permission: rw            # Read-Write (資料)
   
   gen_opts: >
-    +instr_cnt=4000
+    +instr_cnt=5000
     +num_of_sub_programs=40
     +uvm_set_type_override=riscv_instr_gen_config,riscv_instr_gen_config_ext
     +directed_instr_0=riscv_hazard_instr_stream,5

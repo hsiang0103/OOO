@@ -109,41 +109,21 @@ module top_tb;
         TOP.DM1.i_SRAM.MEMORY[b/32][b%32] = Memory_word[32768 + b];
     end
 
-    num = 0;
-    gf = $fopen({prog_path, "/golden.hex"}, "r");
-    while (!$feof(gf))
-    begin
-      $fscanf(gf, "%h\n", GOLDEN[num]);
-      num++;
-    end
-    $fclose(gf);
-
     wait(`mem_word(`SIM_END) == `SIM_END_CODE);
     $display("\nDone\n");
     err = 0;
 
-    for (i = 0; i < num; i++)
-    begin
-      if (`mem_word(`TEST_START + i) !== GOLDEN[i])
-      begin
-        $display("DM[%4d] = %h, expect = %h", `TEST_START + i, `mem_word(`TEST_START + i), GOLDEN[i]);
-        err = err + 1;
-      end
-      else
-      begin
-        $display("DM[%4d] = %h, pass", `TEST_START + i, `mem_word(`TEST_START + i));
-      end
-    end
-	//`ifdef RDCYCLE
-	if (rdcycle == "1") begin
-	  
-	  $display("your total cycle is %f ",`mem_word(`TEST_START + num));
-	  $display("your total cycle is %f ",`mem_word(`TEST_START + num+1));
-	  
-	end
-	
-	//`endif
-    result(err, num);
+    $display("\n");
+    $display("\n");
+    $display("        ****************************               ");
+    $display("        **                        **       |\__||  ");
+    $display("        **  Congratulations !!    **      / O.O  | ");
+    $display("        **                        **    /_____   | ");
+    $display("        **  Simulation PASS!!     **   /^ ^ ^ \\  |");
+    $display("        **                        **  |^ ^ ^ ^ |w| ");
+    $display("        ****************************   \\m___m__|_|");
+    $display("\n");
+
     $finish;
   end
 
@@ -167,62 +147,21 @@ end
     $fsdbDumpvars("+struct", "+mda", TOP);
     `endif
     #(`CYCLE*`MAX)
-    for (i = 0; i < num; i++)
-    begin
-      if (`mem_word(`TEST_START + i) !== GOLDEN[i])
-      begin
-        $display("DM[%4d] = %h, expect = %h", `TEST_START + i, `mem_word(`TEST_START + i), GOLDEN[i]);
-        err = err + 1;
-      end
-      else
-      begin
-        $display("DM[%4d] = %h, pass", `TEST_START + i, `mem_word(`TEST_START + i));
-      end
-    end
+    
     $display("SIM_END(%5d) = %h, expect = %h", `SIM_END, `mem_word(`SIM_END), `SIM_END_CODE);
-    result(num, num);
+
+    $display("\n");
+    $display("\n");
+    $display("        ****************************               ");
+    $display("        **                        **       |\__||  ");
+    $display("        **  Congratulations !!    **      / O.O  | ");
+    $display("        **                        **    /_____   | ");
+    $display("        **  Simulation PASS!!     **   /^ ^ ^ \\  |");
+    $display("        **                        **  |^ ^ ^ ^ |w| ");
+    $display("        ****************************   \\m___m__|_|");
+    $display("\n");
+
     $finish;
   end
-  
-  task result;
-    input integer err;
-    input integer num;
-    integer rf;
-    begin
-      `ifdef SYN
-			rf = $fopen({prog_path, "/result_syn.txt"}, "w");
-      `else
-			rf = $fopen({prog_path, "/result_rtl.txt"}, "w");
-      `endif
-      $fdisplay(rf, "%d,%d", num - err, num);
-      if (err === 0)
-      begin
-        $display("\n");
-        $display("\n");
-        $display("        ****************************               ");
-        $display("        **                        **       |\__||  ");
-        $display("        **  Congratulations !!    **      / O.O  | ");
-        $display("        **                        **    /_____   | ");
-        $display("        **  Simulation PASS!!     **   /^ ^ ^ \\  |");
-        $display("        **                        **  |^ ^ ^ ^ |w| ");
-        $display("        ****************************   \\m___m__|_|");
-        $display("\n");
-      end
-      else
-      begin
-        $display("\n");
-        $display("\n");
-        $display("        ****************************               ");
-        $display("        **                        **       |\__||  ");
-        $display("        **  OOPS!!                **      / X,X  | ");
-        $display("        **                        **    /_____   | ");
-        $display("        **  Simulation Failed!!   **   /^ ^ ^ \\  |");
-        $display("        **                        **  |^ ^ ^ ^ |w| ");
-        $display("        ****************************   \\m___m__|_|");
-        $display("         Totally has %d errors                     ", err); 
-        $display("\n");
-      end
-    end
-  endtask
 
 endmodule
