@@ -1,5 +1,5 @@
 // program start address
-`define RESET_ADDR 32'h0000_2000
+`define RESET_ADDR 32'h0001_0000
 
 // Issue Queue
 `define IQ_LEN      8

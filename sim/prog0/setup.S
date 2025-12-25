@@ -80,6 +80,7 @@ write_test_pattern:
   jal fill_block
 
 SystemInit:
+  jal boot
   jal main
 
 SystemExit:

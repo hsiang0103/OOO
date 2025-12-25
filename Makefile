@@ -38,7 +38,7 @@ rtl0: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog0/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64  \
+	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog0$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog0 \
@@ -55,7 +55,7 @@ rtl1: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog1/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64  \
+	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog1$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog1 \
@@ -69,7 +69,7 @@ rtl2: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog2/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64  \
+	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog2$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog2 \
@@ -83,7 +83,7 @@ rtl3: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog3/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64  \
+	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog3$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog3 \
@@ -97,7 +97,7 @@ rtl4: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog4/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64  \
+	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog4$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog4 \
@@ -111,7 +111,7 @@ rtl5: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog5/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64  \
+	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog5$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog5 \
@@ -125,7 +125,7 @@ rtl6: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog6/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64  \
+	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog3$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog6 \
@@ -139,7 +139,7 @@ rtl_gen: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog_gen/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64  \
+	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_uvm.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog_gen$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog_gen \
@@ -171,7 +171,7 @@ syn0: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog0/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64 -diag=sdf:verbose \
+	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64 -diag=sdf:verbose \
 	+incdir+$(root_dir)/$(syn_dir)+$(root_dir)/$(src_dir)+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+SYN+prog0$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog0 \
@@ -184,7 +184,7 @@ syn1: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog1/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64 -diag=sdf:verbose \
+	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64 -diag=sdf:verbose \
 	+incdir+$(root_dir)/$(syn_dir)+$(root_dir)/$(src_dir)+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+SYN+prog1$(FSDB_DEF) \
 	+no_notifier \
@@ -197,7 +197,7 @@ syn2: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog2/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64 -diag=sdf:verbose \
+	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64 -diag=sdf:verbose \
 	+incdir+$(root_dir)/$(syn_dir)+$(root_dir)/$(src_dir)+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+SYN+prog2$(FSDB_DEF) \
 	+no_notifier \
@@ -210,7 +210,7 @@ syn3: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog3/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64 -diag=sdf:verbose \
+	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64 -diag=sdf:verbose \
 	+incdir+$(root_dir)/$(syn_dir)+$(root_dir)/$(src_dir)+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+SYN+prog3$(FSDB_DEF) \
 	+no_notifier \
@@ -223,7 +223,7 @@ syn4: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog4/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64 -diag=sdf:verbose \
+	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64 -diag=sdf:verbose \
 	+incdir+$(root_dir)/$(syn_dir)+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+SYN+prog4$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog4
@@ -235,7 +235,7 @@ syn5: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog5/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64 -diag=sdf:verbose \
+	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64 -diag=sdf:verbose \
 	+incdir+$(root_dir)/$(syn_dir)+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+SYN+prog5$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog5
@@ -247,7 +247,7 @@ syn6: | $(bld_dir)
 	fi; \
 	make -C $(sim_dir)/prog6/; \
 	cd $(bld_dir); \
-	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb.sv -debug_access+all -full64 -diag=sdf:verbose \
+	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64 -diag=sdf:verbose \
 	+incdir+$(root_dir)/$(syn_dir)+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+SYN+prog6$(FSDB_DEF) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog6

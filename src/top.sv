@@ -1,663 +1,514 @@
-//////////////////////////////////////////////////////////////////////
-//          ██╗       ██████╗   ██╗  ██╗    ██████╗            		//
-//          ██║       ██╔══█║   ██║  ██║    ██╔══█║            		//
-//          ██║       ██████║   ███████║    ██████║            		//
-//          ██║       ██╔═══╝   ██╔══██║    ██╔═══╝            		//
-//          ███████╗  ██║  	    ██║  ██║    ██║  	           		//
-//          ╚══════╝  ╚═╝  	    ╚═╝  ╚═╝    ╚═╝  	           		//
-//                                                             		//
-// 	2025 Advanced VLSI System Design, Advisor: Lih-Yih, Chiou		//
-//                                                             		//
-//////////////////////////////////////////////////////////////////////
-//                                                             		//
-// 	Author: 		                           				  	    //
-//	Filename:		top.sv		                                    //
-//	Description:	top module for AVSD HW1                     	//
-// 	Date:			2025/XX/XX								   		//
-// 	Version:		1.0	    								   		//
-//////////////////////////////////////////////////////////////////////
-`include "../include/define.svh"
 `include "../include/AXI_define.svh"
 `include "../include/config.svh"
-`include "AXI/AXI.sv"
-`include "SRAM_wrapper.sv"
-`include "CPU_wrapper.sv"
+`include "../include/define.svh"
 
-module top(
-    input clk,
-    input rst
+`include "CPU_wrapper.sv"
+`include "DMA_wrapper.sv"
+`include "ROM_wrapper.sv"
+`include "SRAM_wrapper.sv"
+`include "DRAM_wrapper.sv"
+`include "WDT_wrapper.sv"
+
+`include "AXI/AXI.sv"
+
+module top (
+    input  logic        clk,
+    input  logic        rst,
+    input  logic        clk2,
+    input  logic        rst2,
+
+    // --------------------------------------------
+    //              Connect with ROM               
+    // --------------------------------------------
+    input  logic [31:0] ROM_out,
+    output logic        ROM_read,
+    output logic        ROM_enable,
+    output logic [11:0] ROM_address,
+
+    // --------------------------------------------
+    //              Connect with DRAM              
+    // --------------------------------------------
+    input  logic [31:0] DRAM_Q,
+    input  logic        DRAM_valid,
+    output logic        DRAM_CSn,
+    output logic [3:0]  DRAM_WEn,
+    output logic        DRAM_RASn,
+    output logic        DRAM_CASn,
+    output logic [10:0] DRAM_A,
+    output logic [31:0] DRAM_D
 );
 
-    logic ACLK;
-    logic ARESETn;
+    // --------------------------------------------
+    //             AXI Master Interface            
+    // --------------------------------------------
+    // AR channel
+    logic [`AXI_ID_BITS  -1:0] ARID_M   [`MASTER_NUM];
+    logic [`AXI_DATA_BITS-1:0] ARADDR_M [`MASTER_NUM];
+    logic [`AXI_LEN_BITS -1:0] ARLEN_M  [`MASTER_NUM];
+    logic [`AXI_SIZE_BITS-1:0] ARSIZE_M [`MASTER_NUM];
+    logic [1:0]                ARBURST_M[`MASTER_NUM];
+    logic                      ARVALID_M[`MASTER_NUM];
+    logic                      ARREADY_M[`MASTER_NUM];
+    // R channel
+    logic [`AXI_ID_BITS  -1:0] RID_M    [`MASTER_NUM];
+    logic [`AXI_DATA_BITS-1:0] RDATA_M  [`MASTER_NUM];
+    logic [1:0]                RRESP_M  [`MASTER_NUM];
+    logic                      RLAST_M  [`MASTER_NUM];
+    logic                      RVALID_M [`MASTER_NUM];
+    logic                      RREADY_M [`MASTER_NUM];
+    // AW channel
+    logic [`AXI_ID_BITS  -1:0] AWID_M   [`MASTER_NUM];
+    logic [`AXI_ADDR_BITS-1:0] AWADDR_M [`MASTER_NUM];
+    logic [`AXI_LEN_BITS -1:0] AWLEN_M  [`MASTER_NUM];
+    logic [`AXI_SIZE_BITS-1:0] AWSIZE_M [`MASTER_NUM];
+    logic [1:0]                AWBURST_M[`MASTER_NUM];
+    logic                      AWVALID_M[`MASTER_NUM];
+    logic                      AWREADY_M[`MASTER_NUM];
+    // W channel
+    logic [`AXI_DATA_BITS-1:0] WDATA_M  [`MASTER_NUM];
+    logic [`AXI_STRB_BITS-1:0] WSTRB_M  [`MASTER_NUM];
+    logic                      WLAST_M  [`MASTER_NUM];
+    logic                      WVALID_M [`MASTER_NUM];
+    logic                      WREADY_M [`MASTER_NUM];
+    // B channel
+    logic [`AXI_ID_BITS  -1:0] BID_M    [`MASTER_NUM];
+    logic [1:0]                BRESP_M  [`MASTER_NUM];
+    logic                      BVALID_M [`MASTER_NUM];
+    logic                      BREADY_M [`MASTER_NUM];
 
-    assign ACLK     = clk;
-    assign ARESETn  = ~rst;
+    // --------------------------------------------
+    //             AXI Slave Interfaces            
+    // --------------------------------------------
+    // AR channel
+    logic [`AXI_IDS_BITS -1:0] ARID_S   [`SLAVE_NUM];
+    logic [`AXI_DATA_BITS-1:0] ARADDR_S [`SLAVE_NUM];
+    logic [`AXI_LEN_BITS -1:0] ARLEN_S  [`SLAVE_NUM];
+    logic [`AXI_SIZE_BITS-1:0] ARSIZE_S [`SLAVE_NUM];
+    logic [1:0]                ARBURST_S[`SLAVE_NUM];
+    logic                      ARVALID_S[`SLAVE_NUM];
+    logic                      ARREADY_S[`SLAVE_NUM];
+    // R channel
+    logic [`AXI_IDS_BITS -1:0] RID_S    [`SLAVE_NUM];
+    logic [`AXI_DATA_BITS-1:0] RDATA_S  [`SLAVE_NUM];
+    logic [1:0]                RRESP_S  [`SLAVE_NUM];
+    logic                      RLAST_S  [`SLAVE_NUM];
+    logic                      RVALID_S [`SLAVE_NUM];
+    logic                      RREADY_S [`SLAVE_NUM];
+    // AW channel
+    logic [`AXI_IDS_BITS -1:0] AWID_S   [`SLAVE_NUM];
+    logic [`AXI_ADDR_BITS-1:0] AWADDR_S [`SLAVE_NUM];
+    logic [`AXI_LEN_BITS -1:0] AWLEN_S  [`SLAVE_NUM];
+    logic [`AXI_SIZE_BITS-1:0] AWSIZE_S [`SLAVE_NUM];
+    logic [1:0]                AWBURST_S[`SLAVE_NUM];
+    logic                      AWVALID_S[`SLAVE_NUM];
+    logic                      AWREADY_S[`SLAVE_NUM];
+    // W channel
+    logic [`AXI_DATA_BITS-1:0] WDATA_S  [`SLAVE_NUM];
+    logic [`AXI_STRB_BITS-1:0] WSTRB_S  [`SLAVE_NUM];
+    logic                      WLAST_S  [`SLAVE_NUM];
+    logic                      WVALID_S [`SLAVE_NUM];
+    logic                      WREADY_S [`SLAVE_NUM];
+    // B channel
+    logic [`AXI_IDS_BITS -1:0] BID_S    [`SLAVE_NUM];
+    logic [1:0]                BRESP_S  [`SLAVE_NUM];
+    logic                      BVALID_S [`SLAVE_NUM];
+    logic                      BREADY_S [`SLAVE_NUM];
 
-    /*
-    // ---------------
-    //     Master1   
-    // ---------------
+    // --------------------------------------------
+    //               External Signals              
+    // --------------------------------------------
+    logic                      DMA_interrupt;
+    logic                      WDT_interrupt;
 
-    // AXI Master1 Write Address Channel (DM)
-    logic [`AXI_ID_BITS-1:0]        AWID_M1;
-    logic [`AXI_ADDR_BITS-1:0]      AWADDR_M1;
-    logic [`AXI_LEN_BITS-1:0]       AWLEN_M1;
-    logic [`AXI_SIZE_BITS-1:0]      AWSIZE_M1;
-    logic [1:0]                     AWBURST_M1;
-    logic                           AWVALID_M1;
-    logic                           AWREADY_M1;
+    // --------------------------------------------
+    //                    System                   
+    // --------------------------------------------
+	
+	assign AWID_M[0] = 4'b0;
+    assign AWADDR_M[0] = 32'b0;
+    assign AWLEN_M[0] = 4'b0;
+    assign AWSIZE_M[0] = 3'b0;
+    assign AWBURST_M[0] = 2'b0;
+    assign AWVALID_M[0] = 1'b0;
+    assign WDATA_M[0] = 32'b0;
+    assign WSTRB_M[0] = 4'b0;
+    assign WLAST_M[0] = 1'b0;
+    assign WVALID_M[0] = 1'b0;
+    assign BREADY_M[0] = 1'b0;
+
+    CPU_wrapper CPU1 (
+        .clk,
+        .rstn            (~rst         ),
+
+        .DMA_interrupt_i (DMA_interrupt),
+        .WDT_interrupt_i (WDT_interrupt),
+
+        .ARID_M0         (ARID_M   [0]),
+        .ARADDR_M0       (ARADDR_M [0]),
+        .ARLEN_M0        (ARLEN_M  [0]),
+        .ARSIZE_M0       (ARSIZE_M [0]),
+        .ARBURST_M0      (ARBURST_M[0]),
+        .ARVALID_M0      (ARVALID_M[0]),
+        .ARREADY_M0      (ARREADY_M[0]),
+        .RID_M0          (RID_M    [0]),
+        .RDATA_M0        (RDATA_M  [0]),
+        .RRESP_M0        (RRESP_M  [0]),
+        .RLAST_M0        (RLAST_M  [0]),
+        .RVALID_M0       (RVALID_M [0]),
+        .RREADY_M0       (RREADY_M [0]),
+
+        .ARID_M1         (ARID_M   [1]),
+        .ARADDR_M1       (ARADDR_M [1]),
+        .ARLEN_M1        (ARLEN_M  [1]),
+        .ARSIZE_M1       (ARSIZE_M [1]),
+        .ARBURST_M1      (ARBURST_M[1]),
+        .ARVALID_M1      (ARVALID_M[1]),
+        .ARREADY_M1      (ARREADY_M[1]),
+        .RID_M1          (RID_M    [1]),
+        .RDATA_M1        (RDATA_M  [1]),
+        .RRESP_M1        (RRESP_M  [1]),
+        .RLAST_M1        (RLAST_M  [1]),
+        .RVALID_M1       (RVALID_M [1]),
+        .RREADY_M1       (RREADY_M [1]),
+        .AWID_M1         (AWID_M   [1]),
+        .AWADDR_M1       (AWADDR_M [1]),
+        .AWLEN_M1        (AWLEN_M  [1]),
+        .AWSIZE_M1       (AWSIZE_M [1]),
+        .AWBURST_M1      (AWBURST_M[1]),
+        .AWVALID_M1      (AWVALID_M[1]),
+        .AWREADY_M1      (AWREADY_M[1]),
+        .WDATA_M1        (WDATA_M  [1]),
+        .WSTRB_M1        (WSTRB_M  [1]),
+        .WLAST_M1        (WLAST_M  [1]),
+        .WVALID_M1       (WVALID_M [1]),
+        .WREADY_M1       (WREADY_M [1]),
+        .BID_M1          (BID_M    [1]),
+        .BRESP_M1        (BRESP_M  [1]),
+        .BVALID_M1       (BVALID_M [1]),
+        .BREADY_M1       (BREADY_M [1])
+    );
+
+    DMA_wrapper DMA1 (
+        .clk,
+        .rstn            (~rst         ),
+        .interrupt_o     (DMA_interrupt),
+
+        .ARID_M          (ARID_M   [2]),
+        .ARADDR_M        (ARADDR_M [2]),
+        .ARLEN_M         (ARLEN_M  [2]),
+        .ARSIZE_M        (ARSIZE_M [2]),
+        .ARBURST_M       (ARBURST_M[2]),
+        .ARVALID_M       (ARVALID_M[2]),
+        .ARREADY_M       (ARREADY_M[2]),
+        .RID_M           (RID_M    [2]),
+        .RDATA_M         (RDATA_M  [2]),
+        .RRESP_M         (RRESP_M  [2]),
+        .RLAST_M         (RLAST_M  [2]),
+        .RVALID_M        (RVALID_M [2]),
+        .RREADY_M        (RREADY_M [2]),
+        .AWID_M          (AWID_M   [2]),
+        .AWADDR_M        (AWADDR_M [2]),
+        .AWLEN_M         (AWLEN_M  [2]),
+        .AWSIZE_M        (AWSIZE_M [2]),
+        .AWBURST_M       (AWBURST_M[2]),
+        .AWVALID_M       (AWVALID_M[2]),
+        .AWREADY_M       (AWREADY_M[2]),
+        .WDATA_M         (WDATA_M  [2]),
+        .WSTRB_M         (WSTRB_M  [2]),
+        .WLAST_M         (WLAST_M  [2]),
+        .WVALID_M        (WVALID_M [2]),
+        .WREADY_M        (WREADY_M [2]),
+        .BID_M           (BID_M    [2]),
+        .BRESP_M         (BRESP_M  [2]),
+        .BVALID_M        (BVALID_M [2]),
+        .BREADY_M        (BREADY_M [2]),
+
+        .ARID_S          (ARID_S   [3]),
+        .ARADDR_S        (ARADDR_S [3]),
+        .ARLEN_S         (ARLEN_S  [3]),
+        .ARSIZE_S        (ARSIZE_S [3]),
+        .ARBURST_S       (ARBURST_S[3]),
+        .ARVALID_S       (ARVALID_S[3]),
+        .ARREADY_S       (ARREADY_S[3]),
+        .RID_S           (RID_S    [3]),
+        .RDATA_S         (RDATA_S  [3]),
+        .RRESP_S         (RRESP_S  [3]),
+        .RLAST_S         (RLAST_S  [3]),
+        .RVALID_S        (RVALID_S [3]),
+        .RREADY_S        (RREADY_S [3]),
+        .AWID_S          (AWID_S   [3]),
+        .AWADDR_S        (AWADDR_S [3]),
+        .AWLEN_S         (AWLEN_S  [3]),
+        .AWSIZE_S        (AWSIZE_S [3]),
+        .AWBURST_S       (AWBURST_S[3]),
+        .AWVALID_S       (AWVALID_S[3]),
+        .AWREADY_S       (AWREADY_S[3]),
+        .WDATA_S         (WDATA_S  [3]),
+        .WSTRB_S         (WSTRB_S  [3]),
+        .WLAST_S         (WLAST_S  [3]),
+        .WVALID_S        (WVALID_S [3]),
+        .WREADY_S        (WREADY_S [3]),
+        .BID_S           (BID_S    [3]),
+        .BRESP_S         (BRESP_S  [3]),
+        .BVALID_S        (BVALID_S [3]),
+        .BREADY_S        (BREADY_S [3])
+    );
+
+    AXI AXI1 (
+        .clk             (clk      ),
+        .rstn            (~rst     ),
+
+        .ARID_M          (ARID_M   ),
+        .ARADDR_M        (ARADDR_M ),
+        .ARLEN_M         (ARLEN_M  ),
+        .ARSIZE_M        (ARSIZE_M ),
+        .ARBURST_M       (ARBURST_M),
+        .ARVALID_M       (ARVALID_M),
+        .ARREADY_M       (ARREADY_M),
+        .RID_M           (RID_M    ),
+        .RDATA_M         (RDATA_M  ),
+        .RRESP_M         (RRESP_M  ),
+        .RLAST_M         (RLAST_M  ),
+        .RVALID_M        (RVALID_M ),
+        .RREADY_M        (RREADY_M ),
+        .AWID_M          (AWID_M   ),
+        .AWADDR_M        (AWADDR_M ),
+        .AWLEN_M         (AWLEN_M  ),
+        .AWSIZE_M        (AWSIZE_M ),
+        .AWBURST_M       (AWBURST_M),
+        .AWVALID_M       (AWVALID_M),
+        .AWREADY_M       (AWREADY_M),
+        .WDATA_M         (WDATA_M  ),
+        .WSTRB_M         (WSTRB_M  ),
+        .WLAST_M         (WLAST_M  ),
+        .WVALID_M        (WVALID_M ),
+        .WREADY_M        (WREADY_M ),
+        .BID_M           (BID_M    ),
+        .BRESP_M         (BRESP_M  ),
+        .BVALID_M        (BVALID_M ),
+        .BREADY_M        (BREADY_M ),
+
+        .ARID_S          (ARID_S   ),
+        .ARADDR_S        (ARADDR_S ),
+        .ARLEN_S         (ARLEN_S  ),
+        .ARSIZE_S        (ARSIZE_S ),
+        .ARBURST_S       (ARBURST_S),
+        .ARVALID_S       (ARVALID_S),
+        .ARREADY_S       (ARREADY_S),
+        .RID_S           (RID_S    ),
+        .RDATA_S         (RDATA_S  ),
+        .RRESP_S         (RRESP_S  ),
+        .RLAST_S         (RLAST_S  ),
+        .RVALID_S        (RVALID_S ),
+        .RREADY_S        (RREADY_S ),
+        .AWID_S          (AWID_S   ),
+        .AWADDR_S        (AWADDR_S ),
+        .AWLEN_S         (AWLEN_S  ),
+        .AWSIZE_S        (AWSIZE_S ),
+        .AWBURST_S       (AWBURST_S),
+        .AWVALID_S       (AWVALID_S),
+        .AWREADY_S       (AWREADY_S),
+        .WDATA_S         (WDATA_S  ),
+        .WSTRB_S         (WSTRB_S  ),
+        .WLAST_S         (WLAST_S  ),
+        .WVALID_S        (WVALID_S ),
+        .WREADY_S        (WREADY_S ),
+        .BID_S           (BID_S    ),
+        .BRESP_S         (BRESP_S  ),
+        .BVALID_S        (BVALID_S ),
+        .BREADY_S        (BREADY_S )
+    );
+
+    ROM_wrapper ROM1 (
+        .clk,
+        .rstn            (~rst        ),
         
-    // AXI Master1 Write Data Channel (DM)
-    logic [`AXI_DATA_BITS-1:0]      WDATA_M1;
-    logic [`AXI_STRB_BITS-1:0]      WSTRB_M1;
-    logic                           WLAST_M1;
-    logic                           WVALID_M1;
-    logic                           WREADY_M1;
-        
-    // AXI Master1 Write Response Channel (DM)
-    logic [`AXI_ID_BITS-1:0]        BID_M1;
-    logic [1:0]                     BRESP_M1;
-    logic                           BVALID_M1;
-    logic                           BREADY_M1;
+        .DO              (ROM_out     ),
+        .OE              (ROM_read    ),
+        .CS              (ROM_enable  ),
+        .A               (ROM_address ),
 
-    // AXI Master1 Read Address Channel (DM)
-    logic [`AXI_ID_BITS-1:0]        ARID_M1;
-    logic [`AXI_ADDR_BITS-1:0]      ARADDR_M1;
-    logic [`AXI_LEN_BITS-1:0]       ARLEN_M1;
-    logic [`AXI_SIZE_BITS-1:0]      ARSIZE_M1;
-    logic [1:0]                     ARBURST_M1;
-    logic                           ARVALID_M1;
-    logic                           ARREADY_M1;
-        
-    // AXI Master1 Read Data Channel (DM)
-    logic [`AXI_ID_BITS-1:0]        RID_M1;
-    logic [`AXI_DATA_BITS-1:0]      RDATA_M1;
-    logic [1:0]                     RRESP_M1;
-    logic                           RLAST_M1;
-    logic                           RVALID_M1;
-    logic                           RREADY_M1;
-
-    // ---------------
-    //     Master0     
-    // ---------------
-
-    // AXI Master0 Read Address Channel (IM)
-    logic [`AXI_ID_BITS-1:0]        ARID_M0;
-    logic [`AXI_ADDR_BITS-1:0]      ARADDR_M0;
-    logic [`AXI_LEN_BITS-1:0]       ARLEN_M0;
-    logic [`AXI_SIZE_BITS-1:0]      ARSIZE_M0;
-    logic [1:0]                     ARBURST_M0;
-    logic                           ARVALID_M0;
-    logic                           ARREADY_M0;
-        
-    // AXI Master0 Read Data Channel (IM)
-    logic [`AXI_ID_BITS-1:0]        RID_M0;
-    logic [`AXI_DATA_BITS-1:0]      RDATA_M0;
-    logic [1:0]                     RRESP_M0;
-    logic                           RLAST_M0;
-    logic                           RVALID_M0;
-    logic                           RREADY_M0;
-
-    CPU_wrapper CPU1(
-        .ACLK       	(ACLK        ),
-        .ARESETn    	(ARESETn     ),
-        // AXI Master1 Write Address Channel (DM)
-        .AWID_M1    	(AWID_M1     ),
-        .AWADDR_M1  	(AWADDR_M1   ),
-        .AWLEN_M1   	(AWLEN_M1    ),
-        .AWSIZE_M1  	(AWSIZE_M1   ),
-        .AWBURST_M1 	(AWBURST_M1  ),
-        .AWVALID_M1 	(AWVALID_M1  ),
-        .AWREADY_M1 	(AWREADY_M1  ),
-        // AXI Master1 Write Data Channel (DM)
-        .WDATA_M1   	(WDATA_M1    ),
-        .WSTRB_M1   	(WSTRB_M1    ),
-        .WLAST_M1   	(WLAST_M1    ),
-        .WVALID_M1  	(WVALID_M1   ),
-        .WREADY_M1  	(WREADY_M1   ),
-        // AXI Master1 Write Response Channel (DM)
-        .BID_M1     	(BID_M1      ),
-        .BRESP_M1   	(BRESP_M1    ),
-        .BVALID_M1  	(BVALID_M1   ),
-        .BREADY_M1  	(BREADY_M1   ),
-        // AXI Master1 Read Address Channel (DM)
-        .ARID_M1    	(ARID_M1     ),
-        .ARADDR_M1  	(ARADDR_M1   ),
-        .ARLEN_M1   	(ARLEN_M1    ),
-        .ARSIZE_M1  	(ARSIZE_M1   ),
-        .ARBURST_M1 	(ARBURST_M1  ),
-        .ARVALID_M1 	(ARVALID_M1  ),
-        .ARREADY_M1 	(ARREADY_M1  ),
-        // AXI Master1 Read Data Channel (DM)
-        .RID_M1     	(RID_M1      ),
-        .RDATA_M1   	(RDATA_M1    ),
-        .RRESP_M1   	(RRESP_M1    ),
-        .RLAST_M1   	(RLAST_M1    ),
-        .RVALID_M1  	(RVALID_M1   ),
-        .RREADY_M1  	(RREADY_M1   ),
-        // AXI Master0 Read Address Channel (IM)
-        .ARID_M0    	(ARID_M0     ),
-        .ARADDR_M0  	(ARADDR_M0   ),
-        .ARLEN_M0   	(ARLEN_M0    ),
-        .ARSIZE_M0  	(ARSIZE_M0   ),
-        .ARBURST_M0 	(ARBURST_M0  ),
-        .ARVALID_M0 	(ARVALID_M0  ),
-        .ARREADY_M0 	(ARREADY_M0  ),
-        // AXI Master0 Read Data Channel (IM)
-        .RID_M0     	(RID_M0      ),
-        .RDATA_M0   	(RDATA_M0    ),
-        .RRESP_M0   	(RRESP_M0    ),
-        .RLAST_M0   	(RLAST_M0    ),
-        .RVALID_M0  	(RVALID_M0   ),
-        .RREADY_M0  	(RREADY_M0   )
-    );
-    
-    SRAM_wrapper IM1(
-        .ACLK       	(ACLK        ),
-        .ARESETn    	(ARESETn     ),
-        // AW Channel
-        .AWID_S    	    ( '0          ),
-        .AWADDR_S    	( '0          ),
-        .AWLEN_S     	( '0          ),
-        .AWSIZE_S    	( '0          ),
-        .AWBURST_S   	( '0          ),
-        .AWVALID_S   	( '0          ),
-        .AWREADY_S   	(             ),
-        // W Channel
-        .WDATA_S     	( '0          ),
-        .WSTRB_S     	( '0          ),
-        .WLAST_S     	( '0          ),
-        .WVALID_S    	( '0          ),
-        .WREADY_S    	(             ),
-        // B Channel
-        .BID_S       	(             ),
-        .BRESP_S     	(             ),
-        .BVALID_S    	(             ),
-        .BREADY_S    	( '0          ),
-        // AR Channel
-        .ARID_S      	(ARID_M0      ),
-        .ARADDR_S    	(ARADDR_M0    ),
-        .ARLEN_S     	(ARLEN_M0     ),
-        .ARSIZE_S    	(ARSIZE_M0    ),
-        .ARBURST_S   	(ARBURST_M0   ),
-        .ARVALID_S   	(ARVALID_M0   ),
-        .ARREADY_S   	(ARREADY_M0   ),
-        // R Channel
-        .RID_S       	(RID_M0       ),
-        .RDATA_S     	(RDATA_M0     ),
-        .RRESP_S     	(RRESP_M0     ),
-        .RLAST_S     	(RLAST_M0     ),
-        .RVALID_S    	(RVALID_M0    ),    
-        .RREADY_S    	(RREADY_M0    )
+        .ARID_S          (ARID_S   [0]),
+        .ARADDR_S        (ARADDR_S [0]),
+        .ARLEN_S         (ARLEN_S  [0]),
+        .ARSIZE_S        (ARSIZE_S [0]),
+        .ARBURST_S       (ARBURST_S[0]),
+        .ARVALID_S       (ARVALID_S[0]),
+        .ARREADY_S       (ARREADY_S[0]),
+        .RID_S           (RID_S    [0]),
+        .RDATA_S         (RDATA_S  [0]),
+        .RRESP_S         (RRESP_S  [0]),
+        .RLAST_S         (RLAST_S  [0]),
+        .RVALID_S        (RVALID_S [0]),
+        .RREADY_S        (RREADY_S [0]),
+        .AWID_S          (AWID_S   [0]),
+        .AWADDR_S        (AWADDR_S [0]),
+        .AWLEN_S         (AWLEN_S  [0]),
+        .AWSIZE_S        (AWSIZE_S [0]),
+        .AWBURST_S       (AWBURST_S[0]),
+        .AWVALID_S       (AWVALID_S[0]),
+        .AWREADY_S       (AWREADY_S[0]),
+        .WDATA_S         (WDATA_S  [0]),
+        .WSTRB_S         (WSTRB_S  [0]),
+        .WLAST_S         (WLAST_S  [0]),
+        .WVALID_S        (WVALID_S [0]),
+        .WREADY_S        (WREADY_S [0]),
+        .BID_S           (BID_S    [0]),
+        .BRESP_S         (BRESP_S  [0]),
+        .BVALID_S        (BVALID_S [0]),
+        .BREADY_S        (BREADY_S [0])
     );
 
-    
-    SRAM_wrapper DM1(
-        .ACLK       	(ACLK         ),
-        .ARESETn    	(ARESETn      ),
-        // AW Channel
-        .AWID_S    	    (AWID_M1      ),
-        .AWADDR_S    	(AWADDR_M1    ),
-        .AWLEN_S     	(AWLEN_M1     ),
-        .AWSIZE_S    	(AWSIZE_M1    ),
-        .AWBURST_S   	(AWBURST_M1   ),
-        .AWVALID_S   	(AWVALID_M1   ),
-        .AWREADY_S   	(AWREADY_M1   ),
-        // W Channel
-        .WDATA_S     	(WDATA_M1     ),
-        .WSTRB_S     	(WSTRB_M1     ),
-        .WLAST_S     	(WLAST_M1     ),
-        .WVALID_S    	(WVALID_M1    ),
-        .WREADY_S    	(WREADY_M1    ),
-        // B Channel
-        .BID_S       	(BID_M1       ),
-        .BRESP_S     	(BRESP_M1     ),
-        .BVALID_S    	(BVALID_M1    ),
-        .BREADY_S    	(BREADY_M1    ),
-        // AR Channel
-        .ARID_S      	(ARID_M1      ),
-        .ARADDR_S    	(ARADDR_M1    ),
-        .ARLEN_S     	(ARLEN_M1     ),
-        .ARSIZE_S    	(ARSIZE_M1    ),
-        .ARBURST_S   	(ARBURST_M1   ),
-        .ARVALID_S   	(ARVALID_M1   ),
-        .ARREADY_S   	(ARREADY_M1   ),
-        // R Channel
-        .RID_S       	(RID_M1       ),
-        .RDATA_S     	(RDATA_M1     ),
-        .RRESP_S     	(RRESP_M1     ),
-        .RLAST_S     	(RLAST_M1     ),
-        .RVALID_S    	(RVALID_M1    ),    
-        .RREADY_S    	(RREADY_M1    )
-    );
-    */
-
-    // --------------------------------------------
-    //       Write Address Channel - Master1       
-    // --------------------------------------------
-    logic [`AXI_ID_BITS  -1:0] awid_m1;
-    logic [`AXI_ADDR_BITS-1:0] awaddr_m1;
-    logic [`AXI_LEN_BITS -1:0] awlen_m1;
-    logic [`AXI_SIZE_BITS-1:0] awsize_m1;
-    logic [1:0]                awburst_m1;
-    logic                      awvalid_m1;
-    logic                      awready_m1;
-
-    // --------------------------------------------
-    //         Write Data Channel - Master1        
-    // --------------------------------------------
-    logic [`AXI_DATA_BITS-1:0] wdata_m1;
-    logic [`AXI_STRB_BITS-1:0] wstrb_m1;
-    logic                      wlast_m1;
-    logic                      wvalid_m1;
-    logic                      wready_m1;
-
-    // --------------------------------------------
-    //       Write Response Channel - Master1      
-    // --------------------------------------------
-    logic [`AXI_ID_BITS  -1:0] bid_m1;
-    logic [1:0]                bresp_m1;
-    logic                      bvalid_m1;
-    logic                      bready_m1;
-
-    // --------------------------------------------
-    //        Read Address Channel - Master0       
-    // --------------------------------------------
-    logic [`AXI_ID_BITS  -1:0] arid_m0;
-    logic [`AXI_DATA_BITS-1:0] araddr_m0;
-    logic [`AXI_LEN_BITS -1:0] arlen_m0;
-    logic [`AXI_SIZE_BITS-1:0] arsize_m0;
-    logic [1:0]                arburst_m0;
-    logic                      arvalid_m0;
-    logic                      arready_m0;
-
-    // --------------------------------------------
-    //          Read Data Channel - Master0        
-    // --------------------------------------------
-    logic [`AXI_ID_BITS  -1:0] rid_m0;
-    logic [`AXI_DATA_BITS-1:0] rdata_m0;
-    logic [1:0]                rresp_m0;
-    logic                      rlast_m0;
-    logic                      rvalid_m0;
-    logic                      rready_m0;
-
-    // --------------------------------------------
-    //        Read Address Channel - Master1       
-    // -------------------------------------------- 
-    logic [`AXI_ID_BITS  -1:0] arid_m1;
-    logic [`AXI_DATA_BITS-1:0] araddr_m1;
-    logic [`AXI_LEN_BITS -1:0] arlen_m1;
-    logic [`AXI_SIZE_BITS-1:0] arsize_m1;
-    logic [1:0]                arburst_m1;
-    logic                      arvalid_m1;
-    logic                      arready_m1;
-
-    // --------------------------------------------
-    //          Read Data Channel - Master1        
-    // --------------------------------------------
-    logic [`AXI_ID_BITS  -1:0] rid_m1;
-    logic [`AXI_DATA_BITS-1:0] rdata_m1;
-    logic [1:0]                rresp_m1;
-    logic                      rlast_m1;
-    logic                      rvalid_m1;
-    logic                      rready_m1;
-
-    // --------------------------------------------
-    //        Write Address Channel - Slave0       
-    // --------------------------------------------
-    logic [`AXI_IDS_BITS -1:0] awid_s0;
-    logic [`AXI_ADDR_BITS-1:0] awaddr_s0;
-    logic [`AXI_LEN_BITS -1:0] awlen_s0;
-    logic [`AXI_SIZE_BITS-1:0] awsize_s0;
-    logic [1:0]                awburst_s0;
-    logic                      awvalid_s0;
-    logic                      awready_s0;
-
-    // --------------------------------------------
-    //         Write Data Channel - Slave0         
-    // --------------------------------------------
-    logic [`AXI_DATA_BITS-1:0] wdata_s0;
-    logic [`AXI_STRB_BITS-1:0] wstrb_s0;
-    logic                      wlast_s0;
-    logic                      wvalid_s0;
-    logic                      wready_s0;
-
-    // --------------------------------------------
-    //       Write Response Channel - Slave0       
-    // --------------------------------------------
-    logic [`AXI_IDS_BITS -1:0] bid_s0;
-    logic [1:0]                bresp_s0;
-    logic                      bvalid_s0;
-    logic                      bready_s0;
-
-    // --------------------------------------------
-    //        Read Address Channel - Slave0        
-    // --------------------------------------------
-    logic [`AXI_IDS_BITS -1:0] arid_s0;
-    logic [`AXI_DATA_BITS-1:0] araddr_s0;
-    logic [`AXI_LEN_BITS -1:0] arlen_s0;
-    logic [`AXI_SIZE_BITS-1:0] arsize_s0;
-    logic [1:0]                arburst_s0;
-    logic                      arvalid_s0;
-    logic                      arready_s0;
-
-    // --------------------------------------------
-    //          Read Data Channel - Slave0         
-    // --------------------------------------------
-    logic [`AXI_IDS_BITS -1:0] rid_s0;
-    logic [`AXI_DATA_BITS-1:0] rdata_s0;
-    logic [1:0]                rresp_s0;
-    logic                      rlast_s0;
-    logic                      rvalid_s0;
-    logic                      rready_s0;
-
-    // --------------------------------------------
-    //        Write Address Channel - Slave1       
-    // --------------------------------------------
-    logic [`AXI_IDS_BITS -1:0] awid_s1;
-    logic [`AXI_ADDR_BITS-1:0] awaddr_s1;
-    logic [`AXI_LEN_BITS -1:0] awlen_s1;
-    logic [`AXI_SIZE_BITS-1:0] awsize_s1;
-    logic [1:0]                awburst_s1;
-    logic                      awvalid_s1;
-    logic                      awready_s1;
-
-    // --------------------------------------------
-    //         Write Data Channel - Slave1         
-    // --------------------------------------------
-    logic [`AXI_DATA_BITS-1:0] wdata_s1;
-    logic [`AXI_STRB_BITS-1:0] wstrb_s1;
-    logic                      wlast_s1;
-    logic                      wvalid_s1;
-    logic                      wready_s1;
-
-    // --------------------------------------------
-    //       Write Response Channel - Slave1       
-    // --------------------------------------------
-    logic [`AXI_IDS_BITS -1:0] bid_s1;
-    logic [1:0]                bresp_s1;
-    logic                      bvalid_s1;
-    logic                      bready_s1;
-
-    // --------------------------------------------
-    //        Read Address Channel - Slave1        
-    // --------------------------------------------
-    logic [`AXI_IDS_BITS -1:0] arid_s1;
-    logic [`AXI_DATA_BITS-1:0] araddr_s1;
-    logic [`AXI_LEN_BITS -1:0] arlen_s1;
-    logic [`AXI_SIZE_BITS-1:0] arsize_s1;
-    logic [1:0]                arburst_s1;
-    logic                      arvalid_s1;
-    logic                      arready_s1;
-
-    // --------------------------------------------
-    //          Read Data Channel - Slave1         
-    // --------------------------------------------
-    logic [`AXI_IDS_BITS -1:0] rid_s1;
-    logic [`AXI_DATA_BITS-1:0] rdata_s1;
-    logic [1:0]                rresp_s1;
-    logic                      rlast_s1;
-    logic                      rvalid_s1;
-    logic                      rready_s1;
-
-
-    CPU_wrapper CPU_wrapper(
-        .ACLK          (clk       ),
-        .ARESETn       (~rst      ),
-
-        .AWID_M1       (awid_m1   ),
-        .AWADDR_M1     (awaddr_m1 ),
-        .AWLEN_M1      (awlen_m1  ),
-        .AWSIZE_M1     (awsize_m1 ),
-        .AWBURST_M1    (awburst_m1),
-        .AWVALID_M1    (awvalid_m1),
-        .AWREADY_M1    (awready_m1),
-
-        .WDATA_M1      (wdata_m1  ),
-        .WSTRB_M1      (wstrb_m1  ),
-        .WLAST_M1      (wlast_m1  ),
-        .WVALID_M1     (wvalid_m1 ),
-        .WREADY_M1     (wready_m1 ),
-
-        .BID_M1        (bid_m1    ),
-        .BRESP_M1      (bresp_m1  ),
-        .BVALID_M1     (bvalid_m1 ),
-        .BREADY_M1     (bready_m1 ),
-
-        .ARID_M0       (arid_m0   ),
-        .ARADDR_M0     (araddr_m0 ),
-        .ARLEN_M0      (arlen_m0  ),
-        .ARSIZE_M0     (arsize_m0 ),
-        .ARBURST_M0    (arburst_m0),
-        .ARVALID_M0    (arvalid_m0),
-        .ARREADY_M0    (arready_m0),
-
-        .RID_M0        (rid_m0    ),
-        .RDATA_M0      (rdata_m0  ),
-        .RRESP_M0      (rresp_m0  ),
-        .RLAST_M0      (rlast_m0  ),
-        .RVALID_M0     (rvalid_m0 ),
-        .RREADY_M0     (rready_m0 ),
-
-        .ARID_M1       (arid_m1   ),
-        .ARADDR_M1     (araddr_m1 ),
-        .ARLEN_M1      (arlen_m1  ),
-        .ARSIZE_M1     (arsize_m1 ),
-        .ARBURST_M1    (arburst_m1),
-        .ARVALID_M1    (arvalid_m1),
-        .ARREADY_M1    (arready_m1),
-
-        .RID_M1        (rid_m1    ),
-        .RDATA_M1      (rdata_m1  ),
-        .RRESP_M1      (rresp_m1  ),
-        .RLAST_M1      (rlast_m1  ),
-        .RVALID_M1     (rvalid_m1 ),
-        .RREADY_M1     (rready_m1 )
+    SRAM_wrapper IM1 (
+        .ACLK            (clk         ),
+        .ARESETn         (~rst        ),
+        .ARID_S          (ARID_S   [1]),
+        .ARADDR_S        (ARADDR_S [1]),
+        .ARLEN_S         (ARLEN_S  [1]),
+        .ARSIZE_S        (ARSIZE_S [1]),
+        .ARBURST_S       (ARBURST_S[1]),
+        .ARVALID_S       (ARVALID_S[1]),
+        .ARREADY_S       (ARREADY_S[1]),
+        .RID_S           (RID_S    [1]),
+        .RDATA_S         (RDATA_S  [1]),
+        .RRESP_S         (RRESP_S  [1]),
+        .RLAST_S         (RLAST_S  [1]),
+        .RVALID_S        (RVALID_S [1]),
+        .RREADY_S        (RREADY_S [1]),
+        .AWID_S          (AWID_S   [1]),
+        .AWADDR_S        (AWADDR_S [1]),
+        .AWLEN_S         (AWLEN_S  [1]),
+        .AWSIZE_S        (AWSIZE_S [1]),
+        .AWBURST_S       (AWBURST_S[1]),
+        .AWVALID_S       (AWVALID_S[1]),
+        .AWREADY_S       (AWREADY_S[1]),
+        .WDATA_S         (WDATA_S  [1]),
+        .WSTRB_S         (WSTRB_S  [1]),
+        .WLAST_S         (WLAST_S  [1]),
+        .WVALID_S        (WVALID_S [1]),
+        .WREADY_S        (WREADY_S [1]),
+        .BID_S           (BID_S    [1]),
+        .BRESP_S         (BRESP_S  [1]),
+        .BVALID_S        (BVALID_S [1]),
+        .BREADY_S        (BREADY_S [1])
     );
 
-    AXI AXI(
-        .ACLK          (clk       ),
-        .ARESETn       (~rst      ),
+    SRAM_wrapper DM1 (
+        .ACLK            (clk         ),
+        .ARESETn         (~rst        ),
 
-        .AWID_M1       (awid_m1   ),
-        .AWADDR_M1     (awaddr_m1 ),
-        .AWLEN_M1      (awlen_m1  ),
-        .AWSIZE_M1     (awsize_m1 ),
-        .AWBURST_M1    (awburst_m1),
-        .AWVALID_M1    (awvalid_m1),
-        .AWREADY_M1    (awready_m1),
-
-        .WDATA_M1      (wdata_m1  ),
-        .WSTRB_M1      (wstrb_m1  ),
-        .WLAST_M1      (wlast_m1  ),
-        .WVALID_M1     (wvalid_m1 ),
-        .WREADY_M1     (wready_m1 ),
-
-        .BID_M1        (bid_m1    ),
-        .BRESP_M1      (bresp_m1  ),
-        .BVALID_M1     (bvalid_m1 ),
-        .BREADY_M1     (bready_m1 ),
-
-        .ARID_M0       (arid_m0   ),
-        .ARADDR_M0     (araddr_m0 ),
-        .ARLEN_M0      (arlen_m0  ),
-        .ARSIZE_M0     (arsize_m0 ),
-        .ARBURST_M0    (arburst_m0),
-        .ARVALID_M0    (arvalid_m0),
-        .ARREADY_M0    (arready_m0),
-
-        .RID_M0        (rid_m0    ),
-        .RDATA_M0      (rdata_m0  ),
-        .RRESP_M0      (rresp_m0  ),
-        .RLAST_M0      (rlast_m0  ),
-        .RVALID_M0     (rvalid_m0 ),
-        .RREADY_M0     (rready_m0 ),
-
-        .ARID_M1       (arid_m1   ),
-        .ARADDR_M1     (araddr_m1 ),
-        .ARLEN_M1      (arlen_m1  ),
-        .ARSIZE_M1     (arsize_m1 ),
-        .ARBURST_M1    (arburst_m1),
-        .ARVALID_M1    (arvalid_m1),
-        .ARREADY_M1    (arready_m1),
-
-        .RID_M1        (rid_m1    ),
-        .RDATA_M1      (rdata_m1  ),
-        .RRESP_M1      (rresp_m1  ),
-        .RLAST_M1      (rlast_m1  ),
-        .RVALID_M1     (rvalid_m1 ),
-        .RREADY_M1     (rready_m1 ),
-
-        .AWID_S0       (awid_s0   ),
-        .AWADDR_S0     (awaddr_s0 ),
-        .AWLEN_S0      (awlen_s0  ),
-        .AWSIZE_S0     (awsize_s0 ),
-        .AWBURST_S0    (awburst_s0),
-        .AWVALID_S0    (awvalid_s0),
-        .AWREADY_S0    (awready_s0),
-
-        .WDATA_S0      (wdata_s0  ),
-        .WSTRB_S0      (wstrb_s0  ),
-        .WLAST_S0      (wlast_s0  ),
-        .WVALID_S0     (wvalid_s0 ),
-        .WREADY_S0     (wready_s0 ),
-
-        .BID_S0        (bid_s0    ),
-        .BRESP_S0      (bresp_s0  ),
-        .BVALID_S0     (bvalid_s0 ),
-        .BREADY_S0     (bready_s0 ),
-
-        .AWID_S1       (awid_s1   ),
-        .AWADDR_S1     (awaddr_s1 ),
-        .AWLEN_S1      (awlen_s1  ),
-        .AWSIZE_S1     (awsize_s1 ),
-        .AWBURST_S1    (awburst_s1),
-        .AWVALID_S1    (awvalid_s1),
-        .AWREADY_S1    (awready_s1),
-
-        .WDATA_S1      (wdata_s1  ),
-        .WSTRB_S1      (wstrb_s1  ),
-        .WLAST_S1      (wlast_s1  ),
-        .WVALID_S1     (wvalid_s1 ),
-        .WREADY_S1     (wready_s1 ),
-
-        .BID_S1        (bid_s1    ),
-        .BRESP_S1      (bresp_s1  ),
-        .BVALID_S1     (bvalid_s1 ),
-        .BREADY_S1     (bready_s1 ),
-
-        .ARID_S0       (arid_s0   ),
-        .ARADDR_S0     (araddr_s0 ),
-        .ARLEN_S0      (arlen_s0  ),
-        .ARSIZE_S0     (arsize_s0 ),
-        .ARBURST_S0    (arburst_s0),
-        .ARVALID_S0    (arvalid_s0),
-        .ARREADY_S0    (arready_s0),
-
-        .RID_S0        (rid_s0    ),
-        .RDATA_S0      (rdata_s0  ),
-        .RRESP_S0      (rresp_s0  ),
-        .RLAST_S0      (rlast_s0  ),
-        .RVALID_S0     (rvalid_s0 ),
-        .RREADY_S0     (rready_s0 ),
-
-        .ARID_S1       (arid_s1   ),
-        .ARADDR_S1     (araddr_s1 ),
-        .ARLEN_S1      (arlen_s1  ),
-        .ARSIZE_S1     (arsize_s1 ),
-        .ARBURST_S1    (arburst_s1),
-        .ARVALID_S1    (arvalid_s1),
-        .ARREADY_S1    (arready_s1),
-
-        .RID_S1        (rid_s1    ),
-        .RDATA_S1      (rdata_s1  ),
-        .RRESP_S1      (rresp_s1  ),
-        .RLAST_S1      (rlast_s1  ),
-        .RVALID_S1     (rvalid_s1 ),
-        .RREADY_S1     (rready_s1 )
+        .ARID_S          (ARID_S   [2]),
+        .ARADDR_S        (ARADDR_S [2]),
+        .ARLEN_S         (ARLEN_S  [2]),
+        .ARSIZE_S        (ARSIZE_S [2]),
+        .ARBURST_S       (ARBURST_S[2]),
+        .ARVALID_S       (ARVALID_S[2]),
+        .ARREADY_S       (ARREADY_S[2]),
+        .RID_S           (RID_S    [2]),
+        .RDATA_S         (RDATA_S  [2]),
+        .RRESP_S         (RRESP_S  [2]),
+        .RLAST_S         (RLAST_S  [2]),
+        .RVALID_S        (RVALID_S [2]),
+        .RREADY_S        (RREADY_S [2]),
+        .AWID_S          (AWID_S   [2]),
+        .AWADDR_S        (AWADDR_S [2]),
+        .AWLEN_S         (AWLEN_S  [2]),
+        .AWSIZE_S        (AWSIZE_S [2]),
+        .AWBURST_S       (AWBURST_S[2]),
+        .AWVALID_S       (AWVALID_S[2]),
+        .AWREADY_S       (AWREADY_S[2]),
+        .WDATA_S         (WDATA_S  [2]),
+        .WSTRB_S         (WSTRB_S  [2]),
+        .WLAST_S         (WLAST_S  [2]),
+        .WVALID_S        (WVALID_S [2]),
+        .WREADY_S        (WREADY_S [2]),
+        .BID_S           (BID_S    [2]),
+        .BRESP_S         (BRESP_S  [2]),
+        .BVALID_S        (BVALID_S [2]),
+        .BREADY_S        (BREADY_S [2])
     );
 
-    SRAM_wrapper IM1(
+    WDT_wrapper WDT1(
+        .clk_m           (clk          ),
+        .rstn_m          (~rst         ),
+        .clk_s           (clk2         ),
+        .rstn_s          (~rst2        ),
+        .interrupt_o     (WDT_interrupt),
 
-        .ACLK          (clk       ),
-        .ARESETn       (~rst      ),
-
-        .AWID_S        (awid_s0   ),
-        .AWADDR_S      (awaddr_s0 ),
-        .AWLEN_S       (awlen_s0  ),
-        .AWSIZE_S      (awsize_s0 ),
-        .AWBURST_S     (awburst_s0),
-        .AWVALID_S     (awvalid_s0),
-        .AWREADY_S     (awready_s0),
-
-        .WDATA_S       (wdata_s0  ),
-        .WSTRB_S       (wstrb_s0  ),
-        .WLAST_S       (wlast_s0  ),
-        .WVALID_S      (wvalid_s0 ),
-        .WREADY_S      (wready_s0 ),
-
-        .BID_S         (bid_s0    ),
-        .BRESP_S       (bresp_s0  ),
-        .BVALID_S      (bvalid_s0 ),
-        .BREADY_S      (bready_s0 ),
-
-        .ARID_S        (arid_s0   ),
-        .ARADDR_S      (araddr_s0 ),
-        .ARLEN_S       (arlen_s0  ),
-        .ARSIZE_S      (arsize_s0 ),
-        .ARBURST_S     (arburst_s0),
-        .ARVALID_S     (arvalid_s0),
-        .ARREADY_S     (arready_s0),
-
-        .RID_S         (rid_s0    ),
-        .RDATA_S       (rdata_s0  ),
-        .RRESP_S       (rresp_s0  ),
-        .RLAST_S       (rlast_s0  ),
-        .RVALID_S      (rvalid_s0 ),
-        .RREADY_S      (rready_s0 )
-    );
-
-    SRAM_wrapper DM1(
-        .ACLK          (clk       ),
-        .ARESETn       (~rst      ),
-
-        .AWID_S        (awid_s1   ),
-        .AWADDR_S      (awaddr_s1 ),
-        .AWLEN_S       (awlen_s1  ),
-        .AWSIZE_S      (awsize_s1 ),
-        .AWBURST_S     (awburst_s1),
-        .AWVALID_S     (awvalid_s1),
-        .AWREADY_S     (awready_s1),
-
-        .WDATA_S       (wdata_s1  ),
-        .WSTRB_S       (wstrb_s1  ),
-        .WLAST_S       (wlast_s1  ),
-        .WVALID_S      (wvalid_s1 ),
-        .WREADY_S      (wready_s1 ),
-
-        .BID_S         (bid_s1    ),
-        .BRESP_S       (bresp_s1  ),
-        .BVALID_S      (bvalid_s1 ),
-        .BREADY_S      (bready_s1 ),
-
-        .ARID_S        (arid_s1   ),
-        .ARADDR_S      (araddr_s1 ),
-        .ARLEN_S       (arlen_s1  ),
-        .ARSIZE_S      (arsize_s1 ),
-        .ARBURST_S     (arburst_s1),
-        .ARVALID_S     (arvalid_s1),
-        .ARREADY_S     (arready_s1),
-
-        .RID_S         (rid_s1    ),
-        .RDATA_S       (rdata_s1  ),
-        .RRESP_S       (rresp_s1  ),
-        .RLAST_S       (rlast_s1  ),
-        .RVALID_S      (rvalid_s1 ),
-        .RREADY_S      (rready_s1 )
+        .ARID_S          (ARID_S   [4]),
+        .ARADDR_S        (ARADDR_S [4]),
+        .ARLEN_S         (ARLEN_S  [4]),
+        .ARSIZE_S        (ARSIZE_S [4]),
+        .ARBURST_S       (ARBURST_S[4]),
+        .ARVALID_S       (ARVALID_S[4]),
+        .ARREADY_S       (ARREADY_S[4]),
+        .RID_S           (RID_S    [4]),
+        .RDATA_S         (RDATA_S  [4]),
+        .RRESP_S         (RRESP_S  [4]),
+        .RLAST_S         (RLAST_S  [4]),
+        .RVALID_S        (RVALID_S [4]),
+        .RREADY_S        (RREADY_S [4]),
+        .AWID_S          (AWID_S   [4]),
+        .AWADDR_S        (AWADDR_S [4]),
+        .AWLEN_S         (AWLEN_S  [4]),
+        .AWSIZE_S        (AWSIZE_S [4]),
+        .AWBURST_S       (AWBURST_S[4]),
+        .AWVALID_S       (AWVALID_S[4]),
+        .AWREADY_S       (AWREADY_S[4]),
+        .WDATA_S         (WDATA_S  [4]),
+        .WSTRB_S         (WSTRB_S  [4]),
+        .WLAST_S         (WLAST_S  [4]),
+        .WVALID_S        (WVALID_S [4]),
+        .WREADY_S        (WREADY_S [4]),
+        .BID_S           (BID_S    [4]),
+        .BRESP_S         (BRESP_S  [4]),
+        .BVALID_S        (BVALID_S [4]),
+        .BREADY_S        (BREADY_S [4])
     );
 
 
+    DRAM_wrapper DRAM1(
+        .clk,
+        .rstn            (~rst),
 
+        .DRAM_Q,
+        .DRAM_valid,
+        .DRAM_CSn,
+        .DRAM_WEn,
+        .DRAM_RASn,
+        .DRAM_CASn,
+        .DRAM_A,
+        .DRAM_D,
+
+        .ARID_S          (ARID_S   [5]),
+        .ARADDR_S        (ARADDR_S [5]),
+        .ARLEN_S         (ARLEN_S  [5]),
+        .ARSIZE_S        (ARSIZE_S [5]),
+        .ARBURST_S       (ARBURST_S[5]),
+        .ARVALID_S       (ARVALID_S[5]),
+        .ARREADY_S       (ARREADY_S[5]),
+        .RID_S           (RID_S    [5]),
+        .RDATA_S         (RDATA_S  [5]),
+        .RRESP_S         (RRESP_S  [5]),
+        .RLAST_S         (RLAST_S  [5]),
+        .RVALID_S        (RVALID_S [5]),
+        .RREADY_S        (RREADY_S [5]),
+        .AWID_S          (AWID_S   [5]),
+        .AWADDR_S        (AWADDR_S [5]),
+        .AWLEN_S         (AWLEN_S  [5]),
+        .AWSIZE_S        (AWSIZE_S [5]),
+        .AWBURST_S       (AWBURST_S[5]),
+        .AWVALID_S       (AWVALID_S[5]),
+        .AWREADY_S       (AWREADY_S[5]),
+        .WDATA_S         (WDATA_S  [5]),
+        .WSTRB_S         (WSTRB_S  [5]),
+        .WLAST_S         (WLAST_S  [5]),
+        .WVALID_S        (WVALID_S [5]),
+        .WREADY_S        (WREADY_S [5]),
+        .BID_S           (BID_S    [5]),
+        .BRESP_S         (BRESP_S  [5]),
+        .BVALID_S        (BVALID_S [5]),
+        .BREADY_S        (BREADY_S [5])
+    );
 
 endmodule

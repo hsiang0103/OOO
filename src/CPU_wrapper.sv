@@ -1,16 +1,17 @@
 `include "../include/AXI_define.svh"
 `include "../include/define.svh"
 
-`include "CPU.sv" 
+`include "CPU/CPU.sv" 
 
 module CPU_wrapper(
 
-    input ACLK,
-    input ARESETn,
+    input clk,
+    input rstn,
     //-------------------------------------//
     //      Port: MASTER <-> AXI BUS       //
     //-------------------------------------//
-
+    input logic DMA_interrupt_i, 
+    input logic WDT_interrupt_i,
     // ---------------
     //     Master1   
     // ---------------
@@ -95,8 +96,11 @@ module CPU_wrapper(
     logic        load_req_ready;
 
     CPU cpu(
-        .clk                (ACLK),
-        .rst                (~ARESETn),
+        .clk                (clk),
+        .rst                (~rstn),
+        // Interrupt
+        .DMA_interrupt      (DMA_interrupt_i),
+        .WDT_interrupt      (WDT_interrupt_i),
         // Instruction Memory Interface
         .fetch_data(fetch_data),
         .fetch_data_valid(fetch_data_valid),
@@ -143,8 +147,8 @@ module CPU_wrapper(
 
     assign fetch_req_ready = (M0_cs == M0_IDLE);
 
-    always_ff @(posedge ACLK) begin
-        if (!ARESETn) begin
+    always_ff @(posedge clk) begin
+        if (!rstn) begin
             M0_cs <= M0_IDLE;
         end
         else begin
@@ -182,7 +186,7 @@ module CPU_wrapper(
                 ARID_M0         = 4'b0;
                 ARSIZE_M0       = 3'b010; // 4 bytes
                 ARBURST_M0      = 2'b01;  // INCR
-                ARVALID_M0      = fetch_handshake && (M1_cs == IDLE);
+                ARVALID_M0      = fetch_handshake;
             end
 	    	M0_WAIT_R: begin
                 // AR
@@ -205,8 +209,8 @@ module CPU_wrapper(
         endcase
     end
 
-    always_ff @(posedge ACLK) begin
-		if(!ARESETn) begin
+    always_ff @(posedge clk) begin
+		if(!rstn) begin
 			M0_buff_addr <= 32'b0;
 		end
 		else begin
@@ -238,15 +242,12 @@ module CPU_wrapper(
 
     assign load_handshake = load_req_valid  & load_req_ready;
     assign store_handshake = store_req_valid & store_req_ready;
-    
-
-    
 
     assign load_req_ready  = (M1_cs == IDLE);
     assign store_req_ready = (M1_cs == IDLE);
 
-    always_ff @(posedge ACLK) begin
-        if (!ARESETn) begin
+    always_ff @(posedge clk) begin
+        if (!rstn) begin
             M1_cs <= IDLE;
         end
         else begin
@@ -275,8 +276,8 @@ module CPU_wrapper(
 	logic [31:0] M1_buff_addr;
 	logic [31:0] M1_buff_data;
 	logic [3:0]  M1_buff_strb;
-	always_ff @(posedge ACLK) begin
-		if(!ARESETn) begin
+	always_ff @(posedge clk) begin
+		if(!rstn) begin
 			M1_buff_addr <= 32'b0;
             M1_buff_data <= 32'b0;
             M1_buff_strb <= 4'b0;
@@ -334,7 +335,7 @@ module CPU_wrapper(
                 AWID_M1         = 4'b1;
                 AWSIZE_M1       = 3'b010; // 4 bytes
                 AWBURST_M1      = 2'b01;  // INCR
-                AWVALID_M1      = store_handshake && (M0_cs == M0_IDLE && (!fetch_handshake || (fetch_addr[16] != ld_st_req_addr[16])));
+                AWVALID_M1      = store_handshake;
                 // W
                 WDATA_M1        = store_data;
                 WSTRB_M1        = ~store_strb[3:0];

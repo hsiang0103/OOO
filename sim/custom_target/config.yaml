@@ -1,5 +1,24 @@
 - test: main
   description: >
+  mem_region:
+    # 1. IMEM (SRAM) - 存放 Boot Code 或部分指令
+    - name: imem
+      size_in_bytes: 65536      # 64KB (0x10000)
+      start_addr: "0x00010000"
+      permission: rx            # Read-Execute (程式碼)
+    
+    # 2. DMEM (SRAM) - 存放部分 Data
+    - name: dmem
+      size_in_bytes: 65536      # 64KB (0x10000)
+      start_addr: "0x00020000"
+      permission: rw            # Read-Write (資料)
+
+    # 4. DRAM_D (DRAM) - 存放大量資料
+    - name: dram_d
+      size_in_bytes: 1048576    # 1MB (0x100000)
+      start_addr: "0x20100000"
+      permission: rw            # Read-Write (資料)
+  
   gen_opts: >
     +instr_cnt=4000
     +num_of_sub_programs=40

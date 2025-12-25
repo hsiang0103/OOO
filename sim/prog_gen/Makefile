@@ -40,9 +40,12 @@ build_hex: $(ELF_NAME).elf
 	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 1 $(ELF_NAME)1.hex
 	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 2 $(ELF_NAME)2.hex
 	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 3 $(ELF_NAME)3.hex
-
+	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 0 --change-addresses -0x20000000 dram0.hex
+	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 1 --change-addresses -0x20000000 dram1.hex
+	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 2 --change-addresses -0x20000000 dram2.hex
+	$(RISCV_OBJCOPY) -O verilog $< -i 4 -b 3 --change-addresses -0x20000000 dram3.hex
 run_spike: $(ELF_NAME).elf
-	spike --isa=rv32imf -m0x2000:0x1E000 --log-commits -l $< > golden.log 2>&1
+	spike --isa=rv32imf -m0x10000:0x20000,0x20000000:0x200000 --log-commits -l $< > golden.log 2>&1
 	python3 gen_commit_log.py golden.log
 
 %.o: %.S
@@ -52,5 +55,5 @@ run_spike: $(ELF_NAME).elf
 	$(RISCV_GCC) -c $(CFLAGS) $^
 
 clean:
-	rm -rf $(ELF_NAME) *.log $(ELF_NAME)*.hex *.o *.elf golden.log commit.log asm_test/ spike_sim/ vcs_simv.daidir/ vcs_simv vc_hdrs.h seed.yaml vcs_simv.csrc/ compile.log
+	rm -rf $(ELF_NAME) *.log *.hex *.o *.elf golden.log commit.log asm_test/ spike_sim/ vcs_simv.daidir/ vcs_simv vc_hdrs.h seed.yaml vcs_simv.csrc/ compile.log
 	rm -rf main.S

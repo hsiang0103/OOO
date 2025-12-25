@@ -2,7 +2,7 @@ Magic 271485
 Revision Verdi_U-2023.03-SP2
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 0 23 1920 1009 100 65
+viewPort 0 23 1920 1009 100 311
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
@@ -16,8 +16,8 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 1181013.048867 1184303.039647
-cursor 1181250.000000
+zoom 1879125.253339 1883713.688833
+cursor 0.000000
 marker 0.000000
 
 ; user define markers
@@ -25,7 +25,7 @@ marker 0.000000
 ; visible top row signal index
 top 0
 ; marker line index
-markerPos 5
+markerPos 22
 
 ; event list
 ; addEvent event_name event_expression
@@ -47,12 +47,29 @@ curSTATUS ByChange
 
 addGroup "G1"
 activeDirFile "" "/home/hsiang/Desktop/OOO/build/top.fsdb"
-addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU_wrapper/cpu/IF/IF_out_inst[31:0]
+addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU1/cpu/IF/IF_out_inst[31:0]
 addSignal -h 15 -UNSIGNED -HEX -holdScope IF_out_pc[31:0]
-addSignal -h 15 -UNSIGNED -HEX /top_tb/TOP/CPU_wrapper/ld_st_req_addr[31:0]
-addSignal -h 15 -UNSIGNED -HEX -holdScope store_data[31:0]
-addSignal -h 15 -holdScope store_handshake
+addSignal -expanded -h 15 /top_tb/TOP/CPU1/cpu/ROB_inst/ROB[0:15]
+addSignal -h 15 -holdScope ROB[0]
+addSignal -h 15 -holdScope ROB[1]
+addSignal -h 15 -holdScope ROB[2]
+addSignal -h 15 -holdScope ROB[3]
+addSignal -h 15 -holdScope ROB[4]
+addSignal -h 15 -holdScope ROB[5]
+addSignal -h 15 -holdScope ROB[6]
+addSignal -h 15 -holdScope ROB[7]
+addSignal -h 15 -holdScope ROB[8]
+addSignal -h 15 -holdScope ROB[9]
+addSignal -h 15 -holdScope ROB[10]
+addSignal -h 15 -holdScope ROB[11]
+addSignal -h 15 -holdScope ROB[12]
+addSignal -h 15 -holdScope ROB[13]
+addSignal -h 15 -holdScope ROB[14]
+addSignal -h 15 -holdScope ROB[15]
 addGroup "G2"
+addSignal -h 15 -UNSIGNED /top_tb/TOP/CPU1/cpu/ROB_inst/cs[1:0]
+addSignal -h 15 -holdScope wakeup_wfi
+addGroup "G3"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm
@@ -63,18 +80,18 @@ getSignalForm close
 
 "/top_tb"
 "/top_tb/TOP"
-"/top_tb/TOP/CPU_wrapper"
-"/top_tb/TOP/CPU_wrapper/cpu"
-"/top_tb/TOP/CPU_wrapper/cpu/IF"
+"/top_tb/TOP/CPU1"
+"/top_tb/TOP/CPU1/cpu"
+"/top_tb/TOP/CPU1/cpu/IF"
+"/top_tb/TOP/CPU1/cpu/ROB_inst"
 
 SCOPE_LIST_BEGIN
 "/top_tb"
-"/top_tb/TOP/CPU_wrapper/cpu/EXE"
-"/top_tb/TOP/CPU_wrapper/cpu/IF"
-"/top_tb/TOP/CPU_wrapper/cpu/IS"
+"/top_tb/TOP/CPU1/cpu"
+"/top_tb/TOP/CPU1/cpu/IF"
 "/top_tb/TOP"
-"/top_tb/TOP/CPU_wrapper"
-"/top_tb/TOP/CPU_wrapper/cpu"
+"/top_tb/TOP/CPU1"
+"/top_tb/TOP/CPU1/cpu/ROB_inst"
 SCOPE_LIST_END
 
 GETSIGNALFORM_SCOPE_HIERARCHY_END

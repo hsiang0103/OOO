@@ -1,14 +1,16 @@
 OUTPUT_ARCH( "riscv" )
 
 _STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x1000;
-_TEST_SIZE = DEFINED(_TEST_SIZE) ? _TEST_SIZE : 0x100;
+_TEST_SIZE = DEFINED(_TEST_SIZE) ? _TEST_SIZE : 0x1000;
 
 /*****************************************************************************
  * Define memory layout
  ****************************************************************************/
 MEMORY {
-  imem : ORIGIN = 0x00002000, LENGTH = 0x0000E000
-  dmem : ORIGIN = 0x00010000, LENGTH = 0x00010000
+  imem      : ORIGIN = 0x00010000, LENGTH = 0x00010000
+  dmem      : ORIGIN = 0x00020000, LENGTH = 0x00010000
+  dram_i    : ORIGIN = 0x20000000, LENGTH = 0x00100000
+  dram_d    : ORIGIN = 0x20100000, LENGTH = 0x00100000
 }
 
 /* Specify the default entry point to the program */
@@ -75,7 +77,7 @@ SECTIONS {
     *(.data.*)
     *(.gnu.linkonce.d.*)
     __data_end = .;
-  } > dmem
+  } > dram_d
 
   .bss : {
     . = ALIGN(4);
@@ -94,7 +96,7 @@ SECTIONS {
     . += _STACK_SIZE;
     _stack = .;
     __stack = _stack;
-  } > dmem
+  } > dram_d
 
   . = ORIGIN(dmem) + LENGTH(dmem) - 4;
   _sim_end = .;
