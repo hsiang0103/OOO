@@ -7,5 +7,5 @@
 - [ ] Other "F" extension
 - [x] Other "M" extension
 - [x] Interrupt and CSR
-- [ ] Store to Load forwarding
+- [x] Store to Load forwarding
 - [ ] Memory request coalescing

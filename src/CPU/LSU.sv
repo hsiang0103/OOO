@@ -82,7 +82,7 @@ module LSU (
     logic [$clog2(`SQ_LEN):0] commit_cnt;
     logic store_handshake;
     logic load_handshake;
-    logic [$clog2(`SQ_LEN):0] st_commit_idx;
+    
 
     logic ld_inflight;           
     logic [$clog2(`LQ_LEN)-1:0] ld_inflight_idx;
@@ -94,22 +94,46 @@ module LSU (
     assign LQ_tail          = LQ_t;
     assign SQ_tail          = SQ_t;
 
-    assign st_commit_idx    = (SQ_h[$clog2(`SQ_LEN)-1:0] + commit_cnt) & (`SQ_LEN-1);
-    assign st_addr          = SQ[st_commit_idx].addr;
-    // assign st_data          = SQ[st_commit_idx].data;
+    
 
     // ================
     // load select
     // ================
-    logic [`LQ_LEN-1:0] can_request;
-    logic [`SQ_LEN-1:0] age_mask    [0:`LQ_LEN-1];
-    logic [`SQ_LEN-1:0] sq_addr_cmp [0:`LQ_LEN-1];
     logic [$clog2(`LQ_LEN)-1:0] LQ_order    [0:`LQ_LEN-1];
+    logic [$clog2(`SQ_LEN)-1:0] SQ_order    [0:`SQ_LEN-1];
+
+    logic [`LQ_LEN-1:0]         can_request;
+    logic [`SQ_LEN-1:0]         age_mask    [0:`LQ_LEN-1];
+    logic [`SQ_LEN-1:0]         sq_addr_cmp [0:`LQ_LEN-1];
     logic [$clog2(`LQ_LEN)-1:0] load_request_idx;
-    logic       load_request_valid;
-    logic       same_phase;
+    logic                       load_request_valid;
+    logic                       same_phase;
+
+    logic [`SQ_LEN-1:0]         forwarding_addr_cmp [0:`LQ_LEN-1];
+    logic [`LQ_LEN-1:0]         forward_hit;
+    logic [$clog2(`LQ_LEN)-1:0] ld_forwarding_idx;
+    logic [$clog2(`SQ_LEN)-1:0] sq_forwarding_idx;
+
+    logic [3:0]                 load_mask, store_mask;
+    logic                       mask_cover;
+    logic                       forwarding_valid;
+    logic [`SQ_LEN-1:0]         sq_addr_valid;
+    
+
+    function automatic logic [3:0] get_byte_mask(logic [1:0] offset, logic [2:0] f3);
+        case (f3[1:0]) // 只看寬度 bits (00=Byte, 01=Half, 10=Word)
+            2'b00:      return 4'b0001 << offset;
+            2'b01:      return 4'b0011 << offset;
+            2'b10:      return 4'b1111;
+            default:    return 4'b0000;
+        endcase
+    endfunction
 
     always_comb begin
+        for(int j = 0; j < `SQ_LEN; j = j + 1) begin
+            sq_addr_valid[j] = SQ[j].valid && SQ[j].issued;
+        end
+
         // check younger store in SQ
         for(int i = 0; i < `LQ_LEN; i = i + 1) begin
             same_phase = (SQ_h[$clog2(`SQ_LEN)] == LQ[i].SQ_t[$clog2(`SQ_LEN)]);
@@ -125,11 +149,14 @@ module LSU (
                 else begin
                     age_mask[i][j] = 0;
                 end
-                sq_addr_cmp[i][j] = SQ[j].valid && (!SQ[j].issued || SQ[j].addr[31:2] == LQ[i].addr[31:2]);
+                sq_addr_cmp[i][j]           = SQ[j].valid && (!SQ[j].issued || SQ[j].addr[31:2] == LQ[i].addr[31:2]);
+                forwarding_addr_cmp[i][j]   = SQ[j].valid && SQ[j].issued && (SQ[j].addr[31:2] == LQ[i].addr[31:2]);
             end
             LQ_order[i]     = (LQ_h + i) & {($clog2(`LQ_LEN)){1'b1}};
+            SQ_order[i]     = (SQ_h + i) & {($clog2(`SQ_LEN)){1'b1}};
             // can request if no younger store with different address
             can_request[i]  = ((sq_addr_cmp[i] & age_mask[i]) == '0) && LQ[i].issued && !LQ[i].done;
+            forward_hit[i]  = |(forwarding_addr_cmp[i] & age_mask[i]) && LQ[i].issued && !LQ[i].done && ((age_mask[i] ^ sq_addr_valid) == 0);
         end
 
         load_request_idx = '0;
@@ -139,40 +166,68 @@ module LSU (
                 break;
             end
         end
-        load_request_valid = |can_request;
-        // TODO : forwarding logic
+        ld_forwarding_idx = '0;
+        for (int i = 0; i < `LQ_LEN; i++) begin
+            if (forward_hit[LQ_order[i]]) begin
+                ld_forwarding_idx = LQ_order[i];
+                break;
+            end
+        end
+        sq_forwarding_idx = '0;
+        for (int j = 0; j < `SQ_LEN; j++) begin
+            if (forwarding_addr_cmp[ld_forwarding_idx][SQ_order[j]] && age_mask[ld_forwarding_idx][SQ_order[j]]) begin
+                sq_forwarding_idx = SQ_order[j];
+            end
+        end
+        
+        load_mask   = get_byte_mask(LQ[ld_forwarding_idx].addr[1:0], LQ[ld_forwarding_idx].f3);
+        store_mask  = get_byte_mask(SQ[sq_forwarding_idx].addr[1:0], SQ[sq_forwarding_idx].f3);
+        mask_cover  = store_mask[0] >= load_mask[0] &&
+                      store_mask[1] >= load_mask[1] &&
+                      store_mask[2] >= load_mask[2] &&
+                      store_mask[3] >= load_mask[3];
+
+        forwarding_valid    = forward_hit[ld_forwarding_idx] && mask_cover && !load_data_valid;
+        load_request_valid  = |can_request;
     end
 
     logic [1:0]  addr_offset;
     logic [7:0]  target_byte;
     logic [15:0] target_half;
+    logic [31:0] load_data_selected;
+    logic [2:0]  load_f3;
 
-    assign addr_offset   = LQ[ld_inflight_idx].addr[1:0];
 
-    assign ld_o_rob_idx  = LQ[ld_inflight_idx].rob_idx;
-    assign ld_o_rd       = LQ[ld_inflight_idx].rd;
+    
 
     always_comb begin
-        case (addr_offset)
-            2'b00: target_byte = load_data[7:0];
-            2'b01: target_byte = load_data[15:8];
-            2'b10: target_byte = load_data[23:16];
-            2'b11: target_byte = load_data[31:24];
+        load_data_selected  = forwarding_valid ? SQ[sq_forwarding_idx].data         : load_data;
+        addr_offset         = forwarding_valid ? LQ[ld_forwarding_idx].addr[1:0]    : LQ[ld_inflight_idx].addr[1:0];
+        load_f3             = forwarding_valid ? LQ[ld_forwarding_idx].f3           : LQ[ld_inflight_idx].f3;
+        case (addr_offset)  
+            2'b00: target_byte = load_data_selected[7:0];
+            2'b01: target_byte = load_data_selected[15:8];
+            2'b10: target_byte = load_data_selected[23:16];
+            2'b11: target_byte = load_data_selected[31:24];
         endcase
 
         case (addr_offset[1])
-            1'b0: target_half = load_data[15:0];
-            1'b1: target_half = load_data[31:16];
+            1'b0: target_half = load_data_selected[15:0];
+            1'b1: target_half = load_data_selected[31:16];
         endcase
 
-        case (LQ[ld_inflight_idx].f3)
+        case (load_f3)
             `LB:     ld_o_data = {{24{target_byte[7]}}, target_byte}; 
             `LBU:    ld_o_data = {24'b0, target_byte};                
             `LH:     ld_o_data = {{16{target_half[15]}}, target_half};
             `LHU:    ld_o_data = {16'b0, target_half};                
-            default: ld_o_data = load_data;
+            default: ld_o_data = load_data_selected;
         endcase
     end
+
+    assign ld_o_rob_idx     = forwarding_valid ? LQ[ld_forwarding_idx].rob_idx : LQ[ld_inflight_idx].rob_idx;
+    assign ld_o_rd          = forwarding_valid ? LQ[ld_forwarding_idx].rd : LQ[ld_inflight_idx].rd;
+    assign ld_o_valid       = load_data_valid || forwarding_valid;
 
     always_comb begin
         unique case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].f3)
@@ -195,43 +250,28 @@ module LSU (
         endcase
     end
 
-    always_comb begin
-        unique case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].f3)
-            `SB: begin
-                case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr[1:0])
-                    2'b00:  store_data = {24'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0]};
-                    2'b01:  store_data = {16'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0], 8'b0};
-                    2'b10:  store_data = {8'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0], 16'b0};
-                    2'b11:  store_data = {SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[7:0], 24'b0};
-                endcase
-            end
-            `SH:begin
-                case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr[1:0])
-                    2'b00:  store_data = {16'b0, SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[15:0]};
-                    2'b10:  store_data = {SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data[15:0], 16'b0};
-                endcase
-            end
-            default:        store_data = SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data;
-        endcase
-    end
+    assign store_data = SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].data;
 
+    logic [31:0] to_SQ_data;
+    logic [31:0] to_SQ_addr;
     always_comb begin
-        unique case (SQ[st_commit_idx].f3)
+        to_SQ_addr = lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
+        unique case (funct3)
             `SB: begin
-                case (SQ[st_commit_idx].addr[1:0])
-                    2'b00:  st_data = {24'b0, SQ[st_commit_idx].data[7:0]};
-                    2'b01:  st_data = {16'b0, SQ[st_commit_idx].data[7:0], 8'b0};
-                    2'b10:  st_data = {8'b0, SQ[st_commit_idx].data[7:0], 16'b0};
-                    2'b11:  st_data = {SQ[st_commit_idx].data[7:0], 24'b0};
+                case (to_SQ_addr[1:0])
+                    2'b00:  to_SQ_data = {24'b0, lsu_i_rs2_data[7:0]};
+                    2'b01:  to_SQ_data = {16'b0, lsu_i_rs2_data[7:0], 8'b0};
+                    2'b10:  to_SQ_data = {8'b0, lsu_i_rs2_data[7:0], 16'b0};
+                    2'b11:  to_SQ_data = {lsu_i_rs2_data[7:0], 24'b0};
                 endcase
             end
             `SH:begin
-                case (SQ[st_commit_idx].addr[1:0])
-                    2'b00:  st_data = {16'b0, SQ[st_commit_idx].data[15:0]};
-                    2'b10:  st_data = {SQ[st_commit_idx].data[15:0], 16'b0};
+                case (to_SQ_addr[1:0])
+                    2'b00:  to_SQ_data = {16'b0, lsu_i_rs2_data[15:0]};
+                    2'b10:  to_SQ_data = {lsu_i_rs2_data[15:0], 16'b0};
                 endcase
             end
-            default:        st_data = SQ[st_commit_idx].data;
+            default:        to_SQ_data = lsu_i_rs2_data;
         endcase
     end
 
@@ -266,13 +306,7 @@ module LSU (
         end
     end
 
-    // ================
-    // Load Output Generation
-    // ================
     
-
-    
-    assign ld_o_valid = load_data_valid;
     // ================
     // LQ management
     // ================
@@ -328,6 +362,9 @@ module LSU (
                             LQ[i].issued    <= 1'b1;
                             LQ[i].f3        <= funct3;
                             LQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
+                        end
+                        forwarding_valid && i == ld_forwarding_idx: begin
+                            LQ[i].done  <= 1'b1;
                         end
                         // issue load request
                         load_handshake && i == load_request_idx: begin
@@ -393,8 +430,8 @@ module LSU (
                         // issue
                         st_i_valid && i == EX_st_idx[$clog2(`SQ_LEN)-1:0]: begin
                             SQ[i].issued    <= 1'b1;
-                            SQ[i].addr      <= lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
-                            SQ[i].data      <= lsu_i_rs2_data;
+                            SQ[i].addr      <= to_SQ_addr;
+                            SQ[i].data      <= to_SQ_data;
                             SQ[i].f3        <= funct3;
                         end
                         // commit
@@ -410,4 +447,11 @@ module LSU (
             end
         end
     end
+
+
+    // for commit tracker
+    logic [$clog2(`SQ_LEN):0] st_commit_idx;
+    assign st_commit_idx    = (SQ_h[$clog2(`SQ_LEN)-1:0] + commit_cnt) & (`SQ_LEN-1);
+    assign st_addr          = SQ[st_commit_idx].addr;
+    assign st_data          = SQ[st_commit_idx].data;
 endmodule
