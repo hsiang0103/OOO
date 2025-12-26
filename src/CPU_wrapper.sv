@@ -1,5 +1,6 @@
 `include "../include/AXI_define.svh"
 `include "../include/define.svh"
+`include "../include/config.svh"
 
 `include "CPU/CPU.sv" 
 

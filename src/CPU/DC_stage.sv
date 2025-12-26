@@ -71,10 +71,10 @@ module DC_stage(
 
     assign is_csr    = (DC_op == `CSR); 
     assign csr_stall = is_csr && !rob_empty;
-    assign is_wfi    = DC_in_inst === 32'h10500073; // wfi
+    assign is_wfi    = DC_in_inst == 32'h10500073; // wfi
 
     always @(posedge clk) begin
-        if (rst) begin
+        if (rst || mispredict) begin
             waiting_wfi <= 1'b0;
         end
         else begin
