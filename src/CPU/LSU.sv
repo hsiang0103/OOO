@@ -230,6 +230,7 @@ module LSU (
     assign ld_o_valid       = load_data_valid || forwarding_valid;
 
     always_comb begin
+        store_strb = 4'b1111;
         unique case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].f3)
             `SB: begin
                 case (SQ[SQ_h[$clog2(`SQ_LEN)-1:0]].addr[1:0])
@@ -246,7 +247,6 @@ module LSU (
                 endcase
             end
             `SW:            store_strb = 4'b0000;
-            default:        store_strb = 4'b1111;
         endcase
     end
 
@@ -256,6 +256,7 @@ module LSU (
     logic [31:0] to_SQ_addr;
     always_comb begin
         to_SQ_addr = lsu_i_rs1_data[31:0] + lsu_i_imm[31:0];
+        to_SQ_data = lsu_i_rs2_data;
         unique case (funct3)
             `SB: begin
                 case (to_SQ_addr[1:0])
@@ -271,7 +272,6 @@ module LSU (
                     2'b10:  to_SQ_data = {lsu_i_rs2_data[15:0], 16'b0};
                 endcase
             end
-            default:        to_SQ_data = lsu_i_rs2_data;
         endcase
     end
 

@@ -1,6 +1,3 @@
-`include "config.svh"
-`include "define.svh"
-
 module DIV (
     input  logic        clk,
     input  logic        rst,
