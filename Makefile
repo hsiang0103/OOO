@@ -46,6 +46,7 @@ rtl0: | $(bld_dir)
 	+define+prog0$(FSDB_DEF) \
 	+define+RESET_ADDR=$(BOOT_ADDR) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog0 \
+	+define+ENABLE_DEBUG_PORTS
 	+rdcycle=1 \
 	+notimingcheck; \
 	cd $(root_dir); \
@@ -178,6 +179,7 @@ syn0: | $(bld_dir)
 	vcs -R -sverilog +neg_tchk -negdelay -v /usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v $(root_dir)/$(sim_dir)/top_tb_interrupt.sv -debug_access+all -full64 -diag=sdf:verbose \
 	+incdir+$(root_dir)/$(syn_dir)+$(root_dir)/$(src_dir)+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+SYN+prog0$(FSDB_DEF) \
+	+define+ENABLE_DEBUG_PORTS \
 	+prog_path=$(root_dir)/$(sim_dir)/prog0 \
     +rdcycle=1
 

@@ -1,9 +1,14 @@
+`include "../include/config.svh"
+`include "../include/define.svh"
+
+
 module konata(
     input logic clk,
     input logic rst,
     // IF stage signals
-    input logic [31:0] fetch_addr,
     input logic        fetch_request,
+    input logic [31:0] fetch_addr,
+    
     // DC stage signals
     input logic        IF_valid,
     input logic        DC_ready,
@@ -30,8 +35,7 @@ module konata(
     input logic        commit,
     input logic [$clog2(`ROB_LEN)-1:0]  commit_rob_idx,
     // Flush signals
-    input logic        mispredict,
-    input logic [31:0] jb_pc,
+    input logic         mispredict,
     input logic [`ROB_LEN-1:0]  flush_mask
 );
 

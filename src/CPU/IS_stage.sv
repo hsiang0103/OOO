@@ -107,7 +107,7 @@ module IS_stage (
         end
 
         for (int i = 0; i < `IQ_LEN; i++) begin
-            req_vec[i] = iq[i].valid && rs1_valid[i] && rs2_valid[i] && EX_ready[iq[i].fu_sel];
+            req_vec[i]  = iq[i].valid && rs1_valid[i] && rs2_valid[i] && EX_ready[iq[i].fu_sel];
         end
 
         grant_vec = req_vec; 

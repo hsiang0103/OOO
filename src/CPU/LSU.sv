@@ -247,6 +247,7 @@ module LSU (
                 endcase
             end
             `SW:            store_strb = 4'b0000;
+            default:;
         endcase
     end
 
@@ -272,6 +273,7 @@ module LSU (
                     2'b10:  to_SQ_data = {lsu_i_rs2_data[15:0], 16'b0};
                 endcase
             end
+            default:;
         endcase
     end
 

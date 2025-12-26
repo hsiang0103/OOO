@@ -1,3 +1,5 @@
+`include "../include/config.svh"
+
 module DIV (
     input  logic        clk,
     input  logic        rst,

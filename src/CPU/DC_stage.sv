@@ -26,7 +26,6 @@ module DC_stage(
     output  logic [6:0]     DC_P_rd_new,
     output  logic [6:0]     DC_P_rd_old,
     output  logic [2:0]     DC_fu_sel, 
-    output  logic           dispatch_ready,
     output  logic           dispatch_valid,
     // IS stage
     input   logic           IS_ready,
@@ -74,11 +73,14 @@ module DC_stage(
     assign is_wfi    = DC_in_inst == 32'h10500073; // wfi
 
     always @(posedge clk) begin
-        if (rst || mispredict) begin
+        if (rst) begin
             waiting_wfi <= 1'b0;
         end
         else begin
-            if (!waiting_wfi) begin
+            if(mispredict) begin
+                waiting_wfi <= 1'b0;
+            end
+            else if (!waiting_wfi) begin
                 waiting_wfi <= IF_valid && is_wfi;
             end
             else begin

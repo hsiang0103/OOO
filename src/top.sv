@@ -36,6 +36,44 @@ module top (
     output logic        DRAM_CASn,
     output logic [10:0] DRAM_A,
     output logic [31:0] DRAM_D
+
+    // --------------------------------------------
+    //            Connect with Debuger              
+    // --------------------------------------------
+    `ifdef ENABLE_DEBUG_PORTS
+    ,
+    output logic        debug_fetch_req_valid,
+    output logic        debug_fetch_req_ready,
+    output logic [31:0] debug_fetch_addr,
+    output logic        debug_IF_valid,
+    output logic        debug_DC_ready,
+    output logic [31:0] debug_IF_out_pc,
+    output logic [31:0] debug_IF_out_inst,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_DC_rob_idx,
+    output logic        debug_DC_valid,
+    output logic        debug_dispatch_valid,
+    output logic [31:0] debug_DC_out_pc,
+    output logic        debug_IS_valid,
+    output logic        debug_RR_ready,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_IS_out_rob_idx,
+    output logic        debug_RR_valid,
+    output logic        debug_EX_ready_selected,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_RR_out_rob_idx,
+    output logic [31:0] debug_RR_out_pc,
+    output logic        debug_WB_out_valid,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_WB_out_rob_idx,
+    output logic        debug_commit,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_commit_rob_idx,
+    output logic        debug_mispredict,
+    output logic [`ROB_LEN-1:0] debug_flush_mask,
+    output logic [31:0] debug_commit_pc,
+    output logic [31:0] debug_commit_inst,
+    output logic [5:0]  debug_commit_A_rd,
+    output logic [31:0] debug_commit_data,
+    output logic        debug_st_commit,
+    output logic [31:0] debug_st_addr,
+    output logic [31:0] debug_st_data
+    `endif
 );
 
     // --------------------------------------------
@@ -137,8 +175,8 @@ module top (
     assign BREADY_M[0] = 1'b0;
 
     CPU_wrapper CPU1 (
-        .clk,
-        .rstn            (~rst         ),
+        .clk           (clk         ),
+        .rst             (rst         ),
 
         .DMA_interrupt_i (DMA_interrupt),
         .WDT_interrupt_i (WDT_interrupt),
@@ -186,6 +224,41 @@ module top (
         .BRESP_M1        (BRESP_M  [1]),
         .BVALID_M1       (BVALID_M [1]),
         .BREADY_M1       (BREADY_M [1])
+
+        `ifdef ENABLE_DEBUG_PORTS
+        ,
+        .debug_fetch_req_valid(debug_fetch_req_valid),
+        .debug_fetch_req_ready(debug_fetch_req_ready),
+        .debug_fetch_addr(debug_fetch_addr),
+        .debug_IF_valid(debug_IF_valid),
+        .debug_DC_ready(debug_DC_ready),
+        .debug_IF_out_pc(debug_IF_out_pc),
+        .debug_IF_out_inst(debug_IF_out_inst),
+        .debug_DC_rob_idx(debug_DC_rob_idx),
+        .debug_DC_valid(debug_DC_valid),
+        .debug_dispatch_valid(debug_dispatch_valid),
+        .debug_DC_out_pc(debug_DC_out_pc),
+        .debug_IS_valid(debug_IS_valid),
+        .debug_RR_ready(debug_RR_ready),
+        .debug_IS_out_rob_idx(debug_IS_out_rob_idx),
+        .debug_RR_valid(debug_RR_valid),
+        .debug_EX_ready_selected(debug_EX_ready_selected),
+        .debug_RR_out_rob_idx(debug_RR_out_rob_idx),
+        .debug_RR_out_pc(debug_RR_out_pc),
+        .debug_WB_out_valid(debug_WB_out_valid),
+        .debug_WB_out_rob_idx(debug_WB_out_rob_idx),
+        .debug_commit(debug_commit),
+        .debug_commit_rob_idx(debug_commit_rob_idx),
+        .debug_mispredict(debug_mispredict),
+        .debug_flush_mask(debug_flush_mask),
+        .debug_commit_pc(debug_commit_pc),
+        .debug_commit_inst(debug_commit_inst),
+        .debug_commit_A_rd(debug_commit_A_rd),
+        .debug_commit_data(debug_commit_data),
+        .debug_st_commit(debug_st_commit),
+        .debug_st_addr(debug_st_addr),
+        .debug_st_data(debug_st_data)
+        `endif
     );
 
     DMA_wrapper DMA1 (

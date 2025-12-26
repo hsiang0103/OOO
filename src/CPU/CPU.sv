@@ -13,10 +13,6 @@
 `include "CPU/Rename.sv"
 `include "CPU/ROB.sv"
 `include "CPU/BPU.sv"
-// synopsys translate_off
-`include "CPU/konata.sv"
-`include "CPU/commit_tracker.sv"
-// synopsys translate_on
 
 module CPU (
     input   logic           clk,
@@ -33,7 +29,7 @@ module CPU (
     // DM
     output  logic [31:0]    ld_st_req_addr,
     input   logic           store_data_valid,
-    output  logic [31:0]    store_strb,
+    output  logic [3:0]     store_strb,
     output  logic [31:0]    store_data,
     output  logic           store_req_valid,
     input   logic           store_req_ready,
@@ -41,6 +37,43 @@ module CPU (
     input   logic [31:0]    load_data,
     output  logic           load_req_valid,
     input   logic           load_req_ready
+    // --------------------------------------------
+    //            Connect with Debuger              
+    // --------------------------------------------
+    `ifdef ENABLE_DEBUG_PORTS
+    ,
+    output logic        debug_fetch_req_valid,
+    output logic        debug_fetch_req_ready,
+    output logic [31:0] debug_fetch_addr,
+    output logic        debug_IF_valid,
+    output logic        debug_DC_ready,
+    output logic [31:0] debug_IF_out_pc,
+    output logic [31:0] debug_IF_out_inst,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_DC_rob_idx,
+    output logic        debug_DC_valid,
+    output logic        debug_dispatch_valid,
+    output logic [31:0] debug_DC_out_pc,
+    output logic        debug_IS_valid,
+    output logic        debug_RR_ready,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_IS_out_rob_idx,
+    output logic        debug_RR_valid,
+    output logic        debug_EX_ready_selected,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_RR_out_rob_idx,
+    output logic [31:0] debug_RR_out_pc,
+    output logic        debug_WB_out_valid,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_WB_out_rob_idx,
+    output logic        debug_commit,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_commit_rob_idx,
+    output logic        debug_mispredict,
+    output logic [`ROB_LEN-1:0] debug_flush_mask,
+    output logic [31:0] debug_commit_pc,
+    output logic [31:0] debug_commit_inst,
+    output logic [5:0]  debug_commit_A_rd,
+    output logic [31:0] debug_commit_data,
+    output logic        debug_st_commit,
+    output logic [31:0] debug_st_addr,
+    output logic [31:0] debug_st_data
+    `endif
 );
     // =========================
     // === Wire Instiantiate ===
@@ -173,6 +206,7 @@ module CPU (
     // BPU 
     logic        is_jb;
     logic [31:0] next_pc;
+    logic        next_jump;
     logic        jump_out;
 
     // rollback
@@ -225,9 +259,11 @@ module CPU (
         .clk(clk),
         .rst(rst),
         // IF stage
+        .IF_valid(IF_valid),
         .DC_in_pc(IF_out_pc),
         .DC_in_inst(IF_out_inst),
         .DC_in_jump(IF_out_jump),
+        .DC_ready(DC_ready),
         // rename
         .P_rs1(P_rs1),
         .P_rs2(P_rs2),
@@ -249,6 +285,7 @@ module CPU (
         .DC_fu_sel(DC_fu_sel),
         .dispatch_valid(dispatch_valid),
         // IS stage
+        .IS_ready(IS_ready),
         .DC_out_pc(DC_out_pc),
         .DC_out_inst(DC_out_inst),
         .DC_out_imm(DC_out_imm),
@@ -263,6 +300,7 @@ module CPU (
         .DC_out_SQ_tail(DC_out_SQ_tail),
         .DC_out_rob_idx(DC_out_rob_idx),
         .DC_out_jump(DC_out_jump),
+        .DC_valid(DC_valid),
         // mispredict
         .mispredict(mispredict),
         .stall(stall),
@@ -271,11 +309,6 @@ module CPU (
         .SQ_tail(SQ_tail),
         .ld_ready(ld_ready),
         .st_ready(st_ready),
-        // Handshake signals
-        .DC_ready(DC_ready),
-        .IF_valid(IF_valid),
-        .DC_valid(DC_valid),
-        .IS_ready(IS_ready),
         // wakeup wfi
         .waiting_wfi(waiting_wfi),
         .wakeup_wfi(wakeup_wfi)
@@ -561,46 +594,38 @@ module CPU (
         .fetch_req_ready(fetch_req_ready)
     );
 
-    // synopsys translate_off
-    konata k1(
-        .clk(clk),
-        .rst(rst),
-        .fetch_request(fetch_req_valid && fetch_req_ready),
-        .fetch_addr(fetch_addr),
-        .IF_valid(IF_valid),
-        .DC_ready(DC_ready),
-        .IF_out_pc(IF_out_pc),
-        .IF_out_inst(IF_out_inst),
-        .ROB_tail(DC_rob_idx),
-        .DC_valid(DC_valid),
-        .IS_ready(dispatch_valid),
-        .DC_out_pc(DC_out_pc),
-        .IS_valid(IS_valid),
-        .RR_ready(RR_ready),
-        .IS_out_rob_idx(IS_out_rob_idx),
-        .RR_valid(RR_valid),
-        .EX_ready(EX_ready[RR_out_fu_sel]),
-        .RR_out_rob_idx(RR_out_rob_idx),
-        .RR_out_pc(RR_out_pc),
-        .EX_valid(WB_out_valid),
-        .EX_out_rob_idx(WB_out_rob_idx),
-        .commit(commit),
-        .commit_rob_idx(commit_rob_idx),
-        .mispredict(mispredict),
-        .flush_mask(flush_mask)
-    );
-    
-    commit_tracker ct1(
-        .clk(clk),
-        .rst(rst),
-        .commit_valid(commit),
-        .commit_pc(commit_pc),
-        .commit_inst(commit_inst),
-        .commit_Ard(commit_A_rd),
-        .commit_data(commit_data),
-        .st_commit(st_commit),
-        .st_addr(st_addr),
-        .st_data(st_data)
-    );
-    // synopsys translate_on
+    `ifdef ENABLE_DEBUG_PORTS
+    assign debug_fetch_req_valid = fetch_req_valid;
+    assign debug_fetch_req_ready = fetch_req_ready;
+    assign debug_fetch_addr = fetch_addr;
+    assign debug_IF_valid = IF_valid;
+    assign debug_DC_ready = DC_ready;
+    assign debug_IF_out_pc = IF_out_pc;
+    assign debug_IF_out_inst = IF_out_inst;
+    assign debug_DC_rob_idx = DC_rob_idx;
+    assign debug_DC_valid = DC_valid;
+    assign debug_dispatch_valid = dispatch_valid;
+    assign debug_DC_out_pc = DC_out_pc;
+    assign debug_IS_valid = IS_valid;
+    assign debug_RR_ready = RR_ready;
+    assign debug_IS_out_rob_idx = IS_out_rob_idx;
+    assign debug_RR_valid = RR_valid;
+    assign debug_EX_ready_selected = EX_ready[RR_out_fu_sel];
+    assign debug_RR_out_rob_idx = RR_out_rob_idx;
+    assign debug_RR_out_pc = RR_out_pc;
+    assign debug_WB_out_valid = WB_out_valid;
+    assign debug_WB_out_rob_idx = WB_out_rob_idx;
+    assign debug_commit = commit;
+    assign debug_commit_rob_idx = commit_rob_idx;
+    assign debug_mispredict = mispredict;
+    assign debug_flush_mask = flush_mask;
+    assign debug_commit_pc = commit_pc;
+    assign debug_commit_inst = commit_inst;
+    assign debug_commit_A_rd = commit_A_rd;
+    assign debug_commit_data = commit_data;
+    assign debug_st_commit = st_commit;
+    assign debug_st_addr = st_addr;
+    assign debug_st_data = st_data;
+    `endif
+
 endmodule

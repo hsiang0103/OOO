@@ -7,7 +7,7 @@
 module CPU_wrapper(
 
     input clk,
-    input rstn,
+    input rst,
     //-------------------------------------//
     //      Port: MASTER <-> AXI BUS       //
     //-------------------------------------//
@@ -76,6 +76,44 @@ module CPU_wrapper(
     input                               RLAST_M0,
     input                               RVALID_M0,
     output logic                        RREADY_M0
+
+    // --------------------------------------------
+    //            Connect with Debuger              
+    // --------------------------------------------
+    `ifdef ENABLE_DEBUG_PORTS
+    ,
+    output logic        debug_fetch_req_valid,
+    output logic        debug_fetch_req_ready,
+    output logic [31:0] debug_fetch_addr,
+    output logic        debug_IF_valid,
+    output logic        debug_DC_ready,
+    output logic [31:0] debug_IF_out_pc,
+    output logic [31:0] debug_IF_out_inst,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_DC_rob_idx,
+    output logic        debug_DC_valid,
+    output logic        debug_dispatch_valid,
+    output logic [31:0] debug_DC_out_pc,
+    output logic        debug_IS_valid,
+    output logic        debug_RR_ready,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_IS_out_rob_idx,
+    output logic        debug_RR_valid,
+    output logic        debug_EX_ready_selected,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_RR_out_rob_idx,
+    output logic [31:0] debug_RR_out_pc,
+    output logic        debug_WB_out_valid,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_WB_out_rob_idx,
+    output logic        debug_commit,
+    output logic [$clog2(`ROB_LEN)-1:0] debug_commit_rob_idx,
+    output logic        debug_mispredict,
+    output logic [`ROB_LEN-1:0] debug_flush_mask,
+    output logic [31:0] debug_commit_pc,
+    output logic [31:0] debug_commit_inst,
+    output logic [5:0]  debug_commit_A_rd,
+    output logic [31:0] debug_commit_data,
+    output logic        debug_st_commit,
+    output logic [31:0] debug_st_addr,
+    output logic [31:0] debug_st_data
+    `endif
 );
 
     // Instruction Memory Interface
@@ -98,7 +136,7 @@ module CPU_wrapper(
 
     CPU cpu(
         .clk                (clk),
-        .rst                (~rstn),
+        .rst                (rst),
         // Interrupt
         .DMA_interrupt      (DMA_interrupt_i),
         .WDT_interrupt      (WDT_interrupt_i),
@@ -119,6 +157,40 @@ module CPU_wrapper(
         .load_data(load_data),
         .load_req_valid(load_req_valid),
         .load_req_ready(load_req_ready)
+        `ifdef ENABLE_DEBUG_PORTS
+        ,
+        .debug_fetch_req_valid(debug_fetch_req_valid),
+        .debug_fetch_req_ready(debug_fetch_req_ready),
+        .debug_fetch_addr(debug_fetch_addr),
+        .debug_IF_valid(debug_IF_valid),
+        .debug_DC_ready(debug_DC_ready),
+        .debug_IF_out_pc(debug_IF_out_pc),
+        .debug_IF_out_inst(debug_IF_out_inst),
+        .debug_DC_rob_idx(debug_DC_rob_idx),
+        .debug_DC_valid(debug_DC_valid),
+        .debug_dispatch_valid(debug_dispatch_valid),
+        .debug_DC_out_pc(debug_DC_out_pc),
+        .debug_IS_valid(debug_IS_valid),
+        .debug_RR_ready(debug_RR_ready),
+        .debug_IS_out_rob_idx(debug_IS_out_rob_idx),
+        .debug_RR_valid(debug_RR_valid),
+        .debug_EX_ready_selected(debug_EX_ready_selected),
+        .debug_RR_out_rob_idx(debug_RR_out_rob_idx),
+        .debug_RR_out_pc(debug_RR_out_pc),
+        .debug_WB_out_valid(debug_WB_out_valid),
+        .debug_WB_out_rob_idx(debug_WB_out_rob_idx),
+        .debug_commit(debug_commit),
+        .debug_commit_rob_idx(debug_commit_rob_idx),
+        .debug_mispredict(debug_mispredict),
+        .debug_flush_mask(debug_flush_mask),
+        .debug_commit_pc(debug_commit_pc),
+        .debug_commit_inst(debug_commit_inst),
+        .debug_commit_A_rd(debug_commit_A_rd),
+        .debug_commit_data(debug_commit_data),
+        .debug_st_commit(debug_st_commit),
+        .debug_st_addr(debug_st_addr),
+        .debug_st_data(debug_st_data)
+        `endif
     );
 
     // ---------------
@@ -149,7 +221,7 @@ module CPU_wrapper(
     assign fetch_req_ready = (M0_cs == M0_IDLE);
 
     always_ff @(posedge clk) begin
-        if (!rstn) begin
+        if (rst) begin
             M0_cs <= M0_IDLE;
         end
         else begin
@@ -211,7 +283,7 @@ module CPU_wrapper(
     end
 
     always_ff @(posedge clk) begin
-		if(!rstn) begin
+		if(rst) begin
 			M0_buff_addr <= 32'b0;
 		end
 		else begin
@@ -248,7 +320,7 @@ module CPU_wrapper(
     assign store_req_ready = (M1_cs == IDLE);
 
     always_ff @(posedge clk) begin
-        if (!rstn) begin
+        if (rst) begin
             M1_cs <= IDLE;
         end
         else begin
@@ -270,6 +342,7 @@ module CPU_wrapper(
 			WAIT_W:     M1_ns = (M1_AW_handshake)? ((M1_W_handshake)? BRESP : WRITE) : WAIT_W;
             WRITE:      M1_ns = (M1_W_handshake)? BRESP : WRITE;
             BRESP:      M1_ns = (M1_B_handshake)? IDLE  : BRESP;
+            default:    M1_ns = IDLE;
         endcase
     end
 
@@ -278,7 +351,7 @@ module CPU_wrapper(
 	logic [31:0] M1_buff_data;
 	logic [3:0]  M1_buff_strb;
 	always_ff @(posedge clk) begin
-		if(!rstn) begin
+		if(rst) begin
 			M1_buff_addr <= 32'b0;
             M1_buff_data <= 32'b0;
             M1_buff_strb <= 4'b0;

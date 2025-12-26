@@ -105,18 +105,24 @@ module IF_stage(
 
     // FIFO Pointers & Memory Update
     always_ff @(posedge clk) begin
-        if (rst || mispredict) begin
+        if (rst) begin
             wr_ptr <= 0;
             rd_ptr <= 0;
         end
         else begin
-            if (fifo_write) begin
-                fifo_mem[wr_ptr[$clog2(FIFO_DEPTH)-1:0]] <= fifo_in;
-                wr_ptr <= wr_ptr + 1;
+            if(mispredict) begin
+                wr_ptr <= 0;
+                rd_ptr <= 0;
             end
-            
-            if (fifo_read) begin
-                rd_ptr <= rd_ptr + 1;
+            else begin
+                if (fifo_write) begin
+                    fifo_mem[wr_ptr[$clog2(FIFO_DEPTH)-1:0]] <= fifo_in;
+                    wr_ptr <= wr_ptr + 1;
+                end
+                
+                if (fifo_read) begin
+                    rd_ptr <= rd_ptr + 1;
+                end
             end
         end
     end

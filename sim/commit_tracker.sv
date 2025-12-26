@@ -1,3 +1,7 @@
+`include "../include/config.svh"
+`include "../include/define.svh"
+
+
 module commit_tracker(
     input logic        clk,
     input logic        rst,
@@ -8,8 +12,7 @@ module commit_tracker(
     input logic [31:0] commit_data,
     input logic        st_commit,
     input logic [31:0] st_addr,
-    input logic [31:0] st_data,
-    input logic [3:0]  st_mask
+    input logic [31:0] st_data
 );
 
     integer f;
