@@ -7,7 +7,6 @@
 `ifdef SYN
 `include "top_syn.v"
 `timescale 1ns/10ps
-// `include "/usr/cad/CBDK/Executable_Package/Collaterals/IP/stdcell/N16ADFP_StdCell/VERILOG/N16ADFP_StdCell.v"
 `include "/SRAM/TS1N16ADFPCLLLVTA512X45M4SWSHOD.sv"
 `else
 `include "top.sv"
@@ -193,6 +192,14 @@ module top_tb;
     .debug_st_data(debug_st_data)
     `endif
   );  
+
+  ROM i_ROM(
+    .CK (clk        ),
+    .CS (ROM_enable ),
+    .OE (ROM_read   ),
+    .A  (ROM_address),
+    .DO (ROM_out    )
+  );
 
   DRAM i_DRAM(
     .CK   (clk        ),

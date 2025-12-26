@@ -46,7 +46,7 @@ rtl0: | $(bld_dir)
 	+define+prog0$(FSDB_DEF) \
 	+define+RESET_ADDR=$(BOOT_ADDR) \
 	+prog_path=$(root_dir)/$(sim_dir)/prog0 \
-	+define+ENABLE_DEBUG_PORTS
+	+define+ENABLE_DEBUG_PORTS \
 	+rdcycle=1 \
 	+notimingcheck; \
 	cd $(root_dir); \
@@ -147,6 +147,7 @@ rtl_gen: | $(bld_dir)
 	vcs -R -sverilog $(root_dir)/$(sim_dir)/top_tb_uvm.sv -debug_access+all -full64  \
 	+incdir+$(root_dir)/$(src_dir)+$(root_dir)/$(src_dir)/AXI+$(root_dir)/$(inc_dir)+$(root_dir)/$(sim_dir) \
 	+define+prog_gen$(FSDB_DEF) \
+	+define+ENABLE_DEBUG_PORTS \
 	+prog_path=$(root_dir)/$(sim_dir)/prog_gen \
 	+rdcycle=1 \
 	+notimingcheck \
