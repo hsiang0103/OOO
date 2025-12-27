@@ -1,5 +1,5 @@
 `ifndef RESET_ADDR
-    `define RESET_ADDR 32'h0000_2000  // 這是預設值，當 Makefile 沒傳參數時使用
+    `define RESET_ADDR 32'h0001_0000  // 這是預設值，當 Makefile 沒傳參數時使用
 `endif
 
 // Issue Queue
