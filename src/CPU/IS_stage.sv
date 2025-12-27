@@ -127,8 +127,7 @@ module IS_stage (
         issue_ptr = '0;
         for (int i = 0; i < `IQ_LEN; i++) begin
             if (grant_vec[i]) begin
-                issue_ptr = i[$clog2(`IQ_LEN)-1:0];
-                break;
+                issue_ptr |= i[$clog2(`IQ_LEN)-1:0]; 
             end
         end
     end
@@ -212,14 +211,29 @@ module IS_stage (
         end
     end
 
+    logic [6:0] pre_rs1_index;
+    logic [6:0] pre_rs2_index;
+
+    always_comb begin
+        pre_rs1_index = '0;
+        pre_rs2_index = '0;
+        for (int i = 0; i < `IQ_LEN; i++) begin
+            if (grant_vec[i]) begin
+                // Flatten MUX: 使用 One-Hot 向量直接選擇地址
+                pre_rs1_index |= iq[i].P_rs1;
+                pre_rs2_index |= iq[i].P_rs2;
+            end
+        end
+    end
+
     // Register Read
     logic [31:0] RR_rs1_data, RR_rs2_data;
     RegFile R1 (
         .clk            (clk),
         .rst            (rst),
         // read
-        .rs1_index      (iq[issue_ptr].P_rs1),
-        .rs2_index      (iq[issue_ptr].P_rs2),
+        .rs1_index      (pre_rs1_index),
+        .rs2_index      (pre_rs2_index),
         .rs1_data_out   (RR_rs1_data),
         .rs2_data_out   (RR_rs2_data),
         // write
@@ -248,7 +262,7 @@ module IS_stage (
     data_t  i_data, o_data, temp_data;         
     logic   temp_valid;
 
-    assign i_data.pc        = iq[issue_ptr].pc     ;
+    /*assign i_data.pc        = iq[issue_ptr].pc     ;
     assign i_data.inst      = iq[issue_ptr].inst   ;
     assign i_data.imm       = iq[issue_ptr].imm    ;
     assign i_data.op        = iq[issue_ptr].op     ;
@@ -260,7 +274,7 @@ module IS_stage (
     assign i_data.st_idx    = iq[issue_ptr].st_idx ;
     assign i_data.fu_sel    = iq[issue_ptr].fu_sel ;
     assign i_data.jump      = iq[issue_ptr].jump   ;
-    assign IS_out_rob_idx   = iq[issue_ptr].rob_idx;
+    
 
     // Forwarding data selection
     always_comb begin
@@ -283,8 +297,52 @@ module IS_stage (
         else begin
             i_data.rs2_data = RR_rs2_data;
         end
+    end*/
+
+    always_comb begin
+        // 初始化為 0
+        i_data = '0; 
+        IS_out_rob_idx = '0;
+        // 使用 grant_vec 進行 Flatten MUX
+        for (int i = 0; i < `IQ_LEN; i++) begin
+            if (grant_vec[i]) begin
+                i_data.pc      |= iq[i].pc;
+                i_data.inst    |= iq[i].inst;
+                i_data.imm     |= iq[i].imm;
+                i_data.op      |= iq[i].op;
+                i_data.f3      |= iq[i].f3;
+                i_data.f7      |= iq[i].f7;
+                i_data.P_rd    |= iq[i].P_rd;
+                i_data.rob_idx |= iq[i].rob_idx;
+                i_data.ld_idx  |= iq[i].ld_idx;
+                i_data.st_idx  |= iq[i].st_idx;
+                i_data.fu_sel  |= iq[i].fu_sel;
+                i_data.jump    |= iq[i].jump;
+                IS_out_rob_idx |= iq[i].rob_idx;
+            end
+        end
+        
+        if(EX_in_valid && EX_in_rd != 7'b0 && EX_in_rd == pre_rs1_index) begin
+            i_data.rs1_data = EX_in_data;
+        end 
+        else if(WB_valid && WB_rd != 7'b0 && WB_rd == pre_rs1_index) begin
+            i_data.rs1_data = WB_data;
+        end 
+        else begin
+            i_data.rs1_data = RR_rs1_data;
+        end
+        
+        if(EX_in_valid && EX_in_rd != 7'b0 && EX_in_rd == pre_rs2_index) begin
+            i_data.rs2_data = EX_in_data;
+        end 
+        else if(WB_valid && WB_rd != 7'b0 && WB_rd == pre_rs2_index) begin
+            i_data.rs2_data = WB_data;
+        end 
+        else begin
+            i_data.rs2_data = RR_rs2_data;
+        end
     end
-    
+
     // =================
     // Pipeline register
     // =================

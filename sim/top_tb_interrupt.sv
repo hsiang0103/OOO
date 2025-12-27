@@ -1,6 +1,6 @@
 `timescale 1ns/10ps
 
-`define CYCLE 5.0 // Cycle time
+`define CYCLE 1.0 // Cycle time
 `define CYCLE2 50.0 // Cycle time for WDT
 `define MAX 50000 // Max cycle number
 
